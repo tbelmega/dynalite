@@ -1,6 +1,11 @@
 # dynalite
 
-[![GitHub CI status](https://github.com/architect/dynalite/workflows/Node%20CI/badge.svg)](https://github.com/architect/dynalite/actions?query=workflow%3A%22Node+CI%22)
+Personal fork maintained by Thiemo Belmega.
+Originally created by [Michael Hart](https://github.com/mhart) and later maintained by the
+[Architect team](https://github.com/architect/dynalite).
+
+This fork is based on the upstream project at [architect/dynalite](https://github.com/architect/dynalite)
+and retains upstream attribution under the Apache 2.0 license.
 
 An implementation of Amazon's DynamoDB built on LevelDB
 (well, [@rvagg](https://github.com/rvagg)'s awesome [LevelUP](https://github.com/Level/levelup) to be precise)
@@ -8,14 +13,6 @@ for fast in-memory or persistent usage.
 
 This project aims to match the live DynamoDB instances as closely as possible
 (and is tested against them in various regions), including all limits and error messages.
-
-## What about Amazon's DynamoDB Local?
-
-This project was created before DynamoDB Local existed, and when it did, it differed a lot from the live instances
-in ways that caused my company issues. Since then it's had a lot more development and resources thrown at it,
-and is probably more up-to-date than dynalite is. I'd recommend using it over dynalite if you don't mind the
-overhead of starting the JVM (or docker) each time. If you need a fast in-memory option that you can start up in
-milliseconds, then dynalite might be more suitable for you.
 
 ## Example
 
@@ -39,14 +36,14 @@ Options:
 --verbose, -v         Enable verbose logging
 --debug, -d           Enable debug logging
 
-Report bugs at github.com/architect/dynalite/issues
+Report bugs at github.com/tbelmega/dynalite/issues
 ```
 
 Or programmatically:
 
 ```js
 // Returns a standard Node.js HTTP server
-var dynalite = require('dynalite')
+var dynalite = require('@tbelmega/dynalite')
 var dynaliteServer = dynalite({ path: './mydb', createTableMs: 50 })
 
 // Listen on port 4567
@@ -69,16 +66,16 @@ dynamo.listTables(console.log.bind(console))
 
 ## Installation
 
-With [npm](https://www.npmjs.com/), to install the CLI:
+With [npm](https://www.npmjs.com/), to install this fork's CLI:
 
 ```sh
-npm install -g dynalite
+npm install -g @tbelmega/dynalite
 ```
 
-Or to install for development/testing in your project:
+Or to install this fork for development/testing in your project:
 
 ```sh
-npm install -D dynalite
+npm install -D @tbelmega/dynalite
 ```
 
 ## TODO
@@ -88,4 +85,3 @@ npm install -D dynalite
 - Implement `ReturnItemCollectionMetrics` on all remaining endpoints
 - Implement size info for tables and indexes
 - Add ProvisionedThroughput checking
-- See [open issues on GitHub](https://github.com/architect/dynalite/issues) for any further TODOs

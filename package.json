@@ -1,13 +1,13 @@
 {
-  "name": "dynalite",
+  "name": "@tbelmega/dynalite",
   "version": "4.0.0",
   "description": "An implementation of Amazon's DynamoDB built on LevelDB",
-  "homepage": "https://github.com/architect/dynalite",
+  "homepage": "https://github.com/tbelmega/dynalite",
   "repository": {
     "type": "git",
-    "url": "https://github.com/architect/dynalite"
+    "url": "https://github.com/tbelmega/dynalite"
   },
-  "bugs": "https://github.com/architect/dynalite/issues",
+  "bugs": "https://github.com/tbelmega/dynalite/issues",
   "main": "index.js",
   "bin": "cli.js",
   "scripts": {
@@ -20,7 +20,11 @@
   "engines": {
     "node": ">=20"
   },
-  "author": "Michael Hart <michael.hart.au@gmail.com>",
+  "author": "Thiemo Belmega",
+  "contributors": [
+    "Michael Hart <michael.hart.au@gmail.com>",
+    "Architect"
+  ],
   "license": "Apache-2.0",
   "dependencies": {
     "async": "^3.2.4",

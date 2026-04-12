@@ -6,3 +6,5 @@ v8.log
 package-lock.json
 .nyc_output
 .kiro
+.idea
+.codex

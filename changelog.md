@@ -2,6 +2,19 @@
 
 ---
 
+## [Unreleased]
+
+This repository is maintained as Thiemo Belmega's personal fork of
+[architect/dynalite](https://github.com/architect/dynalite).
+
+### Changed
+
+- Declared this repository as a personal fork maintained by Thiemo Belmega
+- Updated project metadata and documentation to point to the fork while preserving
+  attribution to Michael Hart and Architect
+
+---
+
 ## [4.0.0]
 
 Hello! After a bit of a hiatus, the [Architect team](https://github.com/architect/dynalite/issues/166) is pleased bring the first new Dynalite release in years!
