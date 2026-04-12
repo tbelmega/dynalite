@@ -9,6 +9,37 @@ defaults:
 
 jobs:
 
+  bun:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repo
+      uses: actions/checkout@v3
+
+    - name: Set up Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.3.10
+
+    - name: Env
+      run: |
+        echo "Event name: ${{ github.event_name }}"
+        echo "Git ref:    ${{ github.ref }}"
+        echo "GH actor:   ${{ github.actor }}"
+        echo "SHA:        ${{ github.sha }}"
+        VER=`bun --version`; echo "Bun ver:    $VER"
+
+    - name: Install
+      run: bun install --frozen-lockfile
+
+    - name: Build
+      run: bun run build
+
+    - name: Test
+      run: bun run test
+      env:
+        CI: true
+
   # Test the build
   build:
     # Setup

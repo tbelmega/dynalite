@@ -78,6 +78,24 @@ Or to install this fork for development/testing in your project:
 npm install -D @tbelmega/dynalite
 ```
 
+## Development
+
+For local development in this fork, prefer [Bun](https://bun.sh/) for dependency management and script execution:
+
+```sh
+bun install
+bun run build
+bun run test
+```
+
+The existing `package.json` scripts are unchanged, so npm remains available if you need it:
+
+```sh
+npm install
+npm run build
+npm test
+```
+
 ## TODO
 
 - Implement [Transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html)
