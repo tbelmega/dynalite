@@ -1,8 +1,14 @@
-var helpers = require('./helpers')
+var should = require('should')
+var helpers = require('../../test/helpers')
+
+import type {
+  TestDynamoRequest,
+  TestDynamoResponse,
+} from '../types/types'
 
 var target = 'DescribeTimeToLive',
-  request = helpers.request,
-  opts = helpers.opts.bind(null, target),
+  request: (requestOptions: TestDynamoRequest, cb: (err: unknown, res: TestDynamoResponse) => void) => void = helpers.request,
+  opts: (data: TestDynamoRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target),
   assertNotFound = helpers.assertNotFound.bind(null, target)
