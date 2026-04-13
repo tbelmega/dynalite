@@ -1,8 +1,15 @@
-var helpers = require('./helpers')
+var should = require('should')
+var helpers = require('../../test/helpers')
+
+import type {
+  ListTagsOfResourceResponse,
+  ResourceTag,
+  TestDynamoRequest,
+} from '../types/types'
 
 var target = 'ListTagsOfResource',
-  request = helpers.request,
-  opts = helpers.opts.bind(null, target),
+  request: (requestOptions: TestDynamoRequest, cb: (err: unknown, res: ListTagsOfResourceResponse) => void) => void = helpers.request,
+  opts: (data: TestDynamoRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertAccessDenied = helpers.assertAccessDenied.bind(null, target),
   assertNotFound = helpers.assertNotFound.bind(null, target),
@@ -88,7 +95,7 @@ describe('listTagsOfResource', function () {
         should(res.statusCode).equal(200)
         should(res.body).eql({ Tags: [] })
 
-        var tags = [ { Key: 't1', Value: 'v1' }, { Key: 't2', Value: 'v2' } ]
+        var tags: ResourceTag[] = [ { Key: 't1', Value: 'v1' }, { Key: 't2', Value: 'v2' } ]
 
         request(helpers.opts('TagResource', { ResourceArn: resourceArn, Tags: tags }), function (err, res) {
           if (err) return done(err)
@@ -99,7 +106,7 @@ describe('listTagsOfResource', function () {
             should(res.statusCode).equal(200)
             should(res.body.Tags).not.be.null()
             should(res.body.Tags.length).equal(tags.length)
-            res.body.Tags.forEach(function (tag) { should(tags).containEql(tag) })
+            res.body.Tags.forEach(function (tag: ResourceTag) { should(tags).containEql(tag) })
 
             var tagKeys = tags.map(function (tag) { return tag.Key })
 

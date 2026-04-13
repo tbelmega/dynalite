@@ -86,3 +86,6 @@ export type PutItemResponseBody = {
 export type PutItemResponse = DynamoCommandResponse<PutItemResponseBody>;
 export type InvalidAttributeValueCase = [InvalidAttributeValue, string];
 export type StringValidationCase = [string, string];
+export type ResourceTag = { Key: string; Value: string };
+export type ListTagsOfResourceResponseBody = { Tags: ResourceTag[] };
+export type ListTagsOfResourceResponse = DynamoCommandResponse<ListTagsOfResourceResponseBody>;
