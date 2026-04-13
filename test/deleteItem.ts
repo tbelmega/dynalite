@@ -1,12 +1,33 @@
+var should = require('should')
 var async = require('async'),
-  helpers = require('./helpers')
+  helpers = require('../../test/helpers')
+
+import type {
+  AsyncCallback,
+  DynamoItem,
+  InvalidAttributeValue,
+  InvalidAttributeValueCase,
+  PutItemExpectedMap,
+  RawAttributeValue,
+  TestDynamoRequest,
+  TestDynamoResponse,
+} from '../types/types'
+
+type DeleteItemMutation = {
+  ConditionExpression?: string;
+  Expected?: PutItemExpectedMap;
+  ExpressionAttributeNames?: Record<string, string>;
+  ExpressionAttributeValues?: Record<string, RawAttributeValue>;
+  Key?: DynamoItem;
+  TableName?: string;
+}
 
 var target = 'DeleteItem',
-  request = helpers.request,
-  opts = helpers.opts.bind(null, target),
+  request: (requestOptions: TestDynamoRequest, cb: (err: unknown, res: TestDynamoResponse) => void) => void = helpers.request,
+  opts: (data: TestDynamoRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target),
-  assertConditional = helpers.assertConditional.bind(null, target)
+  assertConditional: (data: TestDynamoRequest, done: AsyncCallback) => void = helpers.assertConditional.bind(null, target)
 
 describe('deleteItem', function () {
 
@@ -212,7 +233,7 @@ describe('deleteItem', function () {
         { M: { a: {} } },
         { L: [ {} ] },
         { L: [ { a: {} } ] },
-      ], function (expr, cb) {
+      ] as InvalidAttributeValue[], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -231,7 +252,7 @@ describe('deleteItem', function () {
         [ { BS: [] }, 'Binary sets should not be empty' ],
         [ { SS: [ 'a', 'a' ] }, 'Input collection [a, a] contains duplicates.' ],
         [ { BS: [ 'Yg==', 'Yg==' ] }, 'Input collection [Yg==, Yg==]of type BS contains duplicates.' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -256,7 +277,7 @@ describe('deleteItem', function () {
         [ { N: '-1e126' }, 'Number overflow. Attempting to store a number with magnitude larger than supported range' ],
         [ { N: '1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
         [ { N: '-1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -299,7 +320,7 @@ describe('deleteItem', function () {
         { M: { a: {} } },
         { L: [ {} ] },
         { L: [ { a: {} } ] },
-      ], function (expr, cb) {
+      ] as InvalidAttributeValue[], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({ TableName: 'abc', Key: { a: expr } },
           'Supplied AttributeValue is empty, must contain exactly one of the supported datatypes', cb)
       }, done)
@@ -313,7 +334,7 @@ describe('deleteItem', function () {
         [ { BS: [] }, 'Binary sets should not be empty' ],
         [ { SS: [ 'a', 'a' ] }, 'Input collection [a, a] contains duplicates.' ],
         [ { BS: [ 'Yg==', 'Yg==' ] }, 'Input collection [Yg==, Yg==]of type BS contains duplicates.' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({ TableName: 'abc', Key: { a: expr[0] } },
           'One or more parameter values were invalid: ' + expr[1], cb)
       }, done)
@@ -333,7 +354,7 @@ describe('deleteItem', function () {
         [ { N: '-1e126' }, 'Number overflow. Attempting to store a number with magnitude larger than supported range' ],
         [ { N: '1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
         [ { N: '-1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({ TableName: 'abc', Key: { a: expr[0] } }, expr[1], cb)
       }, done)
     })
@@ -436,7 +457,7 @@ describe('deleteItem', function () {
         { a: { BS: [ 'aaaa' ] } },
         { a: { M: {} } },
         { a: { L: [] } },
-      ], function (expr, cb) {
+      ] as DynamoItem[], function (expr: DynamoItem, cb: AsyncCallback) {
         assertValidation({ TableName: helpers.testHashTable, Key: expr },
           'The provided key element does not match the schema', cb)
       }, done)
@@ -514,7 +535,7 @@ describe('deleteItem', function () {
         { Expected: { a: { Value: { S: helpers.randomString() } } } },
         { ConditionExpression: 'a = :a', ExpressionAttributeValues: { ':a': { S: helpers.randomString() } } },
         { ConditionExpression: '#a = :a', ExpressionAttributeNames: { '#a': 'a' }, ExpressionAttributeValues: { ':a': { S: helpers.randomString() } } },
-      ], function (deleteOpts, cb) {
+      ] as DeleteItemMutation[], function (deleteOpts: DeleteItemMutation, cb: AsyncCallback) {
         deleteOpts.TableName = helpers.testHashTable
         deleteOpts.Key = { a: { S: helpers.randomString() } }
         assertConditional(deleteOpts, cb)
@@ -528,7 +549,7 @@ describe('deleteItem', function () {
         async.forEach([
           { Expected: { a: { Exists: false } } },
           { ConditionExpression: 'attribute_not_exists(a)' },
-        ], function (deleteOpts, cb) {
+        ] as DeleteItemMutation[], function (deleteOpts: DeleteItemMutation, cb: AsyncCallback) {
           deleteOpts.TableName = helpers.testHashTable
           deleteOpts.Key = { a: item.a }
           assertConditional(deleteOpts, cb)
@@ -543,7 +564,7 @@ describe('deleteItem', function () {
         async.forEach([
           { Expected: { a: { Exists: false } } },
           { ConditionExpression: 'attribute_not_exists(a)' },
-        ], function (deleteOpts, cb) {
+        ] as DeleteItemMutation[], function (deleteOpts: DeleteItemMutation, cb: AsyncCallback) {
           deleteOpts.TableName = helpers.testHashTable
           deleteOpts.Key = { a: { S: helpers.randomString() } }
           request(opts(deleteOpts), function (err, res) {
@@ -561,8 +582,10 @@ describe('deleteItem', function () {
         { Expected: { a: { Value: { S: helpers.randomString() } } } },
         { ConditionExpression: 'a = :a', ExpressionAttributeValues: { ':a': { S: helpers.randomString() } } },
         { ConditionExpression: '#a = :a', ExpressionAttributeNames: { '#a': 'a' }, ExpressionAttributeValues: { ':a': { S: helpers.randomString() } } },
-      ], function (deleteOpts, cb) {
-        var item = { a: deleteOpts.Expected ? deleteOpts.Expected.a.Value : deleteOpts.ExpressionAttributeValues[':a'] }
+      ] as DeleteItemMutation[], function (deleteOpts: DeleteItemMutation, cb: AsyncCallback) {
+        var itemValue = deleteOpts.Expected ? deleteOpts.Expected.a?.Value : deleteOpts.ExpressionAttributeValues?.[':a']
+        if (itemValue == null) return cb(new Error('Missing conditional item value'))
+        var item: DynamoItem = { a: itemValue }
         request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err) {
           if (err) return cb(err)
           deleteOpts.TableName = helpers.testHashTable
@@ -582,7 +605,7 @@ describe('deleteItem', function () {
         { Expected: { b: { Exists: false } }, Key: { a: { S: helpers.randomString() } } },
         { ConditionExpression: 'attribute_not_exists(b)', Key: { a: { S: helpers.randomString() } } },
         { ConditionExpression: 'attribute_not_exists(#b)', ExpressionAttributeNames: { '#b': 'b' }, Key: { a: { S: helpers.randomString() } } },
-      ], function (deleteOpts, cb) {
+      ] as DeleteItemMutation[], function (deleteOpts: DeleteItemMutation, cb: AsyncCallback) {
         var item = deleteOpts.Key
         request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err) {
           if (err) return cb(err)
@@ -605,7 +628,7 @@ describe('deleteItem', function () {
           { Expected: { b: { Exists: false } } },
           { ConditionExpression: 'attribute_not_exists(b)' },
           { ConditionExpression: 'attribute_not_exists(#b)', ExpressionAttributeNames: { '#b': 'b' } },
-        ], function (deleteOpts, cb) {
+        ] as DeleteItemMutation[], function (deleteOpts: DeleteItemMutation, cb: AsyncCallback) {
           deleteOpts.TableName = helpers.testHashTable
           deleteOpts.Key = { a: item.a }
           assertConditional(deleteOpts, cb)
@@ -618,9 +641,11 @@ describe('deleteItem', function () {
         { Expected: { a: { Value: { S: helpers.randomString() } }, b: { Exists: false }, c: { Value: { S: helpers.randomString() } } } },
         { ConditionExpression: 'a = :a AND attribute_not_exists(b) AND c = :c', ExpressionAttributeValues: { ':a': { S: helpers.randomString() }, ':c': { S: helpers.randomString() } } },
         { ConditionExpression: '#a = :a AND attribute_not_exists(#b) AND #c = :c', ExpressionAttributeNames: { '#a': 'a', '#b': 'b', '#c': 'c' }, ExpressionAttributeValues: { ':a': { S: helpers.randomString() }, ':c': { S: helpers.randomString() } } },
-      ], function (deleteOpts, cb) {
-        var item = deleteOpts.Expected ? { a: deleteOpts.Expected.a.Value, c: deleteOpts.Expected.c.Value } :
-          { a: deleteOpts.ExpressionAttributeValues[':a'], c: deleteOpts.ExpressionAttributeValues[':c'] }
+      ] as DeleteItemMutation[], function (deleteOpts: DeleteItemMutation, cb: AsyncCallback) {
+        var itemA = deleteOpts.Expected ? deleteOpts.Expected.a?.Value : deleteOpts.ExpressionAttributeValues?.[':a']
+        var itemC = deleteOpts.Expected ? deleteOpts.Expected.c?.Value : deleteOpts.ExpressionAttributeValues?.[':c']
+        if (itemA == null || itemC == null) return cb(new Error('Missing conditional multi-attribute values'))
+        var item: DynamoItem = { a: itemA, c: itemC }
         request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err) {
           if (err) return cb(err)
           deleteOpts.TableName = helpers.testHashTable
@@ -643,7 +668,7 @@ describe('deleteItem', function () {
           { Expected: { a: { Value: item.a }, b: { Exists: false }, c: { Value: { S: helpers.randomString() } } } },
           { ConditionExpression: 'a = :a AND attribute_not_exists(b) AND c = :c', ExpressionAttributeValues: { ':a': item.a, ':c': { S: helpers.randomString() } } },
           { ConditionExpression: '#a = :a AND attribute_not_exists(#b) AND #c = :c', ExpressionAttributeNames: { '#a': 'a', '#b': 'b', '#c': 'c' }, ExpressionAttributeValues: { ':a': item.a, ':c': { S: helpers.randomString() } } },
-        ], function (deleteOpts, cb) {
+        ] as DeleteItemMutation[], function (deleteOpts: DeleteItemMutation, cb: AsyncCallback) {
           deleteOpts.TableName = helpers.testHashTable
           deleteOpts.Key = { a: item.a }
           assertConditional(deleteOpts, cb)
