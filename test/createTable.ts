@@ -1,10 +1,21 @@
-var helpers = require('./helpers'),
+var helpers = require('../../test/helpers'),
   should = require('should')
 
+import type {
+  CreateTableRequest,
+  CreateTableResponse,
+  GlobalSecondaryIndexDescription,
+  TableDescriptionSummary,
+} from '../types/types'
+
+type CreateTableExpectation = TableDescriptionSummary & {
+  BillingMode?: string;
+}
+
 var target = 'CreateTable',
-  request = helpers.request,
+  request: (requestOptions: Record<string, unknown>, cb: (err: unknown, res: CreateTableResponse) => void) => void = helpers.request,
   randomName = helpers.randomName,
-  opts = helpers.opts.bind(null, target),
+  opts: (data: Record<string, unknown>) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target)
 
@@ -1143,7 +1154,7 @@ describe('createTable', function () {
   describe('functionality', function () {
 
     it('should succeed for basic', function (done) {
-      var table = {
+      var table: CreateTableExpectation = {
           TableName: randomName(),
           AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' } ],
           KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
@@ -1153,7 +1164,8 @@ describe('createTable', function () {
         if (err) return done(err)
         should(res.statusCode).equal(200)
         should.exist(res.body.TableDescription)
-        var desc = res.body.TableDescription
+        var desc: CreateTableExpectation | undefined = res.body.TableDescription
+        if (desc == null || desc.ProvisionedThroughput == null) return done(new Error('Missing basic table description'))
         should(desc.TableId).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
         delete desc.TableId
         should(desc.CreationDateTime).be.above(createdAt - 5)
@@ -1162,6 +1174,7 @@ describe('createTable', function () {
           'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName))
         delete desc.TableArn
         table.ItemCount = 0
+        if (table.ProvisionedThroughput == null) return done(new Error('Missing expected throughput'))
         table.ProvisionedThroughput.NumberOfDecreasesToday = 0
         table.TableSizeBytes = 0
         table.TableStatus = 'CREATING'
@@ -1172,7 +1185,7 @@ describe('createTable', function () {
     })
 
     it('should succeed for basic PAY_PER_REQUEST', function (done) {
-      var table = {
+      var table: CreateTableExpectation = {
           TableName: randomName(),
           AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' } ],
           KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
@@ -1182,7 +1195,8 @@ describe('createTable', function () {
         if (err) return done(err)
         should(res.statusCode).equal(200)
         should.exist(res.body.TableDescription)
-        var desc = res.body.TableDescription
+        var desc: CreateTableExpectation | undefined = res.body.TableDescription
+        if (desc == null) return done(new Error('Missing PAY_PER_REQUEST table description'))
         should(desc.TableId).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
         delete desc.TableId
         should(desc.CreationDateTime).be.above(createdAt - 5)
@@ -1209,7 +1223,7 @@ describe('createTable', function () {
 
     it('should change state to ACTIVE after a period', function (done) {
       this.timeout(100000)
-      var table = {
+      var table: CreateTableRequest = {
         TableName: randomName(),
         AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' } ],
         KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
@@ -1217,10 +1231,12 @@ describe('createTable', function () {
       }
       request(opts(table), function (err, res) {
         if (err) return done(err)
+        if (res.body.TableDescription == null) return done(new Error('Missing created table description'))
         should(res.body.TableDescription.TableStatus).equal('CREATING')
 
-        helpers.waitUntilActive(table.TableName, function (err, res) {
+        helpers.waitUntilActive(table.TableName, function (err: unknown, res: CreateTableResponse) {
           if (err) return done(err)
+          if (res.body.Table == null) return done(new Error('Missing active table description'))
           should(res.body.Table.TableStatus).equal('ACTIVE')
           helpers.deleteWhenActive(table.TableName)
           done()
@@ -1231,7 +1247,7 @@ describe('createTable', function () {
     // TODO: Seems to block until other tables with secondary indexes have been created
     it('should succeed for LocalSecondaryIndexes', function (done) {
       this.timeout(100000)
-      var table = {
+      var table: CreateTableExpectation = {
           TableName: randomName(),
           AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' }, { AttributeName: 'b', AttributeType: 'S' } ],
           KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' }, { KeyType: 'RANGE', AttributeName: 'b' } ],
@@ -1262,7 +1278,10 @@ describe('createTable', function () {
         if (err) return done(err)
         should(res.statusCode).equal(200)
         should.exist(res.body.TableDescription)
-        var desc = res.body.TableDescription
+        var desc: CreateTableExpectation | undefined = res.body.TableDescription
+        if (desc == null || desc.LocalSecondaryIndexes == null || desc.ProvisionedThroughput == null) {
+          return done(new Error('Missing local secondary index description'))
+        }
         should(desc.TableId).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
         delete desc.TableId
         should(desc.CreationDateTime).be.above(createdAt - 5)
@@ -1270,21 +1289,24 @@ describe('createTable', function () {
         should(desc.TableArn).match(new RegExp(
           'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName))
         delete desc.TableArn
-        desc.LocalSecondaryIndexes.forEach(function (index) {
+        var localIndexes = desc.LocalSecondaryIndexes
+        desc.LocalSecondaryIndexes.forEach(function (index: GlobalSecondaryIndexDescription) {
           should(index.IndexArn).match(new RegExp(
             'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName + '/index/' + index.IndexName))
           delete index.IndexArn
         })
         table.ItemCount = 0
+        if (table.ProvisionedThroughput == null) return done(new Error('Missing expected local index throughput'))
         table.ProvisionedThroughput.NumberOfDecreasesToday = 0
         table.TableSizeBytes = 0
         table.TableStatus = 'CREATING'
         // DynamoDB seem to put them in a weird order, so check separately
-        table.LocalSecondaryIndexes.forEach(function (index) {
+        table.LocalSecondaryIndexes?.forEach(function (index: GlobalSecondaryIndexDescription) {
           index.IndexSizeBytes = 0
           index.ItemCount = 0
-          should(desc.LocalSecondaryIndexes).containEql(index)
+          should(localIndexes).containEql(index)
         })
+        if (table.LocalSecondaryIndexes == null) return done(new Error('Missing expected local indexes'))
         should(desc.LocalSecondaryIndexes.length).equal(table.LocalSecondaryIndexes.length)
         delete desc.LocalSecondaryIndexes
         delete table.LocalSecondaryIndexes
@@ -1296,7 +1318,7 @@ describe('createTable', function () {
 
     it('should succeed for multiple GlobalSecondaryIndexes', function (done) {
       this.timeout(300000)
-      var table = {
+      var table: CreateTableExpectation = {
           TableName: randomName(),
           AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' }, { AttributeName: 'b', AttributeType: 'S' } ],
           KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
@@ -1332,7 +1354,10 @@ describe('createTable', function () {
         if (err) return done(err)
         should(res.statusCode).equal(200)
         should.exist(res.body.TableDescription)
-        var desc = res.body.TableDescription
+        var desc: CreateTableExpectation | undefined = res.body.TableDescription
+        if (desc == null || desc.GlobalSecondaryIndexes == null || desc.ProvisionedThroughput == null) {
+          return done(new Error('Missing global secondary index description'))
+        }
         should(desc.TableId).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
         delete desc.TableId
         should(desc.CreationDateTime).be.above(createdAt - 5)
@@ -1340,35 +1365,41 @@ describe('createTable', function () {
         should(desc.TableArn).match(new RegExp(
           'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName))
         delete desc.TableArn
-        desc.GlobalSecondaryIndexes.forEach(function (index) {
+        var globalDescIndexes = desc.GlobalSecondaryIndexes
+        desc.GlobalSecondaryIndexes.forEach(function (index: GlobalSecondaryIndexDescription) {
           should(index.IndexArn).match(new RegExp(
             'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName + '/index/' + index.IndexName))
           delete index.IndexArn
         })
         table.ItemCount = 0
+        if (table.ProvisionedThroughput == null) return done(new Error('Missing expected global index throughput'))
         table.ProvisionedThroughput.NumberOfDecreasesToday = 0
         table.TableSizeBytes = 0
         table.TableStatus = 'CREATING'
         // DynamoDB seem to put them in a weird order, so check separately
-        globalIndexes.forEach(function (index) {
+        globalIndexes?.forEach(function (index: GlobalSecondaryIndexDescription) {
           index.IndexSizeBytes = 0
           index.ItemCount = 0
           index.IndexStatus = 'CREATING'
+          if (index.ProvisionedThroughput == null) throw new Error('Missing expected global index throughput')
           index.ProvisionedThroughput.NumberOfDecreasesToday = 0
-          should(desc.GlobalSecondaryIndexes).containEql(index)
+          should(globalDescIndexes).containEql(index)
         })
+        if (globalIndexes == null) return done(new Error('Missing expected global indexes'))
         should(desc.GlobalSecondaryIndexes.length).equal(globalIndexes.length)
         delete desc.GlobalSecondaryIndexes
         delete table.GlobalSecondaryIndexes
         should(desc).eql(table)
 
         // Ensure that the indexes become active too
-        helpers.waitUntilIndexesActive(table.TableName, function (err, res) {
+        helpers.waitUntilIndexesActive(table.TableName, function (err: unknown, res: CreateTableResponse) {
           if (err) return done(err)
-          res.body.Table.GlobalSecondaryIndexes.forEach(function (index) { delete index.IndexArn })
-          globalIndexes.forEach(function (index) {
+          if (res.body.Table?.GlobalSecondaryIndexes == null) return done(new Error('Missing active global indexes'))
+          var activeTable = res.body.Table
+          res.body.Table.GlobalSecondaryIndexes.forEach(function (index: GlobalSecondaryIndexDescription) { delete index.IndexArn })
+          globalIndexes?.forEach(function (index: GlobalSecondaryIndexDescription) {
             index.IndexStatus = 'ACTIVE'
-            should(res.body.Table.GlobalSecondaryIndexes).containEql(index)
+            should(activeTable.GlobalSecondaryIndexes).containEql(index)
           })
           helpers.deleteWhenActive(table.TableName)
           done()
@@ -1377,7 +1408,7 @@ describe('createTable', function () {
     })
 
     it('should succeed for PAY_PER_REQUEST GlobalSecondaryIndexes', function (done) {
-      var table = {
+      var table: CreateTableExpectation = {
           TableName: randomName(),
           AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' }, { AttributeName: 'b', AttributeType: 'S' } ],
           KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
@@ -1396,7 +1427,10 @@ describe('createTable', function () {
         if (err) return done(err)
         should(res.statusCode).equal(200)
         should.exist(res.body.TableDescription)
-        var desc = res.body.TableDescription
+        var desc: CreateTableExpectation | undefined = res.body.TableDescription
+        if (desc == null || desc.GlobalSecondaryIndexes == null) {
+          return done(new Error('Missing PAY_PER_REQUEST global secondary index description'))
+        }
         should(desc.TableId).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
         delete desc.TableId
         should(desc.CreationDateTime).be.above(createdAt - 5)
@@ -1404,7 +1438,8 @@ describe('createTable', function () {
         should(desc.TableArn).match(new RegExp(
           'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName))
         delete desc.TableArn
-        desc.GlobalSecondaryIndexes.forEach(function (index) {
+        var payPerRequestIndexes = desc.GlobalSecondaryIndexes
+        desc.GlobalSecondaryIndexes.forEach(function (index: GlobalSecondaryIndexDescription) {
           should(index.IndexArn).match(new RegExp(
             'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName + '/index/' + index.IndexName))
           delete index.IndexArn
@@ -1420,7 +1455,7 @@ describe('createTable', function () {
           WriteCapacityUnits: 0,
         }
         table.TableStatus = 'CREATING'
-        globalIndexes.forEach(function (index) {
+        globalIndexes?.forEach(function (index: GlobalSecondaryIndexDescription) {
           index.IndexSizeBytes = 0
           index.ItemCount = 0
           index.IndexStatus = 'CREATING'
@@ -1429,20 +1464,23 @@ describe('createTable', function () {
             WriteCapacityUnits: 0,
             NumberOfDecreasesToday: 0,
           }
-          should(desc.GlobalSecondaryIndexes).containEql(index)
+          should(payPerRequestIndexes).containEql(index)
         })
+        if (globalIndexes == null) return done(new Error('Missing expected PAY_PER_REQUEST global indexes'))
         should(desc.GlobalSecondaryIndexes.length).equal(globalIndexes.length)
         delete desc.GlobalSecondaryIndexes
         delete table.GlobalSecondaryIndexes
         should(desc).eql(table)
 
         // Ensure that the indexes become active too
-        helpers.waitUntilIndexesActive(table.TableName, function (err, res) {
+        helpers.waitUntilIndexesActive(table.TableName, function (err: unknown, res: CreateTableResponse) {
           if (err) return done(err)
-          res.body.Table.GlobalSecondaryIndexes.forEach(function (index) { delete index.IndexArn })
-          globalIndexes.forEach(function (index) {
+          if (res.body.Table?.GlobalSecondaryIndexes == null) return done(new Error('Missing active PAY_PER_REQUEST global indexes'))
+          var activeTable = res.body.Table
+          res.body.Table.GlobalSecondaryIndexes.forEach(function (index: GlobalSecondaryIndexDescription) { delete index.IndexArn })
+          globalIndexes?.forEach(function (index: GlobalSecondaryIndexDescription) {
             index.IndexStatus = 'ACTIVE'
-            should(res.body.Table.GlobalSecondaryIndexes).containEql(index)
+            should(activeTable.GlobalSecondaryIndexes).containEql(index)
           })
           helpers.deleteWhenActive(table.TableName)
           done()

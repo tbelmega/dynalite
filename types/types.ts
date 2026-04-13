@@ -123,7 +123,13 @@ export type TableThroughputModeSummary = {
   TableThroughputMode?: string;
 };
 export type GlobalSecondaryIndexDescription = {
+  IndexArn?: string;
+  IndexName?: string;
+  IndexSizeBytes?: number;
   IndexStatus?: string;
+  ItemCount?: number;
+  KeySchema?: Array<{ AttributeName: string; KeyType: string }>;
+  Projection?: { NonKeyAttributes?: string[]; ProjectionType?: string };
   ProvisionedThroughput?: TableProvisionedThroughput;
 };
 export type TableDescriptionSummary = {
@@ -133,7 +139,10 @@ export type TableDescriptionSummary = {
   GlobalSecondaryIndexes?: GlobalSecondaryIndexDescription[];
   ItemCount?: number;
   KeySchema?: Array<{ AttributeName: string; KeyType: string }>;
+  LocalSecondaryIndexes?: GlobalSecondaryIndexDescription[];
   ProvisionedThroughput?: TableProvisionedThroughput;
+  TableArn?: string;
+  TableId?: string;
   TableName?: string;
   TableSizeBytes?: number;
   TableStatus?: string;
@@ -146,6 +155,7 @@ export type UpdateTableResponseBody = {
   TableDescription?: TableDescriptionSummary;
 };
 export type UpdateTableResponse = DynamoCommandResponse<UpdateTableResponseBody>;
+export type CreateTableResponse = UpdateTableResponse;
 export type GetItemRequest = {
   AttributesToGet?: string[];
   ConsistentRead?: boolean;
