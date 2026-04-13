@@ -89,3 +89,11 @@ export type StringValidationCase = [string, string];
 export type ResourceTag = { Key: string; Value: string };
 export type ListTagsOfResourceResponseBody = { Tags: ResourceTag[] };
 export type ListTagsOfResourceResponse = DynamoCommandResponse<ListTagsOfResourceResponseBody>;
+export type DeleteTableResponseBody = {
+  TableDescription: {
+    GlobalSecondaryIndexes?: unknown;
+    TableStatus?: string;
+  };
+  __type?: string;
+} & Record<string, unknown>;
+export type DeleteTableResponse = DynamoCommandResponse<DeleteTableResponseBody>;

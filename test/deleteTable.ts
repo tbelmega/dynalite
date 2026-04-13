@@ -1,10 +1,15 @@
 var should = require('should'),
-  helpers = require('./helpers')
+  helpers = require('../../test/helpers')
+
+import type {
+  DeleteTableResponse,
+  TestDynamoRequest,
+} from '../types/types'
 
 var target = 'DeleteTable',
-  request = helpers.request,
+  request: (requestOptions: TestDynamoRequest, cb: (err: unknown, res: DeleteTableResponse) => void) => void = helpers.request,
   randomName = helpers.randomName,
-  opts = helpers.opts.bind(null, target),
+  opts: (data: TestDynamoRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target),
   assertNotFound = helpers.assertNotFound.bind(null, target),
@@ -77,10 +82,10 @@ describe('deleteTable', function () {
         should(res.statusCode).equal(200)
 
         assertInUse({ TableName: table.TableName }, 'Attempt to change a resource which is still in use: ' +
-            'Table is being created: ' + table.TableName, function (err) {
+            'Table is being created: ' + table.TableName, function (err: unknown) {
           if (err) return done(err)
 
-          helpers.waitUntilActive(table.TableName, function (err) {
+          helpers.waitUntilActive(table.TableName, function (err: unknown) {
             if (err) return done(err)
 
             request(opts(table), function (err, res) {
@@ -90,7 +95,7 @@ describe('deleteTable', function () {
               should(res.body.TableDescription.TableStatus).equal('DELETING')
               should.not.exist(res.body.TableDescription.GlobalSecondaryIndexes)
 
-              helpers.waitUntilDeleted(table.TableName, function (err, res) {
+              helpers.waitUntilDeleted(table.TableName, function (err: unknown, res: DeleteTableResponse) {
                 if (err) return done(err)
                 should(res.body.__type).equal('com.amazonaws.dynamodb.v20120810#ResourceNotFoundException')
                 done()
