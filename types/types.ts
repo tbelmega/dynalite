@@ -89,6 +89,29 @@ export type PutItemResponseBody = {
   TableDescription?: Record<string, unknown>;
 } & Record<string, unknown>;
 export type PutItemResponse = DynamoCommandResponse<PutItemResponseBody>;
+export type UpdateAttributeUpdate = {
+  Action?: string;
+  Value?: RawAttributeValue;
+} & Record<string, unknown>;
+export type UpdateItemRequest = {
+  AttributeUpdates?: Record<string, UpdateAttributeUpdate>;
+  ConditionExpression?: string;
+  Expected?: PutItemExpectedMap;
+  ExpressionAttributeNames?: Record<string, string>;
+  ExpressionAttributeValues?: Record<string, RawAttributeValue>;
+  Key?: DynamoItem;
+  ReturnConsumedCapacity?: string;
+  ReturnItemCollectionMetrics?: string;
+  ReturnValues?: string;
+  TableName?: string;
+  UpdateExpression?: string;
+} & Record<string, unknown>;
+export type UpdateItemResponseBody = {
+  Attributes?: DynamoItem;
+  ConsumedCapacity?: ConsumedCapacity;
+  Item?: DynamoItem;
+} & Record<string, unknown>;
+export type UpdateItemResponse = DynamoCommandResponse<UpdateItemResponseBody>;
 export type InvalidAttributeValueCase = [InvalidAttributeValue, string];
 export type StringValidationCase = [string, string];
 export type ResourceTag = { Key: string; Value: string };

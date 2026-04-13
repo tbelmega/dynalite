@@ -1,14 +1,31 @@
+var should = require('should')
 var async = require('async'),
-  helpers = require('./helpers')
+  helpers = require('../../test/helpers')
+
+import type {
+  AsyncCallback,
+  GetItemResponse,
+  InvalidAttributeValue,
+  InvalidAttributeValueCase,
+  TestDynamoRequest,
+  TestDynamoResponse,
+  UpdateAttributeUpdate,
+  UpdateItemRequest,
+  UpdateItemResponse,
+} from '../types/types'
 
 var target = 'UpdateItem',
-  request = helpers.request,
+  request: <TResponse extends TestDynamoResponse>(requestOptions: TestDynamoRequest, cb: (err: unknown, res: TResponse) => void) => void = helpers.request,
   randomName = helpers.randomName,
-  opts = helpers.opts.bind(null, target),
+  opts: (data: UpdateItemRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target),
   assertNotFound = helpers.assertNotFound.bind(null, target),
-  assertConditional = helpers.assertConditional.bind(null, target)
+  assertConditional: (data: UpdateItemRequest, done: AsyncCallback) => void = helpers.assertConditional.bind(null, target)
+
+type ValidationTriplet = [string, string, string]
+type ValidationPair = [string, string]
+type OperatorValidationCase = [string, InvalidAttributeValue, string, string]
 
 describe('updateItem', function () {
 
@@ -199,7 +216,7 @@ describe('updateItem', function () {
         { M: { a: {} } },
         { L: [ {} ] },
         { L: [ { a: {} } ] },
-      ], function (expr, cb) {
+      ] as InvalidAttributeValue[], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: { a: expr },
@@ -219,7 +236,7 @@ describe('updateItem', function () {
         [ { BS: [] }, 'Binary sets should not be empty' ],
         [ { SS: [ 'a', 'a' ] }, 'Input collection [a, a] contains duplicates.' ],
         [ { BS: [ 'Yg==', 'Yg==' ] }, 'Input collection [Yg==, Yg==]of type BS contains duplicates.' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: { a: expr[0] },
@@ -243,7 +260,7 @@ describe('updateItem', function () {
         [ { N: '-1e126' }, 'Number overflow. Attempting to store a number with magnitude larger than supported range' ],
         [ { N: '1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
         [ { N: '-1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({ TableName: 'abc', Key: { a: expr[0] } }, expr[1], cb)
       }, done)
     })
@@ -272,7 +289,7 @@ describe('updateItem', function () {
         { BOOL: true },
         { M: {} },
         { L: [] },
-      ], function (val, cb) {
+      ] as InvalidAttributeValue[], function (val: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -289,7 +306,7 @@ describe('updateItem', function () {
         { NULL: true },
         { BOOL: true },
         { M: {} },
-      ], function (val, cb) {
+      ] as InvalidAttributeValue[], function (val: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -372,7 +389,7 @@ describe('updateItem', function () {
         { M: { a: {} } },
         { L: [ {} ] },
         { L: [ { a: {} } ] },
-      ], function (expr, cb) {
+      ] as InvalidAttributeValue[], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -392,7 +409,7 @@ describe('updateItem', function () {
         [ { BS: [] }, 'Binary sets should not be empty' ],
         [ { SS: [ 'a', 'a' ] }, 'Input collection [a, a] contains duplicates.' ],
         [ { BS: [ 'Yg==', 'Yg==' ] }, 'Input collection [Yg==, Yg==]of type BS contains duplicates.' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -411,7 +428,7 @@ describe('updateItem', function () {
         [ { NS: [ '1', '' ] }, 'The parameter cannot be converted to a numeric value' ],
         [ { NS: [ '1', 'b' ] }, 'The parameter cannot be converted to a numeric value: b' ],
         [ { NS: [ '1', '1' ] }, 'Input collection contains duplicates' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -486,7 +503,7 @@ describe('updateItem', function () {
         'set a = (b.c)[0] + e',
         'set a = b + c + d',
         // 'set a = ((b.c.d)+(e))',
-      ], function (updateOpts, cb) {
+      ] as string[], function (updateOpts: string, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -499,7 +516,7 @@ describe('updateItem', function () {
       async.forEach([
         [ ' set #c = :c set abOrt = true ', 'abOrt' ],
         [ ' remove Absolute ', 'Absolute' ],
-      ], function (expr, cb) {
+      ] as ValidationPair[], function (expr: ValidationPair, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -513,7 +530,7 @@ describe('updateItem', function () {
     it('should return ValidationException for invalid functions in UpdateExpression', function (done) {
       async.forEach([
         'set #c = if_not_exist(:c) set c = d',
-      ], function (updateOpts, cb) {
+      ] as string[], function (updateOpts: string, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -530,7 +547,7 @@ describe('updateItem', function () {
         [ 'remove #d set a = b remove e', 'REMOVE' ],
         [ 'add #d :e set a = b add e :f', 'ADD' ],
         [ 'delete #d :e set a = b delete #e :f', 'DELETE' ],
-      ], function (expr, cb) {
+      ] as ValidationPair[], function (expr: ValidationPair, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -544,7 +561,7 @@ describe('updateItem', function () {
     it('should return ValidationException for undefined attribute names in UpdateExpression', function (done) {
       async.forEach([
         'SET #c = if_not_exists(:c)',
-      ], function (updateOpts, cb) {
+      ] as string[], function (updateOpts: string, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -558,7 +575,7 @@ describe('updateItem', function () {
     it('should return ValidationException for undefined attribute values in UpdateExpression', function (done) {
       async.forEach([
         'SET #a = if_not_exists(:c)',
-      ], function (updateOpts, cb) {
+      ] as string[], function (updateOpts: string, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -581,7 +598,7 @@ describe('updateItem', function () {
         // ['remove c, #c.a, #d', '[c]', '[[3]]'],
         // TODO: This changed at some point, now conflicts with [[3]] instead of [a]?
         // ['remove a, #c, a, #d', '[a]', '[[3]]'],
-      ], function (expr, cb) {
+      ] as ValidationTriplet[], function (expr: ValidationTriplet, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -596,7 +613,7 @@ describe('updateItem', function () {
       async.forEach([
         [ 'set #c[3].#d = a, #c.#d[3] = if_not_exists(a)', '[c, [3], [3]]', '[c, [3], [3]]' ],
         [ 'remove a.#c set a[1] = #d', '[a, c]', '[a, [1]]' ],
-      ], function (expr, cb) {
+      ] as ValidationTriplet[], function (expr: ValidationTriplet, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -622,7 +639,7 @@ describe('updateItem', function () {
         [ 'add a.b :a', { L: [ { N: '1' } ] }, 'ADD', 'LIST' ],
         [ 'delete a.b :a', { L: [ { N: '1' } ] }, 'DELETE', 'LIST' ],
         [ 'delete a.b :a', { N: '1' }, 'DELETE', 'NUMBER' ],
-      ], function (updateOpts, cb) {
+      ] as OperatorValidationCase[], function (updateOpts: OperatorValidationCase, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -637,7 +654,7 @@ describe('updateItem', function () {
       async.forEach([
         'set a = if_not_exists(c)',
         'set a = list_append(c)',
-      ], function (expression, cb) {
+      ] as string[], function (expression: string, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -652,7 +669,7 @@ describe('updateItem', function () {
       async.forEach([
         'set a = if_not_exists(:a, c)',
         'set a = if_not_exists(if_not_exists(a, b), c)',
-      ], function (expression, cb) {
+      ] as string[], function (expression: string, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -694,7 +711,7 @@ describe('updateItem', function () {
         [ 'set a = a - :h', '-', 'BS' ],
         [ 'set a = a - :i', '-', 'M' ],
         [ 'set a = a - :j', '-', 'L' ],
-      ], function (expr, cb) {
+      ] as ValidationTriplet[], function (expr: ValidationTriplet, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -757,7 +774,7 @@ describe('updateItem', function () {
         { a: { BS: [ 'aaaa' ] } },
         { a: { M: {} } },
         { a: { L: [] } },
-      ], function (expr, cb) {
+      ] as ValidationTriplet[], function (expr: ValidationTriplet, cb: AsyncCallback) {
         assertValidation({ TableName: helpers.testHashTable, Key: expr },
           'The provided key element does not match the schema', cb)
       }, done)
@@ -791,7 +808,7 @@ describe('updateItem', function () {
         { UpdateExpression: 'remove d set b = :a, a = :a', ExpressionAttributeValues: { ':a': { N: '1' } } },
         { UpdateExpression: 'delete b :a remove a', ExpressionAttributeValues: { ':a': { NS: [ '1' ] } } },
         { UpdateExpression: 'set a = a.b + a[1]' },
-      ], function (updateOpts, cb) {
+      ] as UpdateItemRequest[], function (updateOpts: UpdateItemRequest, cb: AsyncCallback) {
         updateOpts.TableName = helpers.testHashTable
         updateOpts.Key = { a: { S: helpers.randomString() } }
         assertValidation(updateOpts, 'One or more parameter values were invalid: ' +
@@ -803,7 +820,7 @@ describe('updateItem', function () {
       async.forEach([
         { AttributeUpdates: { d: { Value: { N: helpers.randomNumber() } }, b: { Value: { S: helpers.randomString() } } } },
         { UpdateExpression: 'set d[1] = :a add b.b :a', ExpressionAttributeValues: { ':a': { N: '1' } } },
-      ], function (updateOpts, cb) {
+      ] as UpdateItemRequest[], function (updateOpts: UpdateItemRequest, cb: AsyncCallback) {
         updateOpts.TableName = helpers.testRangeTable
         updateOpts.Key = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() } }
         assertValidation(updateOpts, 'One or more parameter values were invalid: ' +
@@ -816,7 +833,7 @@ describe('updateItem', function () {
         { AttributeUpdates: { d: { Value: { N: helpers.randomNumber() } }, c: { Value: { N: helpers.randomNumber() } } } },
         { UpdateExpression: 'set d.a = a add c :a', ExpressionAttributeValues: { ':a': { N: '1' } } },
         { UpdateExpression: 'set e = c[1], c = a + :a', ExpressionAttributeValues: { ':a': { N: '1' } } },
-      ], function (updateOpts, cb) {
+      ] as UpdateItemRequest[], function (updateOpts: UpdateItemRequest, cb: AsyncCallback) {
         updateOpts.TableName = helpers.testRangeTable
         updateOpts.Key = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() } }
         assertValidation(updateOpts, new RegExp('^One or more parameter values were invalid: ' +
@@ -829,7 +846,7 @@ describe('updateItem', function () {
         { UpdateExpression: 'add d.b :a', ExpressionAttributeValues: { ':a': { N: '1' } } },
         { UpdateExpression: 'set d[1] = :a', ExpressionAttributeValues: { ':a': { N: '1' } } },
         { UpdateExpression: 'set e = list_append(a, b), f = d[1]' },
-      ], function (updateOpts, cb) {
+      ] as UpdateItemRequest[], function (updateOpts: UpdateItemRequest, cb: AsyncCallback) {
         updateOpts.TableName = helpers.testRangeTable
         updateOpts.Key = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() } }
         assertValidation(updateOpts, 'Key attributes must be scalars; ' +
@@ -848,7 +865,7 @@ describe('updateItem', function () {
           { AttributeUpdates: { c: { Action: 'DELETE', Value: { NS: [ '1' ] } } } },
           { AttributeUpdates: { b: { Action: 'ADD', Value: { NS: [ '1' ] } } } },
           { AttributeUpdates: { d: { Action: 'ADD', Value: { N: '1' } } } },
-        ], function (updateOpts, cb) {
+        ] as UpdateItemRequest[], function (updateOpts: UpdateItemRequest, cb: AsyncCallback) {
           updateOpts.TableName = helpers.testHashTable
           updateOpts.Key = key
           assertValidation(updateOpts, 'Type mismatch for attribute to update', cb)
@@ -876,7 +893,7 @@ describe('updateItem', function () {
           { UpdateExpression: 'set e = a + :a', ExpressionAttributeValues: { ':a': { N: '1' } } },
           { UpdateExpression: 'set e = b - :a', ExpressionAttributeValues: { ':a': { N: '1' } } },
           { UpdateExpression: 'set e = list_append(d, if_not_exists(f, :a))', ExpressionAttributeValues: { ':a': { L: [] } } },
-        ], function (updateOpts, cb) {
+        ] as UpdateItemRequest[], function (updateOpts: UpdateItemRequest, cb: AsyncCallback) {
           updateOpts.TableName = helpers.testHashTable
           updateOpts.Key = key
           assertValidation(updateOpts, 'An operand in the update expression has an incorrect data type', cb)
@@ -888,7 +905,7 @@ describe('updateItem', function () {
       async.forEach([
         'set c = b',
         'set e = list_append(b, c)',
-      ], function (expr, cb) {
+      ] as string[], function (expr: string, cb: AsyncCallback) {
         assertValidation({
           TableName: helpers.testHashTable,
           Key: { a: { S: helpers.randomString() } },
@@ -901,7 +918,7 @@ describe('updateItem', function () {
       async.forEach([
         'set b.a = a',
         'set b[1] = a',
-      ], function (expression, cb) {
+      ] as string[], function (expression: string, cb: AsyncCallback) {
         assertValidation({
           TableName: helpers.testHashTable,
           Key: { a: { S: helpers.randomString() } },
@@ -945,7 +962,7 @@ describe('updateItem', function () {
           'add y[1] :a set #1 = :a',
           'add c[1] :a set #1 = :a',
           'add d.#1 :a',
-        ], function (expression, cb) {
+        ] as string[], function (expression: string, cb: AsyncCallback) {
           assertValidation({
             TableName: helpers.testHashTable,
             Key: key,
@@ -970,7 +987,7 @@ describe('updateItem', function () {
         async.forEach([
           { UpdateExpression: 'set c = e' },
           { UpdateExpression: 'set d = e' },
-        ], function (updateOpts, cb) {
+        ] as UpdateItemRequest[], function (updateOpts: UpdateItemRequest, cb: AsyncCallback) {
           updateOpts.TableName = helpers.testRangeTable
           updateOpts.Key = key
           assertValidation(updateOpts, 'The update expression attempted to update the secondary index key to unsupported type', cb)
@@ -999,7 +1016,7 @@ describe('updateItem', function () {
         { ConditionExpression: '#a = :a', ExpressionAttributeNames: { '#a': 'a' }, ExpressionAttributeValues: { ':a': { S: helpers.randomString() } } },
         { ConditionExpression: 'attribute_exists(a)' },
         { ConditionExpression: 'attribute_exists(#a)', ExpressionAttributeNames: { '#a': 'a' } },
-      ], function (updateOpts, cb) {
+      ] as UpdateItemRequest[], function (updateOpts: UpdateItemRequest, cb: AsyncCallback) {
         updateOpts.TableName = helpers.testHashTable
         updateOpts.Key = { a: { S: helpers.randomString() } }
         assertConditional(updateOpts, cb)
@@ -1062,13 +1079,14 @@ describe('updateItem', function () {
     })
 
     it('should return updated old nested values when they exist', function (done) {
-      var key = { a: { S: helpers.randomString() } }, updates = {
+      var key = { a: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = {
         b: { Value: { M: { a: { S: 'a' }, b: { L: [] } } } },
         c: { Value: { N: '1' } },
       }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
+        if (updates.b.Value == null || updates.b.Value.M == null) return done(new Error('Expected nested update value'))
         updates.b.Value.M.a.S = 'b'
         updates.c.Action = 'ADD'
         request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_OLD' }), function (err, res) {
@@ -1096,7 +1114,7 @@ describe('updateItem', function () {
     })
 
     it('should return updated new values when they exist', function (done) {
-      var key = { a: { S: helpers.randomString() } }, updates = { b: { Value: { S: 'a' } }, c: { Value: { S: 'a' } } }
+      var key = { a: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { S: 'a' } }, c: { Value: { S: 'a' } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1131,7 +1149,7 @@ describe('updateItem', function () {
         UpdateExpression: 'ADD #e :e,#d :d DELETE #c :c REMOVE #b SET #f = :f',
         ExpressionAttributeValues: { ':c': { SS: [ 'a', 'b' ] }, ':d': { N: '5' }, ':e': { SS: [ 'a', 'b' ] }, ':f': { L: [ { S: 'a' }, { N: '1' } ] } },
         ExpressionAttributeNames: { '#b': 'b', '#c': 'c', '#d': 'd', '#e': 'e', '#f': 'f' },
-      } ], function (updateOpts, cb) {
+      } ] as UpdateItemRequest[], function (updateOpts: UpdateItemRequest, cb: AsyncCallback) {
         var key = { a: { S: helpers.randomString() } }
         updateOpts.TableName = helpers.testHashTable
         updateOpts.Key = key
@@ -1151,7 +1169,7 @@ describe('updateItem', function () {
     })
 
     it('should delete normal values and return updated new', function (done) {
-      var key = { a: { S: helpers.randomString() } }, updates = { b: { Value: { S: 'a' } }, c: { Value: { S: 'a' } } }
+      var key = { a: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { S: 'a' } }, c: { Value: { S: 'a' } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1171,7 +1189,7 @@ describe('updateItem', function () {
     })
 
     it('should delete normal values and return updated on index table', function (done) {
-      var key = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() } }, updates = { c: { Value: { S: 'a' } }, d: { Value: { S: 'a' } } }
+      var key = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = { c: { Value: { S: 'a' } }, d: { Value: { S: 'a' } } }
       request(opts({ TableName: helpers.testRangeTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1191,31 +1209,35 @@ describe('updateItem', function () {
     })
 
     it('should delete set values and return updated new', function (done) {
-      var key = { a: { S: helpers.randomString() } }, updates = { b: { Value: { NS: [ '1', '2', '3' ] } }, c: { Value: { S: 'a' } } }
+      var key = { a: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { NS: [ '1', '2', '3' ] } }, c: { Value: { S: 'a' } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
         updates.b = { Action: 'DELETE', Value: { NS: [ '1', '4' ] } }
-        request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_NEW' }), function (err, res) {
+        request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_NEW' }), function (err, res: UpdateItemResponse) {
           if (err) return done(err)
           should(res.statusCode).equal(200)
+          if (res.body.Attributes == null) return done(new Error('Expected updated attributes'))
           should(res.body.Attributes.b.NS).containEql('2')
           should(res.body.Attributes.b.NS).containEql('3')
           should(res.body.Attributes.c).eql({ S: 'a' })
-          request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: key, ConsistentRead: true }), function (err, res) {
+          request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: key, ConsistentRead: true }), function (err, res: GetItemResponse) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
+            if (res.body.Item == null) return done(new Error('Expected stored item'))
             should(res.body.Item.b.NS).containEql('2')
             should(res.body.Item.b.NS).containEql('3')
             should(res.body.Item.c).eql({ S: 'a' })
             updates.b = { Action: 'DELETE', Value: { NS: [ '2', '3' ] } }
-            request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_NEW' }), function (err, res) {
+            request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_NEW' }), function (err, res: UpdateItemResponse) {
               if (err) return done(err)
               should(res.statusCode).equal(200)
+              if (res.body.Attributes == null) return done(new Error('Expected updated attributes'))
               should(res.body.Attributes).eql({ c: { S: 'a' } })
-              request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: key, ConsistentRead: true }), function (err, res) {
+              request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: key, ConsistentRead: true }), function (err, res: GetItemResponse) {
                 if (err) return done(err)
                 should(res.statusCode).equal(200)
+                if (res.body.Item == null) return done(new Error('Expected stored item'))
                 should(res.body.Item).eql({ a: key.a, c: { S: 'a' } })
                 done()
               })
@@ -1226,7 +1248,7 @@ describe('updateItem', function () {
     })
 
     it('should add numerical value and return updated new', function (done) {
-      var key = { a: { S: helpers.randomString() } }, updates = { b: { Value: { N: '1' } } }
+      var key = { a: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { N: '1' } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1246,7 +1268,7 @@ describe('updateItem', function () {
     })
 
     it('should add set value and return updated new', function (done) {
-      var key = { a: { S: helpers.randomString() } }, updates = { b: { Value: { SS: [ 'a', 'b' ] } } }
+      var key = { a: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { SS: [ 'a', 'b' ] } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1266,7 +1288,7 @@ describe('updateItem', function () {
     })
 
     it('should add list value and return updated new', function (done) {
-      var key = { a: { S: helpers.randomString() } }, updates = { b: { Value: { L: [ { S: 'a' }, { N: '1' } ] } } }
+      var key = { a: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { L: [ { S: 'a' }, { N: '1' } ] } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1286,22 +1308,24 @@ describe('updateItem', function () {
     })
 
     it('should throw away duplicate string values', function (done) {
-      var key = { a: { S: helpers.randomString() } }, updates = { b: { Value: { SS: [ 'a', 'b' ] } } }
+      var key = { a: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { SS: [ 'a', 'b' ] } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
         updates.b = { Action: 'ADD', Value: { SS: [ 'b', 'c', 'd' ] } }
-        request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_NEW' }), function (err, res) {
+        request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_NEW' }), function (err, res: UpdateItemResponse) {
           if (err) return done(err)
           should(res.statusCode).equal(200)
+          if (res.body.Attributes == null) return done(new Error('Expected updated attributes'))
           should(res.body.Attributes.b.SS).have.lengthOf(4)
           should(res.body.Attributes.b.SS).containEql('a')
           should(res.body.Attributes.b.SS).containEql('b')
           should(res.body.Attributes.b.SS).containEql('c')
           should(res.body.Attributes.b.SS).containEql('d')
-          request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: key, ConsistentRead: true }), function (err, res) {
+          request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: key, ConsistentRead: true }), function (err, res: GetItemResponse) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
+            if (res.body.Item == null) return done(new Error('Expected stored item'))
             should(res.body.Item.b.SS).have.lengthOf(4)
             should(res.body.Item.b.SS).containEql('a')
             should(res.body.Item.b.SS).containEql('b')
@@ -1314,22 +1338,24 @@ describe('updateItem', function () {
     })
 
     it('should throw away duplicate numeric values', function (done) {
-      var key = { a: { S: helpers.randomString() } }, updates = { b: { Value: { NS: [ '1', '2' ] } } }
+      var key = { a: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { NS: [ '1', '2' ] } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
         updates.b = { Action: 'ADD', Value: { NS: [ '2', '3', '4' ] } }
-        request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_NEW' }), function (err, res) {
+        request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_NEW' }), function (err, res: UpdateItemResponse) {
           if (err) return done(err)
           should(res.statusCode).equal(200)
+          if (res.body.Attributes == null) return done(new Error('Expected updated attributes'))
           should(res.body.Attributes.b.NS).have.lengthOf(4)
           should(res.body.Attributes.b.NS).containEql('1')
           should(res.body.Attributes.b.NS).containEql('2')
           should(res.body.Attributes.b.NS).containEql('3')
           should(res.body.Attributes.b.NS).containEql('4')
-          request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: key, ConsistentRead: true }), function (err, res) {
+          request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: key, ConsistentRead: true }), function (err, res: GetItemResponse) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
+            if (res.body.Item == null) return done(new Error('Expected stored item'))
             should(res.body.Item.b.NS).have.lengthOf(4)
             should(res.body.Item.b.NS).containEql('1')
             should(res.body.Item.b.NS).containEql('2')
@@ -1342,21 +1368,23 @@ describe('updateItem', function () {
     })
 
     it('should throw away duplicate binary values', function (done) {
-      var key = { a: { S: helpers.randomString() } }, updates = { b: { Value: { BS: [ 'AQI=', 'Ag==' ] } } }
+      var key = { a: { S: helpers.randomString() } }, updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { BS: [ 'AQI=', 'Ag==' ] } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
         updates.b = { Action: 'ADD', Value: { BS: [ 'Ag==', 'AQ==' ] } }
-        request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_NEW' }), function (err, res) {
+        request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnValues: 'UPDATED_NEW' }), function (err, res: UpdateItemResponse) {
           if (err) return done(err)
           should(res.statusCode).equal(200)
+          if (res.body.Attributes == null) return done(new Error('Expected updated attributes'))
           should(res.body.Attributes.b.BS).have.lengthOf(3)
           should(res.body.Attributes.b.BS).containEql('AQI=')
           should(res.body.Attributes.b.BS).containEql('Ag==')
           should(res.body.Attributes.b.BS).containEql('AQ==')
-          request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: key, ConsistentRead: true }), function (err, res) {
+          request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: key, ConsistentRead: true }), function (err, res: GetItemResponse) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
+            if (res.body.Item == null) return done(new Error('Expected stored item'))
             should(res.body.Item.b.BS).have.lengthOf(3)
             should(res.body.Item.b.BS).containEql('AQI=')
             should(res.body.Item.b.BS).containEql('Ag==')
@@ -1369,8 +1397,8 @@ describe('updateItem', function () {
 
     it('should return ConsumedCapacity for creating small item', function (done) {
       var key = { a: { S: helpers.randomString() } }, b = new Array(1010 - key.a.S.length).join('b'),
-        updates = { b: { Value: { S: b } }, c: { Value: { N: '12.3456' } }, d: { Value: { B: 'AQI=' } }, e: { Value: { BS: [ 'AQI=', 'Ag==', 'AQ==' ] } } },
-        req = { TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnConsumedCapacity: 'TOTAL' }
+        updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { S: b } }, c: { Value: { N: '12.3456' } }, d: { Value: { B: 'AQI=' } }, e: { Value: { BS: [ 'AQI=', 'Ag==', 'AQ==' ] } } },
+        req: UpdateItemRequest = { TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnConsumedCapacity: 'TOTAL' }
       request(opts(req), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1387,8 +1415,8 @@ describe('updateItem', function () {
 
     it('should return ConsumedCapacity for creating larger item', function (done) {
       var key = { a: { S: helpers.randomString() } }, b = new Array(1012 - key.a.S.length).join('b'),
-        updates = { b: { Value: { S: b } }, c: { Value: { N: '12.3456' } }, d: { Value: { B: 'AQI=' } }, e: { Value: { BS: [ 'AQI=', 'Ag==' ] } } },
-        req = { TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnConsumedCapacity: 'TOTAL' }
+        updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { S: b } }, c: { Value: { N: '12.3456' } }, d: { Value: { B: 'AQI=' } }, e: { Value: { BS: [ 'AQI=', 'Ag==' ] } } },
+        req: UpdateItemRequest = { TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnConsumedCapacity: 'TOTAL' }
       request(opts(req), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1405,7 +1433,7 @@ describe('updateItem', function () {
 
     it('should return ConsumedCapacity for creating and updating small item', function (done) {
       var key = { a: { S: helpers.randomString() } }, b = new Array(1009 - key.a.S.length).join('b'),
-        updates = { b: { Value: { S: b } }, c: { Value: { N: '12.3456' } }, d: { Value: { B: 'AQI=' } }, e: { Value: { BS: [ 'AQI=', 'Ag==', 'AQ==' ] } } }
+        updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { S: b } }, c: { Value: { N: '12.3456' } }, d: { Value: { B: 'AQI=' } }, e: { Value: { BS: [ 'AQI=', 'Ag==', 'AQ==' ] } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1422,7 +1450,7 @@ describe('updateItem', function () {
 
     it('should return ConsumedCapacity for creating and updating larger item', function (done) {
       var key = { a: { S: helpers.randomString() } }, b = new Array(1011 - key.a.S.length).join('b'),
-        updates = { b: { Value: { S: b } }, c: { Value: { N: '12.3456' } }, d: { Value: { B: 'AQI=' } }, e: { Value: { BS: [ 'AQI=', 'Ag==' ] } } }
+        updates: Record<string, UpdateAttributeUpdate> = { b: { Value: { S: b } }, c: { Value: { N: '12.3456' } }, d: { Value: { B: 'AQI=' } }, e: { Value: { BS: [ 'AQI=', 'Ag==' ] } } }
       request(opts({ TableName: helpers.testHashTable, Key: key, AttributeUpdates: updates, ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1450,7 +1478,7 @@ describe('updateItem', function () {
         UpdateExpression: 'SET #b = :b',
         ExpressionAttributeNames: { '#a': 'active', '#b': 'active' },
         ExpressionAttributeValues: { ':a': { BOOL: false }, ':b': { BOOL: true } },
-      } ], function (updateOpts, cb) {
+      } ] as UpdateItemRequest[], function (updateOpts: UpdateItemRequest, cb: AsyncCallback) {
         var item = { a: { S: helpers.randomString() }, active: { BOOL: false } }
         request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
           if (err) return cb(err)
