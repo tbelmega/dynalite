@@ -1,4 +1,4 @@
-var helpers = require('./helpers')
+var helpers = require('../../test/helpers')
 
 var target = 'UntagResource',
   assertType = helpers.assertType.bind(null, target),
