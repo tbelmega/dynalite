@@ -1,4 +1,4 @@
-var helpers = require('./helpers')
+var helpers = require('../../test/helpers')
 
 var target = 'TagResource',
   assertType = helpers.assertType.bind(null, target),
