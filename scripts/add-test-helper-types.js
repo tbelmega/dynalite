@@ -114,14 +114,14 @@ function ensureTypesImport (source, imports) {
       .filter(Boolean)
 
     var merged = unique(existing.concat(imports)).sort()
-    var replacement = "import type {\n  " + merged.join(',\n  ') + ",\n} from '../types/types'"
+    var replacement = 'import type {\n  ' + merged.join(',\n  ') + ",\n} from '../types/types'"
     return source.replace(importPattern, replacement)
   }
 
   var targetIndex = source.indexOf('\nvar target =')
   if (targetIndex == -1) return source
 
-  var block = "import type {\n  " + unique(imports).sort().join(',\n  ') + ",\n} from '../types/types'\n\n"
+  var block = 'import type {\n  ' + unique(imports).sort().join(',\n  ') + ",\n} from '../types/types'\n\n"
   return source.slice(0, targetIndex + 1) + block + source.slice(targetIndex + 1)
 }
 

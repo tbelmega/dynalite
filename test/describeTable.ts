@@ -1,4 +1,4 @@
-var helpers = require('./helpers')
+var helpers = require('../../test/helpers')
 
 var target = 'DescribeTable',
   assertType = helpers.assertType.bind(null, target),
