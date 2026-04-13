@@ -1151,21 +1151,21 @@ describe('createTable', function () {
         }, createdAt = Date.now() / 1000
       request(opts(table), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         should.exist(res.body.TableDescription)
         var desc = res.body.TableDescription
-        desc.TableId.should.match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
+        should(desc.TableId).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
         delete desc.TableId
-        desc.CreationDateTime.should.be.above(createdAt - 5)
+        should(desc.CreationDateTime).be.above(createdAt - 5)
         delete desc.CreationDateTime
-        desc.TableArn.should.match(new RegExp(
+        should(desc.TableArn).match(new RegExp(
           'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName))
         delete desc.TableArn
         table.ItemCount = 0
         table.ProvisionedThroughput.NumberOfDecreasesToday = 0
         table.TableSizeBytes = 0
         table.TableStatus = 'CREATING'
-        desc.should.eql(table)
+        should(desc).eql(table)
         helpers.deleteWhenActive(table.TableName)
         done()
       })
@@ -1180,14 +1180,14 @@ describe('createTable', function () {
         }, createdAt = Date.now() / 1000
       request(opts(table), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         should.exist(res.body.TableDescription)
         var desc = res.body.TableDescription
-        desc.TableId.should.match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
+        should(desc.TableId).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
         delete desc.TableId
-        desc.CreationDateTime.should.be.above(createdAt - 5)
+        should(desc.CreationDateTime).be.above(createdAt - 5)
         delete desc.CreationDateTime
-        desc.TableArn.should.match(new RegExp(
+        should(desc.TableArn).match(new RegExp(
           'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName))
         delete desc.TableArn
         table.ItemCount = 0
@@ -1201,7 +1201,7 @@ describe('createTable', function () {
           ReadCapacityUnits: 0,
           WriteCapacityUnits: 0,
         }
-        desc.should.eql(table)
+        should(desc).eql(table)
         helpers.deleteWhenActive(table.TableName)
         done()
       })
@@ -1217,11 +1217,11 @@ describe('createTable', function () {
       }
       request(opts(table), function (err, res) {
         if (err) return done(err)
-        res.body.TableDescription.TableStatus.should.equal('CREATING')
+        should(res.body.TableDescription.TableStatus).equal('CREATING')
 
         helpers.waitUntilActive(table.TableName, function (err, res) {
           if (err) return done(err)
-          res.body.Table.TableStatus.should.equal('ACTIVE')
+          should(res.body.Table.TableStatus).equal('ACTIVE')
           helpers.deleteWhenActive(table.TableName)
           done()
         })
@@ -1260,18 +1260,18 @@ describe('createTable', function () {
         }, createdAt = Date.now() / 1000
       request(opts(table), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         should.exist(res.body.TableDescription)
         var desc = res.body.TableDescription
-        desc.TableId.should.match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
+        should(desc.TableId).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
         delete desc.TableId
-        desc.CreationDateTime.should.be.above(createdAt - 5)
+        should(desc.CreationDateTime).be.above(createdAt - 5)
         delete desc.CreationDateTime
-        desc.TableArn.should.match(new RegExp(
+        should(desc.TableArn).match(new RegExp(
           'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName))
         delete desc.TableArn
         desc.LocalSecondaryIndexes.forEach(function (index) {
-          index.IndexArn.should.match(new RegExp(
+          should(index.IndexArn).match(new RegExp(
             'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName + '/index/' + index.IndexName))
           delete index.IndexArn
         })
@@ -1283,12 +1283,12 @@ describe('createTable', function () {
         table.LocalSecondaryIndexes.forEach(function (index) {
           index.IndexSizeBytes = 0
           index.ItemCount = 0
-          desc.LocalSecondaryIndexes.should.containEql(index)
+          should(desc.LocalSecondaryIndexes).containEql(index)
         })
-        desc.LocalSecondaryIndexes.length.should.equal(table.LocalSecondaryIndexes.length)
+        should(desc.LocalSecondaryIndexes.length).equal(table.LocalSecondaryIndexes.length)
         delete desc.LocalSecondaryIndexes
         delete table.LocalSecondaryIndexes
-        desc.should.eql(table)
+        should(desc).eql(table)
         helpers.deleteWhenActive(table.TableName)
         done()
       })
@@ -1330,18 +1330,18 @@ describe('createTable', function () {
         }, createdAt = Date.now() / 1000, globalIndexes = table.GlobalSecondaryIndexes
       request(opts(table), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         should.exist(res.body.TableDescription)
         var desc = res.body.TableDescription
-        desc.TableId.should.match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
+        should(desc.TableId).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
         delete desc.TableId
-        desc.CreationDateTime.should.be.above(createdAt - 5)
+        should(desc.CreationDateTime).be.above(createdAt - 5)
         delete desc.CreationDateTime
-        desc.TableArn.should.match(new RegExp(
+        should(desc.TableArn).match(new RegExp(
           'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName))
         delete desc.TableArn
         desc.GlobalSecondaryIndexes.forEach(function (index) {
-          index.IndexArn.should.match(new RegExp(
+          should(index.IndexArn).match(new RegExp(
             'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName + '/index/' + index.IndexName))
           delete index.IndexArn
         })
@@ -1355,12 +1355,12 @@ describe('createTable', function () {
           index.ItemCount = 0
           index.IndexStatus = 'CREATING'
           index.ProvisionedThroughput.NumberOfDecreasesToday = 0
-          desc.GlobalSecondaryIndexes.should.containEql(index)
+          should(desc.GlobalSecondaryIndexes).containEql(index)
         })
-        desc.GlobalSecondaryIndexes.length.should.equal(globalIndexes.length)
+        should(desc.GlobalSecondaryIndexes.length).equal(globalIndexes.length)
         delete desc.GlobalSecondaryIndexes
         delete table.GlobalSecondaryIndexes
-        desc.should.eql(table)
+        should(desc).eql(table)
 
         // Ensure that the indexes become active too
         helpers.waitUntilIndexesActive(table.TableName, function (err, res) {
@@ -1368,7 +1368,7 @@ describe('createTable', function () {
           res.body.Table.GlobalSecondaryIndexes.forEach(function (index) { delete index.IndexArn })
           globalIndexes.forEach(function (index) {
             index.IndexStatus = 'ACTIVE'
-            res.body.Table.GlobalSecondaryIndexes.should.containEql(index)
+            should(res.body.Table.GlobalSecondaryIndexes).containEql(index)
           })
           helpers.deleteWhenActive(table.TableName)
           done()
@@ -1394,18 +1394,18 @@ describe('createTable', function () {
         }, createdAt = Date.now() / 1000, globalIndexes = table.GlobalSecondaryIndexes
       request(opts(table), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         should.exist(res.body.TableDescription)
         var desc = res.body.TableDescription
-        desc.TableId.should.match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
+        should(desc.TableId).match(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{8}/)
         delete desc.TableId
-        desc.CreationDateTime.should.be.above(createdAt - 5)
+        should(desc.CreationDateTime).be.above(createdAt - 5)
         delete desc.CreationDateTime
-        desc.TableArn.should.match(new RegExp(
+        should(desc.TableArn).match(new RegExp(
           'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName))
         delete desc.TableArn
         desc.GlobalSecondaryIndexes.forEach(function (index) {
-          index.IndexArn.should.match(new RegExp(
+          should(index.IndexArn).match(new RegExp(
             'arn:aws:dynamodb:' + helpers.awsRegion + ':\\d+:table/' + table.TableName + '/index/' + index.IndexName))
           delete index.IndexArn
         })
@@ -1429,12 +1429,12 @@ describe('createTable', function () {
             WriteCapacityUnits: 0,
             NumberOfDecreasesToday: 0,
           }
-          desc.GlobalSecondaryIndexes.should.containEql(index)
+          should(desc.GlobalSecondaryIndexes).containEql(index)
         })
-        desc.GlobalSecondaryIndexes.length.should.equal(globalIndexes.length)
+        should(desc.GlobalSecondaryIndexes.length).equal(globalIndexes.length)
         delete desc.GlobalSecondaryIndexes
         delete table.GlobalSecondaryIndexes
-        desc.should.eql(table)
+        should(desc).eql(table)
 
         // Ensure that the indexes become active too
         helpers.waitUntilIndexesActive(table.TableName, function (err, res) {
@@ -1442,7 +1442,7 @@ describe('createTable', function () {
           res.body.Table.GlobalSecondaryIndexes.forEach(function (index) { delete index.IndexArn })
           globalIndexes.forEach(function (index) {
             index.IndexStatus = 'ACTIVE'
-            res.body.Table.GlobalSecondaryIndexes.should.containEql(index)
+            should(res.body.Table.GlobalSecondaryIndexes).containEql(index)
           })
           helpers.deleteWhenActive(table.TableName)
           done()

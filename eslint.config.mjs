@@ -21,6 +21,7 @@ export default [
         after: 'readonly',
         beforeEach: 'readonly',
         afterEach: 'readonly',
+        should: 'readonly',
       },
     },
   },

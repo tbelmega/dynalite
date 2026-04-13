@@ -14,15 +14,15 @@ describe('dynalite connections', function () {
         // Sometimes DynamoDB returns weird/bad HTTP responses
         if (err && err.code == 'HPE_INVALID_CONSTANT') return done()
         if (err) return done(err)
-        res.statusCode.should.equal(404)
+        should(res.statusCode).equal(404)
         try {
-          res.body.should.equal('<UnknownOperationException/>\n')
-          res.headers['x-amz-crc32'].should.equal('3552371480')
-          res.headers['content-length'].should.equal('29')
+          should(res.body).equal('<UnknownOperationException/>\n')
+          should(res.headers['x-amz-crc32']).equal('3552371480')
+          should(res.headers['content-length']).equal('29')
         }
         catch {
           // Sometimes it's an HTML page instead of the above
-          res.body.should.equal(
+          should(res.body).equal(
             '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" ' +
             '"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n' +
             '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">\n' +
@@ -32,10 +32,10 @@ describe('dynalite connections', function () {
             '<body>Page Not Found</body>\n' +
             '</html>',
           )
-          res.headers['x-amz-crc32'].should.equal('2548615100')
-          res.headers['content-length'].should.equal('272')
+          should(res.headers['x-amz-crc32']).equal('2548615100')
+          should(res.headers['content-length']).equal('272')
         }
-        res.headers['x-amzn-requestid'].should.match(/^[0-9A-Z]{52}$/)
+        should(res.headers['x-amzn-requestid']).match(/^[0-9A-Z]{52}$/)
         done()
       }
     }
@@ -48,8 +48,8 @@ describe('dynalite connections', function () {
 
       request({ body: body.join(''), noSign: true }, function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(413)
-        res.headers['transfer-encoding'].should.equal('chunked')
+        should(res.statusCode).equal(413)
+        should(res.headers['transfer-encoding']).equal('chunked')
         done()
       })
     })
@@ -63,7 +63,7 @@ describe('dynalite connections', function () {
       request({ body: body.join(''), noSign: true }, function (err, res) {
         if (err && err.code == 'HPE_INVALID_CONSTANT') return done()
         if (err) return done(err)
-        res.statusCode.should.equal(404)
+        should(res.statusCode).equal(404)
         done()
       })
     })
@@ -75,11 +75,11 @@ describe('dynalite connections', function () {
     it('should return 200 if a GET', function (done) {
       request({ method: 'GET', noSign: true }, function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.equal('healthy: dynamodb.' + helpers.awsRegion + '.amazonaws.com ')
-        res.headers['x-amz-crc32'].should.match(/^[0-9]+$/)
-        res.headers['content-length'].should.equal(res.body.length.toString())
-        res.headers['x-amzn-requestid'].should.match(/^[0-9A-Z]{52}$/)
+        should(res.statusCode).equal(200)
+        should(res.body).equal('healthy: dynamodb.' + helpers.awsRegion + '.amazonaws.com ')
+        should(res.headers['x-amz-crc32']).match(/^[0-9]+$/)
+        should(res.headers['content-length']).equal(res.body.length.toString())
+        should(res.headers['x-amzn-requestid']).match(/^[0-9A-Z]{52}$/)
         done()
       })
     })
@@ -120,7 +120,7 @@ describe('dynalite connections', function () {
           res.on('error', done)
           res.on('data', function () {})
           res.on('end', function () {
-            res.statusCode.should.equal(200)
+            should(res.statusCode).equal(200)
             dynaliteServer.close(done)
           })
         }).on('error', done).end()
@@ -135,12 +135,12 @@ describe('dynalite connections', function () {
       if (typeof contentType == 'function') { done = contentType; contentType = 'application/json' }
       return function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(400)
-        res.body.should.eql(body)
-        res.headers['x-amzn-requestid'].should.match(/^[0-9A-Z]{52}$/)
-        res.headers['x-amz-crc32'].should.equal(String(crc32))
-        res.headers['content-type'].should.equal(contentType)
-        res.headers['content-length'].should.equal(String(Buffer.byteLength(JSON.stringify(res.body), 'utf8')))
+        should(res.statusCode).equal(400)
+        should(res.body).eql(body)
+        should(res.headers['x-amzn-requestid']).match(/^[0-9A-Z]{52}$/)
+        should(res.headers['x-amz-crc32']).equal(String(crc32))
+        should(res.headers['content-type']).equal(contentType)
+        should(res.headers['content-length']).equal(String(Buffer.byteLength(JSON.stringify(res.body), 'utf8')))
         done()
       }
     }
@@ -179,15 +179,15 @@ describe('dynalite connections', function () {
     function assertCors (headers, done) {
       return function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.headers['x-amzn-requestid'].should.match(/^[0-9A-Z]{52}$/)
-        res.headers['access-control-allow-origin'].should.equal('*')
+        should(res.statusCode).equal(200)
+        should(res.headers['x-amzn-requestid']).match(/^[0-9A-Z]{52}$/)
+        should(res.headers['access-control-allow-origin']).equal('*')
         Object.keys(headers || {}).forEach(function (header) {
-          res.headers[header].should.equal(headers[header])
+          should(res.headers[header]).equal(headers[header])
         })
-        res.headers['access-control-max-age'].should.equal('172800')
-        res.headers['content-length'].should.equal('0')
-        res.body.should.eql('')
+        should(res.headers['access-control-max-age']).equal('172800')
+        should(res.headers['content-length']).equal('0')
+        should(res.body).eql('')
         done()
       }
     }
@@ -229,7 +229,7 @@ describe('dynalite connections', function () {
     it('should return UnknownOperationException and set CORS if using Origin', function (done) {
       request({ headers: { origin: 'whatever' } }, function (err, res) {
         if (err) return done(err)
-        res.headers['access-control-allow-origin'].should.equal('*')
+        should(res.headers['access-control-allow-origin']).equal('*')
         assertUnknownOp(done)(err, res)
       })
     })

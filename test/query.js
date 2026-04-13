@@ -1916,8 +1916,8 @@ describe('query', function () {
         queryOpts.Select = 'ALL_ATTRIBUTES'
         request(opts(queryOpts), function (err, res) {
           if (err) return cb(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 0, ScannedCount: 0, Items: [] })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 0, ScannedCount: 0, Items: [] })
           cb()
         })
       }, done)
@@ -1941,8 +1941,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 1, ScannedCount: 1, Items: [ item2 ] })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 1, ScannedCount: 1, Items: [ item2 ] })
             cb()
           })
         }, done)
@@ -1966,8 +1966,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 3, ScannedCount: 3, Items: [ item, item2, item3 ] })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 3, ScannedCount: 3, Items: [ item, item2, item3 ] })
             cb()
           })
         }, done)
@@ -1994,8 +1994,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 1, ScannedCount: 1, Items: [ item2 ] })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 1, ScannedCount: 1, Items: [ item2 ] })
             cb()
           })
         }, done)
@@ -2022,8 +2022,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 2, ScannedCount: 2, Items: [ item, item2 ] })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 2, ScannedCount: 2, Items: [ item, item2 ] })
             cb()
           })
         }, done)
@@ -2050,8 +2050,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 1, ScannedCount: 1, Items: [ item ] })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 1, ScannedCount: 1, Items: [ item ] })
             cb()
           })
         }, done)
@@ -2078,8 +2078,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 2, ScannedCount: 2, Items: [ item2, item3 ] })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 2, ScannedCount: 2, Items: [ item2, item3 ] })
             cb()
           })
         }, done)
@@ -2106,8 +2106,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 1, ScannedCount: 1, Items: [ item3 ] })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 1, ScannedCount: 1, Items: [ item3 ] })
             cb()
           })
         }, done)
@@ -2134,8 +2134,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 2, ScannedCount: 2, Items: [ item, item2 ] })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 2, ScannedCount: 2, Items: [ item, item2 ] })
             cb()
           })
         }, done)
@@ -2164,8 +2164,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 3, ScannedCount: 3, Items: [ item2, item3, item4 ] })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 3, ScannedCount: 3, Items: [ item2, item3, item4 ] })
             cb()
           })
         }, done)
@@ -2203,8 +2203,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 3, ScannedCount: 3, Items: [
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 3, ScannedCount: 3, Items: [
               { b: { S: 'b1' }, d: { S: 'd1' } },
               { b: { S: 'b2' } },
               { b: { S: 'b3' }, d: { S: 'd3' } },
@@ -2241,8 +2241,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 3, ScannedCount: 3, Items: [
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 3, ScannedCount: 3, Items: [
               { e: { M: { a: { S: 'b1' }, d: { S: 'b1' } } }, f: { L: [ { S: 'd1' }, { S: 'd3' } ] } },
               {},
               { d: { S: 'd3' } },
@@ -2276,8 +2276,8 @@ describe('query', function () {
           queryOpts.ConsistentRead = true
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 1, ScannedCount: 3, Items: [
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 1, ScannedCount: 3, Items: [
               { a: item.a, b: { S: 'b3' }, d: { S: 'd3' }, e: { S: 'e3' } },
             ] })
             cb()
@@ -2299,11 +2299,11 @@ describe('query', function () {
           ReturnConsumedCapacity: 'TOTAL' }
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           delete item3.e
           delete item3.f
           delete item4.e
-          res.body.should.eql({
+          should(res.body).eql({
             Count: 3,
             ScannedCount: 3,
             Items: [ item, item3, item4 ],
@@ -2312,8 +2312,8 @@ describe('query', function () {
           req.ReturnConsumedCapacity = 'INDEXES'
           request(opts(req), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 3,
               ScannedCount: 3,
               Items: [ item, item3, item4 ],
@@ -2343,8 +2343,8 @@ describe('query', function () {
           Select: 'ALL_ATTRIBUTES', ReturnConsumedCapacity: 'TOTAL' }
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 3,
             ScannedCount: 3,
             Items: [ item, item3, item4 ],
@@ -2353,8 +2353,8 @@ describe('query', function () {
           req.ReturnConsumedCapacity = 'INDEXES'
           request(opts(req), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 3,
               ScannedCount: 3,
               Items: [ item, item3, item4 ],
@@ -2385,9 +2385,9 @@ describe('query', function () {
           b: { ComparisonOperator: 'GE', AttributeValueList: [ item.b ] },
         }, Select: 'COUNT' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           should.not.exist(res.body.Items)
-          res.body.should.eql({ Count: 4, ScannedCount: 4 })
+          should(res.body).eql({ Count: 4, ScannedCount: 4 })
           done()
         })
       })
@@ -2407,8 +2407,8 @@ describe('query', function () {
           b: { ComparisonOperator: 'GE', AttributeValueList: [ item.b ] },
         }, Limit: 2 }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 2, ScannedCount: 2, Items: [ item, item3 ], LastEvaluatedKey: { a: item3.a, b: item3.b } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 2, ScannedCount: 2, Items: [ item, item3 ], LastEvaluatedKey: { a: item3.a, b: item3.b } })
           done()
         })
       })
@@ -2441,8 +2441,8 @@ describe('query', function () {
           queryOpts.Limit = 2
           request(opts(queryOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: 1, ScannedCount: 2, Items: [ item3 ], LastEvaluatedKey: { a: item3.a, b: item3.b } })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: 1, ScannedCount: 2, Items: [ item3 ], LastEvaluatedKey: { a: item3.a, b: item3.b } })
             cb()
           })
         }, done)
@@ -2463,8 +2463,8 @@ describe('query', function () {
           b: { ComparisonOperator: 'GE', AttributeValueList: [ item.b ] },
         }, Limit: 2, Select: 'COUNT' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 2, ScannedCount: 2, LastEvaluatedKey: { a: item3.a, b: item3.b } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 2, ScannedCount: 2, LastEvaluatedKey: { a: item3.a, b: item3.b } })
           done()
         })
       })
@@ -2486,8 +2486,8 @@ describe('query', function () {
           d: { ComparisonOperator: 'EQ', AttributeValueList: [ item3.d ] },
         }, Limit: 2, Select: 'COUNT' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 1, ScannedCount: 2, LastEvaluatedKey: { a: item3.a, b: item3.b } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 1, ScannedCount: 2, LastEvaluatedKey: { a: item3.a, b: item3.b } })
           done()
         })
       })
@@ -2504,37 +2504,37 @@ describe('query', function () {
 
         request(helpers.opts('Scan', { TableName: helpers.testRangeTable }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           var lastHashItem = res.body.Items[res.body.Items.length - 1],
             lastHashItems = res.body.Items.filter(function (item) { return item.a.S == lastHashItem.a.S }),
             otherHashItem = lastHashItem.a.S == item.a.S ? item3 : item,
             otherHashItems = res.body.Items.filter(function (item) { return item.a.S == otherHashItem.a.S })
-          otherHashItems.length.should.equal(2)
+          should(otherHashItems.length).equal(2)
           request(opts({ TableName: helpers.testRangeTable, ConsistentRead: true, KeyConditions: {
             a: { ComparisonOperator: 'EQ', AttributeValueList: [ lastHashItem.a ] },
           } }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Count: lastHashItems.length, ScannedCount: lastHashItems.length, Items: lastHashItems })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Count: lastHashItems.length, ScannedCount: lastHashItems.length, Items: lastHashItems })
             request(opts({ TableName: helpers.testRangeTable, ConsistentRead: true, KeyConditions: {
               a: { ComparisonOperator: 'EQ', AttributeValueList: [ lastHashItem.a ] },
             }, Limit: lastHashItems.length }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.should.eql({ Count: lastHashItems.length, ScannedCount: lastHashItems.length, Items: lastHashItems, LastEvaluatedKey: { a: lastHashItem.a, b: lastHashItem.b } })
+              should(res.statusCode).equal(200)
+              should(res.body).eql({ Count: lastHashItems.length, ScannedCount: lastHashItems.length, Items: lastHashItems, LastEvaluatedKey: { a: lastHashItem.a, b: lastHashItem.b } })
               request(opts({ TableName: helpers.testRangeTable, ConsistentRead: true, KeyConditions: {
                 a: { ComparisonOperator: 'EQ', AttributeValueList: [ otherHashItem.a ] },
               }, Limit: 2 }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
+                should(res.statusCode).equal(200)
 
                 // TODO: Technically there shouldn't be a LastEvaluatedKey here,
                 //       but the logic is very complicated, so for now, just leave it
                 // res.body.should.eql({Count: 2, Items: otherHashItems})
 
-                res.body.Count.should.equal(2)
-                res.body.ScannedCount.should.equal(2)
-                res.body.Items.should.eql(otherHashItems)
+                should(res.body.Count).equal(2)
+                should(res.body.ScannedCount).equal(2)
+                should(res.body.Items).eql(otherHashItems)
                 done()
               })
             })
@@ -2560,8 +2560,8 @@ describe('query', function () {
           a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
         } }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 9, ScannedCount: 9, Items: [ item, item3, item2, item8, item9, item4, item6, item7, item5 ] })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 9, ScannedCount: 9, Items: [ item, item3, item2, item8, item9, item4, item6, item7, item5 ] })
           done()
         })
       })
@@ -2584,8 +2584,8 @@ describe('query', function () {
           KeyConditions: { a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] } }, ReturnConsumedCapacity: 'TOTAL' }
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 9,
             ScannedCount: 9,
             Items: [ item, item3, item2, item8, item9, item4, item6, item7, item5 ],
@@ -2597,8 +2597,8 @@ describe('query', function () {
           req.ReturnConsumedCapacity = 'INDEXES'
           request(opts(req), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 9,
               ScannedCount: 9,
               Items: [ item, item3, item2, item8, item9, item4, item6, item7, item5 ],
@@ -2636,8 +2636,8 @@ describe('query', function () {
         }
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 6,
             ScannedCount: 6,
             Items: [ item, item3, item2, item8, item9, item4 ],
@@ -2645,8 +2645,8 @@ describe('query', function () {
           req.KeyConditionExpression = 'a = :a AND c = :c'
           request(opts(req), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 1,
               ScannedCount: 1,
               Items: [ item4 ],
@@ -2654,8 +2654,8 @@ describe('query', function () {
             req.KeyConditionExpression = 'a = :a AND c >= :c'
             request(opts(req), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.should.eql({
+              should(res.statusCode).equal(200)
+              should(res.body).eql({
                 Count: 4,
                 ScannedCount: 4,
                 Items: [ item4, item6, item7, item5 ],
@@ -2663,8 +2663,8 @@ describe('query', function () {
               req.KeyConditionExpression = 'a = :a AND c > :c'
               request(opts(req), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.should.eql({
+                should(res.statusCode).equal(200)
+                should(res.body).eql({
                   Count: 3,
                   ScannedCount: 3,
                   Items: [ item6, item7, item5 ],
@@ -2672,8 +2672,8 @@ describe('query', function () {
                 req.KeyConditionExpression = 'a = :a AND c < :c'
                 request(opts(req), function (err, res) {
                   if (err) return done(err)
-                  res.statusCode.should.equal(200)
-                  res.body.should.eql({
+                  should(res.statusCode).equal(200)
+                  should(res.body).eql({
                     Count: 5,
                     ScannedCount: 5,
                     Items: [ item, item3, item2, item8, item9 ],
@@ -2682,8 +2682,8 @@ describe('query', function () {
                   req.ExpressionAttributeValues[':d'] = item7.c
                   request(opts(req), function (err, res) {
                     if (err) return done(err)
-                    res.statusCode.should.equal(200)
-                    res.body.should.eql({
+                    should(res.statusCode).equal(200)
+                    should(res.body).eql({
                       Count: 3,
                       ScannedCount: 3,
                       Items: [ item4, item6, item7 ],
@@ -2730,8 +2730,8 @@ describe('query', function () {
           a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
         } }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 23, ScannedCount: 23, Items: [ item23, item22, item21, item20, item19, item18, item17, item16, item15,
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 23, ScannedCount: 23, Items: [ item23, item22, item21, item20, item19, item18, item17, item16, item15,
             item14, item, item13, item12, item11, item10, item9, item8, item7, item6, item5, item4, item3, item2 ] })
           done()
         })
@@ -2758,8 +2758,8 @@ describe('query', function () {
           a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
         } }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 12, ScannedCount: 12, Items: [ item8, item11, item2, item6, item9, item4,
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 12, ScannedCount: 12, Items: [ item8, item11, item2, item6, item9, item4,
             item, item7, item3, item5, item10, item12 ] })
           done()
         })
@@ -2777,8 +2777,8 @@ describe('query', function () {
           a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
         }, ScanIndexForward: false }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 3, ScannedCount: 3, Items: [ item2, item3, item ] })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 3, ScannedCount: 3, Items: [ item2, item3, item ] })
           done()
         })
       })
@@ -2795,8 +2795,8 @@ describe('query', function () {
           a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
         }, ScanIndexForward: false, Limit: 2 }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 2, ScannedCount: 2, Items: [ item2, item3 ], LastEvaluatedKey: item3 })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 2, ScannedCount: 2, Items: [ item2, item3 ], LastEvaluatedKey: item3 })
           done()
         })
       })
@@ -2813,8 +2813,8 @@ describe('query', function () {
           a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
         }, ScanIndexForward: false, ExclusiveStartKey: item2 }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 2, ScannedCount: 2, Items: [ item3, item ] })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 2, ScannedCount: 2, Items: [ item3, item ] })
           done()
         })
       })
@@ -2837,8 +2837,8 @@ describe('query', function () {
           a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
         }, ScanIndexForward: false }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 9, ScannedCount: 9, Items: [ item2, item3, item4, item5, item, item6, item7, item8, item9 ] })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 9, ScannedCount: 9, Items: [ item2, item3, item4, item5, item, item6, item7, item8, item9 ] })
           done()
         })
       })
@@ -2857,8 +2857,8 @@ describe('query', function () {
           a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
         }, ScanIndexForward: false, Limit: 3 }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 3, ScannedCount: 3, Items: [ item2, item3, item4 ], LastEvaluatedKey: { a: item4.a, b: item4.b } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 3, ScannedCount: 3, Items: [ item2, item3, item4 ], LastEvaluatedKey: { a: item4.a, b: item4.b } })
           done()
         })
       })
@@ -2881,8 +2881,8 @@ describe('query', function () {
           a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
         }, ScanIndexForward: false }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 9, ScannedCount: 9, Items: [ item5, item3, item7, item, item4, item9,
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 9, ScannedCount: 9, Items: [ item5, item3, item7, item, item4, item9,
             item6, item2, item8 ] })
           done()
         })
@@ -2902,8 +2902,8 @@ describe('query', function () {
           a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
         }, ScanIndexForward: false, Limit: 3 }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Count: 3, ScannedCount: 3, Items: [ item5, item3, item ], LastEvaluatedKey: { a: item.a, b: item.b } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Count: 3, ScannedCount: 3, Items: [ item5, item3, item ], LastEvaluatedKey: { a: item.a, b: item.b } })
           done()
         })
       })
@@ -2925,8 +2925,8 @@ describe('query', function () {
           IndexName: 'index3', Limit: 4, ReturnConsumedCapacity: 'TOTAL' }
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 4,
             ScannedCount: 4,
             Items: [ item2, item, item3, item7 ],
@@ -2936,8 +2936,8 @@ describe('query', function () {
           req.ReturnConsumedCapacity = 'INDEXES'
           request(opts(req), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 4,
               ScannedCount: 4,
               Items: [ item2, item, item3, item7 ],
@@ -2971,8 +2971,8 @@ describe('query', function () {
           IndexName: 'index3', ScanIndexForward: false, Limit: 4, ReturnConsumedCapacity: 'INDEXES' }
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 4,
             ScannedCount: 4,
             Items: [ item4, item6, item7, item3 ],
@@ -3005,11 +3005,11 @@ describe('query', function () {
           d: { ComparisonOperator: 'LT', AttributeValueList: [ item.d ] },
         }, IndexName: 'index4', Limit: 3, ReturnConsumedCapacity: 'INDEXES' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           delete item2.f
           delete item3.f
           delete item4.f
-          res.body.should.eql({
+          should(res.body).eql({
             Count: 3,
             ScannedCount: 3,
             Items: [ item2, item3, item4 ],
@@ -3042,8 +3042,8 @@ describe('query', function () {
           d: { ComparisonOperator: 'LT', AttributeValueList: [ item.d ] },
         }, IndexName: 'index4', ScanIndexForward: false, Limit: 3, ReturnConsumedCapacity: 'INDEXES' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 3,
             ScannedCount: 3,
             Items: [ item6, item4, item3 ],
@@ -3076,8 +3076,8 @@ describe('query', function () {
           c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
         }, IndexName: 'index3', Limit: 2, ExclusiveStartKey: item3, ReturnConsumedCapacity: 'INDEXES' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 2,
             ScannedCount: 2,
             Items: [ item7, item6 ],
@@ -3110,8 +3110,8 @@ describe('query', function () {
           c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
         }, IndexName: 'index3', ScanIndexForward: false, Limit: 2, ExclusiveStartKey: item7, ReturnConsumedCapacity: 'INDEXES' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 2,
             ScannedCount: 2,
             Items: [ item3, item ],
@@ -3147,8 +3147,8 @@ describe('query', function () {
           d: { ComparisonOperator: 'LT', AttributeValueList: [ item.d ] },
         }, IndexName: 'index4', Limit: 1, ExclusiveStartKey: item3, ReturnConsumedCapacity: 'INDEXES' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 1,
             ScannedCount: 1,
             Items: [ item4 ],
@@ -3184,8 +3184,8 @@ describe('query', function () {
           d: { ComparisonOperator: 'LT', AttributeValueList: [ item.d ] },
         }, IndexName: 'index4', Limit: 1, ScanIndexForward: false, ExclusiveStartKey: item4, ReturnConsumedCapacity: 'INDEXES' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 1,
             ScannedCount: 1,
             Items: [ item3 ],
@@ -3216,8 +3216,8 @@ describe('query', function () {
           c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
         }, IndexName: 'index4', ExclusiveStartKey: item, ReturnConsumedCapacity: 'INDEXES' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({
+          should(res.statusCode).equal(200)
+          should(res.body).eql({
             Count: 5,
             ScannedCount: 5,
             Items: [ item5, item2, item3, item6, item4 ],
@@ -3256,8 +3256,8 @@ describe('query', function () {
             Limit: 26, // Limit of 25 includes LastEvaluatedKey, leaving this out does not
           }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 25,
               ScannedCount: 25,
               ConsumedCapacity: {
@@ -3289,8 +3289,8 @@ describe('query', function () {
             ReturnConsumedCapacity: 'INDEXES',
           }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 25,
               ScannedCount: 25,
               ConsumedCapacity: {
@@ -3327,8 +3327,8 @@ describe('query', function () {
             ReturnConsumedCapacity: 'TOTAL',
           }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 25,
               ScannedCount: 25,
               ConsumedCapacity: { CapacityUnits: 133.5, TableName: helpers.testRangeTable },
@@ -3358,8 +3358,8 @@ describe('query', function () {
             ReturnConsumedCapacity: 'TOTAL',
           }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 24,
               ScannedCount: 24,
               ConsumedCapacity: { CapacityUnits: 127.5, TableName: helpers.testRangeTable },

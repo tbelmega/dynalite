@@ -1074,8 +1074,8 @@ function batchWriteUntilDone (name, actions, cb) {
 function assertSerialization (target, data, msg, done) {
   request(opts(target, data), function (err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(400)
-    res.body.should.eql({
+    should(res.statusCode).equal(400)
+    should(res.body).eql({
       __type: 'com.amazon.coral.service#SerializationException',
       Message: msg,
     })
@@ -1254,16 +1254,16 @@ function assertType (target, property, type, done) {
 function assertAccessDenied (target, data, msg, done) {
   request(opts(target, data), function (err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(400)
+    should(res.statusCode).equal(400)
     if (typeof res.body !== 'object') {
       return done(new Error('Not JSON: ' + res.body))
     }
-    res.body.__type.should.equal('com.amazon.coral.service#AccessDeniedException')
+    should(res.body.__type).equal('com.amazon.coral.service#AccessDeniedException')
     if (msg instanceof RegExp) {
-      res.body.Message.should.match(msg)
+      should(res.body.Message).match(msg)
     }
     else {
-      res.body.Message.should.equal(msg)
+      should(res.body.Message).equal(msg)
     }
     done()
   })
@@ -1275,22 +1275,22 @@ function assertValidation (target, data, msg, done) {
     if (typeof res.body !== 'object') {
       return done(new Error('Not JSON: ' + res.body))
     }
-    res.body.__type.should.equal('com.amazon.coral.validate#ValidationException')
+    should(res.body.__type).equal('com.amazon.coral.validate#ValidationException')
     if (msg instanceof RegExp) {
-      res.body.message.should.match(msg)
+      should(res.body.message).match(msg)
     }
     else if (Array.isArray(msg)) {
       var prefix = msg.length + ' validation error' + (msg.length === 1 ? '' : 's') + ' detected: '
-      res.body.message.should.startWith(prefix)
+      should(res.body.message).startWith(prefix)
       var errors = res.body.message.slice(prefix.length).split('; ')
       for (var i = 0; i < msg.length; i++) {
-        errors.should.matchAny(msg[i])
+        should(errors).matchAny(msg[i])
       }
     }
     else {
-      res.body.message.should.equal(msg)
+      should(res.body.message).equal(msg)
     }
-    res.statusCode.should.equal(400)
+    should(res.statusCode).equal(400)
     done()
   })
 }
@@ -1298,8 +1298,8 @@ function assertValidation (target, data, msg, done) {
 function assertNotFound (target, data, msg, done) {
   request(opts(target, data), function (err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(400)
-    res.body.should.eql({
+    should(res.statusCode).equal(400)
+    should(res.body).eql({
       __type: 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException',
       message: msg,
     })
@@ -1310,8 +1310,8 @@ function assertNotFound (target, data, msg, done) {
 function assertInUse (target, data, msg, done) {
   request(opts(target, data), function (err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(400)
-    res.body.should.eql({
+    should(res.statusCode).equal(400)
+    should(res.body).eql({
       __type: 'com.amazonaws.dynamodb.v20120810#ResourceInUseException',
       message: msg,
     })
@@ -1322,8 +1322,8 @@ function assertInUse (target, data, msg, done) {
 function assertConditional (target, data, done) {
   request(opts(target, data), function (err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(400)
-    res.body.should.eql({
+    should(res.statusCode).equal(400)
+    should(res.body).eql({
       __type: 'com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException',
       message: 'The conditional request failed',
     })

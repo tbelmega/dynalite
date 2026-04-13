@@ -316,9 +316,9 @@ describe('updateTable', function () {
       ] }), function (err, res) {
         if (err) return done(err)
 
-        res.body.__type.should.equal('com.amazonaws.dynamodb.v20120810#LimitExceededException')
-        res.body.message.should.equal('Subscriber limit exceeded: Only 1 online index can be created or deleted simultaneously per table')
-        res.statusCode.should.equal(400)
+        should(res.body.__type).equal('com.amazonaws.dynamodb.v20120810#LimitExceededException')
+        should(res.body.message).equal('Subscriber limit exceeded: Only 1 online index can be created or deleted simultaneously per table')
+        should(res.statusCode).equal(400)
         done()
       })
     })
@@ -335,20 +335,20 @@ describe('updateTable', function () {
         throughput = { ReadCapacityUnits: newRead, WriteCapacityUnits: newWrite }
       request(opts({ TableName: helpers.testHashTable, ProvisionedThroughput: throughput }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         var desc = res.body.TableDescription
-        desc.AttributeDefinitions.should.eql([ { AttributeName: 'a', AttributeType: 'S' } ])
-        desc.CreationDateTime.should.be.below(Date.now() / 1000)
-        desc.ItemCount.should.be.above(-1)
-        desc.KeySchema.should.eql([ { AttributeName: 'a', KeyType: 'HASH' } ])
-        desc.ProvisionedThroughput.LastIncreaseDateTime.should.be.above(increase - 5)
-        desc.ProvisionedThroughput.NumberOfDecreasesToday.should.be.above(-1)
-        desc.ProvisionedThroughput.ReadCapacityUnits.should.equal(oldRead)
-        desc.ProvisionedThroughput.WriteCapacityUnits.should.equal(oldWrite)
-        desc.TableName.should.equal(helpers.testHashTable)
-        desc.TableSizeBytes.should.be.above(-1)
-        desc.TableStatus.should.equal('UPDATING')
+        should(desc.AttributeDefinitions).eql([ { AttributeName: 'a', AttributeType: 'S' } ])
+        should(desc.CreationDateTime).be.below(Date.now() / 1000)
+        should(desc.ItemCount).be.above(-1)
+        should(desc.KeySchema).eql([ { AttributeName: 'a', KeyType: 'HASH' } ])
+        should(desc.ProvisionedThroughput.LastIncreaseDateTime).be.above(increase - 5)
+        should(desc.ProvisionedThroughput.NumberOfDecreasesToday).be.above(-1)
+        should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(oldRead)
+        should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(oldWrite)
+        should(desc.TableName).equal(helpers.testHashTable)
+        should(desc.TableSizeBytes).be.above(-1)
+        should(desc.TableStatus).equal('UPDATING')
 
         var numDecreases = desc.ProvisionedThroughput.NumberOfDecreasesToday
         increase = desc.ProvisionedThroughput.LastIncreaseDateTime
@@ -358,24 +358,24 @@ describe('updateTable', function () {
 
           var decrease = Date.now() / 1000
           desc = res.body.Table
-          desc.ProvisionedThroughput.ReadCapacityUnits.should.equal(newRead)
-          desc.ProvisionedThroughput.WriteCapacityUnits.should.equal(newWrite)
-          desc.ProvisionedThroughput.LastIncreaseDateTime.should.be.above(increase)
+          should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(newRead)
+          should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(newWrite)
+          should(desc.ProvisionedThroughput.LastIncreaseDateTime).be.above(increase)
 
           increase = desc.ProvisionedThroughput.LastIncreaseDateTime
 
           throughput = { ReadCapacityUnits: oldRead, WriteCapacityUnits: oldWrite }
           request(opts({ TableName: helpers.testHashTable, ProvisionedThroughput: throughput }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
+            should(res.statusCode).equal(200)
 
             desc = res.body.TableDescription
-            desc.ProvisionedThroughput.LastIncreaseDateTime.should.equal(increase)
-            desc.ProvisionedThroughput.LastDecreaseDateTime.should.be.above(decrease - 5)
-            desc.ProvisionedThroughput.NumberOfDecreasesToday.should.equal(numDecreases)
-            desc.ProvisionedThroughput.ReadCapacityUnits.should.equal(newRead)
-            desc.ProvisionedThroughput.WriteCapacityUnits.should.equal(newWrite)
-            desc.TableStatus.should.equal('UPDATING')
+            should(desc.ProvisionedThroughput.LastIncreaseDateTime).equal(increase)
+            should(desc.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease - 5)
+            should(desc.ProvisionedThroughput.NumberOfDecreasesToday).equal(numDecreases)
+            should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(newRead)
+            should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(newWrite)
+            should(desc.TableStatus).equal('UPDATING')
 
             decrease = desc.ProvisionedThroughput.LastDecreaseDateTime
 
@@ -383,11 +383,11 @@ describe('updateTable', function () {
               if (err) return done(err)
 
               desc = res.body.Table
-              desc.ProvisionedThroughput.LastIncreaseDateTime.should.equal(increase)
-              desc.ProvisionedThroughput.LastDecreaseDateTime.should.be.above(decrease)
-              desc.ProvisionedThroughput.NumberOfDecreasesToday.should.equal(numDecreases + 1)
-              desc.ProvisionedThroughput.ReadCapacityUnits.should.equal(oldRead)
-              desc.ProvisionedThroughput.WriteCapacityUnits.should.equal(oldWrite)
+              should(desc.ProvisionedThroughput.LastIncreaseDateTime).equal(increase)
+              should(desc.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease)
+              should(desc.ProvisionedThroughput.NumberOfDecreasesToday).equal(numDecreases + 1)
+              should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(oldRead)
+              should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(oldWrite)
 
               done()
             })
@@ -403,20 +403,20 @@ describe('updateTable', function () {
         throughput = { ReadCapacityUnits: read, WriteCapacityUnits: write }, decrease = Date.now() / 1000
       request(opts({ TableName: helpers.testRangeTable, BillingMode: 'PAY_PER_REQUEST' }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         var desc = res.body.TableDescription
-        desc.TableStatus.should.equal('UPDATING')
-        desc.BillingModeSummary.should.eql({ BillingMode: 'PAY_PER_REQUEST' })
-        desc.TableThroughputModeSummary.should.eql({ TableThroughputMode: 'PAY_PER_REQUEST' })
-        desc.ProvisionedThroughput.LastDecreaseDateTime.should.be.above(decrease - 5)
-        desc.ProvisionedThroughput.NumberOfDecreasesToday.should.be.above(-1)
-        desc.ProvisionedThroughput.ReadCapacityUnits.should.equal(0)
-        desc.ProvisionedThroughput.WriteCapacityUnits.should.equal(0)
+        should(desc.TableStatus).equal('UPDATING')
+        should(desc.BillingModeSummary).eql({ BillingMode: 'PAY_PER_REQUEST' })
+        should(desc.TableThroughputModeSummary).eql({ TableThroughputMode: 'PAY_PER_REQUEST' })
+        should(desc.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease - 5)
+        should(desc.ProvisionedThroughput.NumberOfDecreasesToday).be.above(-1)
+        should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(0)
+        should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(0)
 
         desc.GlobalSecondaryIndexes.forEach(function (index) {
-          index.IndexStatus.should.equal('UPDATING')
-          index.ProvisionedThroughput.should.eql({
+          should(index.IndexStatus).equal('UPDATING')
+          should(index.ProvisionedThroughput).eql({
             NumberOfDecreasesToday: 0,
             ReadCapacityUnits: 0,
             WriteCapacityUnits: 0,
@@ -427,18 +427,18 @@ describe('updateTable', function () {
           if (err) return done(err)
 
           var desc = res.body.Table
-          desc.BillingModeSummary.BillingMode.should.equal('PAY_PER_REQUEST')
-          desc.BillingModeSummary.LastUpdateToPayPerRequestDateTime.should.be.above(decrease - 5)
-          desc.TableThroughputModeSummary.TableThroughputMode.should.equal('PAY_PER_REQUEST')
-          desc.TableThroughputModeSummary.LastUpdateToPayPerRequestDateTime.should.be.above(decrease - 5)
-          desc.ProvisionedThroughput.NumberOfDecreasesToday.should.be.above(-1)
-          desc.ProvisionedThroughput.ReadCapacityUnits.should.equal(0)
-          desc.ProvisionedThroughput.WriteCapacityUnits.should.equal(0)
+          should(desc.BillingModeSummary.BillingMode).equal('PAY_PER_REQUEST')
+          should(desc.BillingModeSummary.LastUpdateToPayPerRequestDateTime).be.above(decrease - 5)
+          should(desc.TableThroughputModeSummary.TableThroughputMode).equal('PAY_PER_REQUEST')
+          should(desc.TableThroughputModeSummary.LastUpdateToPayPerRequestDateTime).be.above(decrease - 5)
+          should(desc.ProvisionedThroughput.NumberOfDecreasesToday).be.above(-1)
+          should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(0)
+          should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(0)
           desc.GlobalSecondaryIndexes.forEach(function (index) {
-            index.ProvisionedThroughput.LastDecreaseDateTime.should.be.above(decrease - 5)
-            index.ProvisionedThroughput.NumberOfDecreasesToday.should.be.above(0)
-            index.ProvisionedThroughput.ReadCapacityUnits.should.equal(0)
-            index.ProvisionedThroughput.WriteCapacityUnits.should.equal(0)
+            should(index.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease - 5)
+            should(index.ProvisionedThroughput.NumberOfDecreasesToday).be.above(0)
+            should(index.ProvisionedThroughput.ReadCapacityUnits).equal(0)
+            should(index.ProvisionedThroughput.WriteCapacityUnits).equal(0)
           })
 
           assertValidation({ TableName: helpers.testRangeTable, BillingMode: 'PROVISIONED', ProvisionedThroughput: throughput },
@@ -463,43 +463,43 @@ describe('updateTable', function () {
                 } ],
               }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
+                should(res.statusCode).equal(200)
 
                 var desc = res.body.TableDescription
-                desc.TableStatus.should.equal('UPDATING')
-                desc.BillingModeSummary.BillingMode.should.equal('PROVISIONED')
-                desc.BillingModeSummary.LastUpdateToPayPerRequestDateTime.should.be.above(decrease - 5)
-                desc.TableThroughputModeSummary.TableThroughputMode.should.equal('PROVISIONED')
-                desc.TableThroughputModeSummary.LastUpdateToPayPerRequestDateTime.should.be.above(decrease - 5)
-                desc.ProvisionedThroughput.NumberOfDecreasesToday.should.be.above(-1)
-                desc.ProvisionedThroughput.ReadCapacityUnits.should.equal(read)
-                desc.ProvisionedThroughput.WriteCapacityUnits.should.equal(write)
+                should(desc.TableStatus).equal('UPDATING')
+                should(desc.BillingModeSummary.BillingMode).equal('PROVISIONED')
+                should(desc.BillingModeSummary.LastUpdateToPayPerRequestDateTime).be.above(decrease - 5)
+                should(desc.TableThroughputModeSummary.TableThroughputMode).equal('PROVISIONED')
+                should(desc.TableThroughputModeSummary.LastUpdateToPayPerRequestDateTime).be.above(decrease - 5)
+                should(desc.ProvisionedThroughput.NumberOfDecreasesToday).be.above(-1)
+                should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(read)
+                should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(write)
 
                 desc.GlobalSecondaryIndexes.forEach(function (index) {
-                  index.IndexStatus.should.equal('UPDATING')
-                  index.ProvisionedThroughput.LastDecreaseDateTime.should.be.above(decrease - 5)
-                  index.ProvisionedThroughput.NumberOfDecreasesToday.should.be.above(0)
-                  index.ProvisionedThroughput.ReadCapacityUnits.should.equal(read)
-                  index.ProvisionedThroughput.WriteCapacityUnits.should.equal(write)
+                  should(index.IndexStatus).equal('UPDATING')
+                  should(index.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease - 5)
+                  should(index.ProvisionedThroughput.NumberOfDecreasesToday).be.above(0)
+                  should(index.ProvisionedThroughput.ReadCapacityUnits).equal(read)
+                  should(index.ProvisionedThroughput.WriteCapacityUnits).equal(write)
                 })
 
                 helpers.waitUntilActive(helpers.testRangeTable, function (err, res) {
                   if (err) return done(err)
 
                   var desc = res.body.Table
-                  desc.BillingModeSummary.BillingMode.should.equal('PROVISIONED')
-                  desc.BillingModeSummary.LastUpdateToPayPerRequestDateTime.should.be.above(decrease - 5)
-                  desc.TableThroughputModeSummary.TableThroughputMode.should.equal('PROVISIONED')
-                  desc.TableThroughputModeSummary.LastUpdateToPayPerRequestDateTime.should.be.above(decrease - 5)
-                  desc.ProvisionedThroughput.NumberOfDecreasesToday.should.be.above(-1)
-                  desc.ProvisionedThroughput.ReadCapacityUnits.should.equal(read)
-                  desc.ProvisionedThroughput.WriteCapacityUnits.should.equal(write)
+                  should(desc.BillingModeSummary.BillingMode).equal('PROVISIONED')
+                  should(desc.BillingModeSummary.LastUpdateToPayPerRequestDateTime).be.above(decrease - 5)
+                  should(desc.TableThroughputModeSummary.TableThroughputMode).equal('PROVISIONED')
+                  should(desc.TableThroughputModeSummary.LastUpdateToPayPerRequestDateTime).be.above(decrease - 5)
+                  should(desc.ProvisionedThroughput.NumberOfDecreasesToday).be.above(-1)
+                  should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(read)
+                  should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(write)
 
                   desc.GlobalSecondaryIndexes.forEach(function (index) {
-                    index.ProvisionedThroughput.LastDecreaseDateTime.should.be.above(decrease - 5)
-                    index.ProvisionedThroughput.NumberOfDecreasesToday.should.be.above(0)
-                    index.ProvisionedThroughput.ReadCapacityUnits.should.equal(read)
-                    index.ProvisionedThroughput.WriteCapacityUnits.should.equal(write)
+                    should(index.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease - 5)
+                    should(index.ProvisionedThroughput.NumberOfDecreasesToday).be.above(0)
+                    should(index.ProvisionedThroughput.ReadCapacityUnits).equal(read)
+                    should(index.ProvisionedThroughput.WriteCapacityUnits).equal(write)
                   })
 
                   done()

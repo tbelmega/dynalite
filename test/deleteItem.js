@@ -454,8 +454,8 @@ describe('deleteItem', function () {
     it('should return nothing if item does not exist', function (done) {
       request(opts({ TableName: helpers.testHashTable, Key: { a: { S: helpers.randomString() } } }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({})
+        should(res.statusCode).equal(200)
+        should(res.body).eql({})
         done()
       })
     })
@@ -464,13 +464,13 @@ describe('deleteItem', function () {
       var req = { TableName: helpers.testHashTable, Key: { a: { S: helpers.randomString() } }, ReturnConsumedCapacity: 'TOTAL' }
       request(opts(req), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 1, TableName: helpers.testHashTable } })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 1, TableName: helpers.testHashTable } })
         req.ReturnConsumedCapacity = 'INDEXES'
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashTable } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashTable } })
           done()
         })
       })
@@ -480,15 +480,15 @@ describe('deleteItem', function () {
       var item = { a: { S: helpers.randomString() } }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         request(opts({ TableName: helpers.testHashTable, Key: { a: item.a } }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({})
+          should(res.statusCode).equal(200)
+          should(res.body).eql({})
           request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: { a: item.a }, ConsistentRead: true }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             done()
           })
         })
@@ -499,11 +499,11 @@ describe('deleteItem', function () {
       var item = { a: { S: helpers.randomString() }, b: { S: 'b' } }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         request(opts({ TableName: helpers.testHashTable, Key: { a: item.a }, ReturnValues: 'ALL_OLD' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Attributes: item })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Attributes: item })
           done()
         })
       })
@@ -548,8 +548,8 @@ describe('deleteItem', function () {
           deleteOpts.Key = { a: { S: helpers.randomString() } }
           request(opts(deleteOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -569,8 +569,8 @@ describe('deleteItem', function () {
           deleteOpts.Key = item
           request(opts(deleteOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         })
@@ -589,8 +589,8 @@ describe('deleteItem', function () {
           deleteOpts.TableName = helpers.testHashTable
           request(opts(deleteOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         })
@@ -627,8 +627,8 @@ describe('deleteItem', function () {
           deleteOpts.Key = { a: item.a }
           request(opts(deleteOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         })
@@ -656,11 +656,11 @@ describe('deleteItem', function () {
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==', 'AQ==' ] } }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         request(opts({ TableName: helpers.testHashTable, Key: { a: item.a }, ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 1, TableName: helpers.testHashTable } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 1, TableName: helpers.testHashTable } })
           done()
         })
       })
@@ -671,11 +671,11 @@ describe('deleteItem', function () {
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==' ] } }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         request(opts({ TableName: helpers.testHashTable, Key: { a: item.a }, ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 2, TableName: helpers.testHashTable } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 2, TableName: helpers.testHashTable } })
           done()
         })
       })

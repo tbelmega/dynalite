@@ -16,8 +16,8 @@ describe('listTables', function () {
     it('should return 400 if no body', function (done) {
       request({ headers: { 'x-amz-target': helpers.version + '.' + target } }, function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(400)
-        res.body.should.eql({ __type: 'com.amazon.coral.service#SerializationException' })
+        should(res.statusCode).equal(400)
+        should(res.body).eql({ __type: 'com.amazon.coral.service#SerializationException' })
         done()
       })
     })
@@ -87,12 +87,12 @@ describe('listTables', function () {
       requestOpts.headers['Content-Type'] = 'application/json'
       request(requestOpts, function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.TableNames.should.be.an.instanceOf(Array)
-        res.headers['x-amzn-requestid'].should.match(/^[0-9A-Z]{52}$/)
-        res.headers['x-amz-crc32'].should.not.be.empty
-        res.headers['content-type'].should.equal('application/json')
-        res.headers['content-length'].should.equal(String(Buffer.byteLength(JSON.stringify(res.body), 'utf8')))
+        should(res.statusCode).equal(200)
+        should(res.body.TableNames).be.an.instanceOf(Array)
+        should(res.headers['x-amzn-requestid']).match(/^[0-9A-Z]{52}$/)
+        should(res.headers['x-amz-crc32']).not.be.empty
+        should(res.headers['content-type']).equal('application/json')
+        should(res.headers['content-length']).equal(String(Buffer.byteLength(JSON.stringify(res.body), 'utf8')))
         done()
       })
     })
@@ -100,12 +100,12 @@ describe('listTables', function () {
     it('should return 200 if no params and application/x-amz-json-1.0', function (done) {
       request(opts({}), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.TableNames.should.be.an.instanceOf(Array)
-        res.headers['x-amzn-requestid'].should.match(/^[0-9A-Z]{52}$/)
-        res.headers['x-amz-crc32'].should.not.be.empty
-        res.headers['content-type'].should.equal('application/x-amz-json-1.0')
-        res.headers['content-length'].should.equal(String(Buffer.byteLength(JSON.stringify(res.body), 'utf8')))
+        should(res.statusCode).equal(200)
+        should(res.body.TableNames).be.an.instanceOf(Array)
+        should(res.headers['x-amzn-requestid']).match(/^[0-9A-Z]{52}$/)
+        should(res.headers['x-amz-crc32']).not.be.empty
+        should(res.headers['content-type']).equal('application/x-amz-json-1.0')
+        should(res.headers['content-length']).equal(String(Buffer.byteLength(JSON.stringify(res.body), 'utf8')))
         done()
       })
     })
@@ -115,9 +115,9 @@ describe('listTables', function () {
       requestOpts.headers.Origin = 'whatever'
       request(requestOpts, function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.headers['access-control-allow-origin'].should.equal('*')
-        res.body.TableNames.should.be.an.instanceOf(Array)
+        should(res.statusCode).equal(200)
+        should(res.headers['access-control-allow-origin']).equal('*')
+        should(res.body.TableNames).be.an.instanceOf(Array)
         done()
       })
     })
@@ -125,8 +125,8 @@ describe('listTables', function () {
     it('should return 200 if random attributes are supplied', function (done) {
       request(opts({ hi: 'yo', stuff: 'things' }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.TableNames.should.be.an.instanceOf(Array)
+        should(res.statusCode).equal(200)
+        should(res.body.TableNames).be.an.instanceOf(Array)
         done()
       })
     })
@@ -134,8 +134,8 @@ describe('listTables', function () {
     it('should return 200 if null attributes are supplied', function (done) {
       request(opts({ ExclusiveStartTableName: null, Limit: null }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.TableNames.should.be.an.instanceOf(Array)
+        should(res.statusCode).equal(200)
+        should(res.body.TableNames).be.an.instanceOf(Array)
         done()
       })
     })
@@ -143,8 +143,8 @@ describe('listTables', function () {
     it('should return 200 if correct types are supplied', function (done) {
       request(opts({ ExclusiveStartTableName: 'aaa', Limit: 100 }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.TableNames.should.be.an.instanceOf(Array)
+        should(res.statusCode).equal(200)
+        should(res.body.TableNames).be.an.instanceOf(Array)
         done()
       })
     })
@@ -154,9 +154,9 @@ describe('listTables', function () {
       requestOpts.signQuery = true
       request(requestOpts, function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.TableNames.should.be.an.instanceOf(Array)
-        Object.keys(requestOpts.headers).sort().should.eql([ 'Content-Type', 'Host', 'X-Amz-Target' ])
+        should(res.statusCode).equal(200)
+        should(res.body.TableNames).be.an.instanceOf(Array)
+        should(Object.keys(requestOpts.headers).sort()).eql([ 'Content-Type', 'Host', 'X-Amz-Target' ])
         done()
       })
     })
@@ -170,11 +170,11 @@ describe('listTables', function () {
       }
       request(helpers.opts('CreateTable', table), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         request(opts({}), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.TableNames.should.containEql(name)
+          should(res.statusCode).equal(200)
+          should(res.body.TableNames).containEql(name)
           done()
           helpers.deleteWhenActive(name)
         })
@@ -207,35 +207,35 @@ describe('listTables', function () {
           function (done) {
             request(opts({ ExclusiveStartTableName: names[0] }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.TableNames.should.not.containEql(names[0])
-              res.body.TableNames.should.containEql(names[1])
+              should(res.statusCode).equal(200)
+              should(res.body.TableNames).not.containEql(names[0])
+              should(res.body.TableNames).containEql(names[1])
               done()
             })
           },
           function (done) {
             request(opts({ ExclusiveStartTableName: beforeName }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.TableNames.should.containEql(names[0])
-              res.body.TableNames.should.containEql(names[1])
+              should(res.statusCode).equal(200)
+              should(res.body.TableNames).containEql(names[0])
+              should(res.body.TableNames).containEql(names[1])
               done()
             })
           },
           function (done) {
             request(opts({ Limit: 1 }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.TableNames.should.have.length(1)
+              should(res.statusCode).equal(200)
+              should(res.body.TableNames).have.length(1)
               done()
             })
           },
           function (done) {
             request(opts({ ExclusiveStartTableName: beforeName, Limit: 1 }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.TableNames.should.eql([ names[0] ])
-              res.body.LastEvaluatedTableName.should.eql(names[0])
+              should(res.statusCode).equal(200)
+              should(res.body.TableNames).eql([ names[0] ])
+              should(res.body.LastEvaluatedTableName).eql(names[0])
               done()
             })
           },
@@ -251,12 +251,12 @@ describe('listTables', function () {
     it('should have no LastEvaluatedTableName if the limit is large enough', function (done) {
       request(opts({ Limit: 100 }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.TableNames.length.should.be.above(0)
+        should(res.statusCode).equal(200)
+        should(res.body.TableNames.length).be.above(0)
         should.not.exist(res.body.LastEvaluatedTableName)
         request(opts({ Limit: res.body.TableNames.length }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           should.not.exist(res.body.LastEvaluatedTableName)
           done()
         })

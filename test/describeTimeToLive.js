@@ -58,8 +58,8 @@ describe('describeTimeToLive', function () {
     it('should succeed if table exists', function (done) {
       request(opts({ TableName: helpers.testHashTable }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ TimeToLiveDescription: { TimeToLiveStatus: 'DISABLED' } })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ TimeToLiveDescription: { TimeToLiveStatus: 'DISABLED' } })
         done()
       })
     })

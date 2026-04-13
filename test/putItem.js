@@ -545,7 +545,7 @@ describe('putItem', function () {
       }
       request(helpers.opts('CreateTable', table), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         assertNotFound({ TableName: table.TableName, Item: { a: { S: 'a' } } },
           'Requested resource not found', done)
         helpers.deleteWhenActive(table.TableName)
@@ -561,12 +561,12 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({})
+        should(res.statusCode).equal(200)
+        should(res.body).eql({})
         request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: { a: item.a }, ConsistentRead: true }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Item: item })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Item: item })
           done()
         })
       })
@@ -582,16 +582,16 @@ describe('putItem', function () {
       }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.body.should.eql({})
-        res.statusCode.should.equal(200)
+        should(res.body).eql({})
+        should(res.statusCode).equal(200)
         request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: { a: item.a }, ConsistentRead: true }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           item.b = { S: '' }
           item.c = { B: '' }
           item.d = { SS: [ '' ] }
           item.e = { BS: [ '' ] }
-          res.body.should.eql({ Item: item })
+          should(res.body).eql({ Item: item })
           done()
         })
       })
@@ -609,18 +609,18 @@ describe('putItem', function () {
       }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({})
+        should(res.statusCode).equal(200)
+        should(res.body).eql({})
         request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: { a: item.a }, ConsistentRead: true }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           item.b = { N: '12345678901234567890123456789012345678' }
           item.c = { N: '-1.2345678901234567890123456789012345678' }
           item.d = { N: Array(39).join('9') + Array(89).join('0') }
           item.e = { N: '-' + Array(39).join('9') + Array(89).join('0') }
           item.f = { N: '0.' + Array(130).join('0') + '1' }
           item.g = { N: '-0.' + Array(130).join('0') + '1' }
-          res.body.should.eql({ Item: item })
+          should(res.body).eql({ Item: item })
           done()
         })
       })
@@ -663,12 +663,12 @@ describe('putItem', function () {
       }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({})
+        should(res.statusCode).equal(200)
+        should(res.body).eql({})
         request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: { a: item.a }, ConsistentRead: true }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Item: item })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Item: item })
           done()
         })
       })
@@ -678,8 +678,8 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() }, b: { S: 'a' }, c: { S: 'a' } }
       request(opts({ TableName: helpers.testHashTable, Item: item, ReturnValues: 'ALL_OLD' }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({})
+        should(res.statusCode).equal(200)
+        should(res.body).eql({})
         done()
       })
     })
@@ -688,13 +688,13 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() }, b: { N: '-0015.789e6' }, c: { S: 'a' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         item.b = { S: 'b' }
         request(opts({ TableName: helpers.testHashTable, Item: item, ReturnValues: 'ALL_OLD' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           item.b = { N: '-15789000' }
-          res.body.should.eql({ Attributes: item })
+          should(res.body).eql({ Attributes: item })
           done()
         })
       })
@@ -704,16 +704,16 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() }, b: { S: 'a' }, c: { S: 'a' } }
       request(opts({ TableName: helpers.testRangeTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({})
+        should(res.statusCode).equal(200)
+        should(res.body).eql({})
         // Put another item with the same hash key to prove we're retrieving the correct one
         request(opts({ TableName: helpers.testRangeTable, Item: { a: item.a, b: { S: 'b' } } }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           request(helpers.opts('GetItem', { TableName: helpers.testRangeTable, Key: { a: item.a, b: item.b }, ConsistentRead: true }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Item: item })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Item: item })
             done()
           })
         })
@@ -739,7 +739,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { Exists: false } } },
           { Expected: { a: { ComparisonOperator: 'NULL' } } },
@@ -757,7 +757,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { Exists: false } } },
           { Expected: { a: { ComparisonOperator: 'NULL' } } },
@@ -768,8 +768,8 @@ describe('putItem', function () {
           putOpts.Item = { a: { S: helpers.randomString() } }
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -780,7 +780,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { Value: item.a } } },
           { Expected: { a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] } } },
@@ -796,8 +796,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -808,7 +808,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { b: { Exists: false } } },
           { Expected: { b: { ComparisonOperator: 'NULL' } } },
@@ -826,7 +826,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { b: { Exists: false } } },
           { Expected: { b: { ComparisonOperator: 'NULL' } } },
@@ -844,7 +844,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { b: { Exists: false } } },
           { Expected: { b: { ComparisonOperator: 'NULL' } } },
@@ -862,7 +862,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() }, c: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { Value: item.a }, b: { Exists: false }, c: { ComparisonOperator: 'GE', Value: item.c } } },
           { Expected: {
@@ -880,8 +880,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -892,7 +892,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() }, c: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { Value: item.a }, b: { Exists: false }, c: { Value: { S: helpers.randomString() } } } },
           { Expected: {
@@ -917,7 +917,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() }, c: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: {
             a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] },
@@ -934,8 +934,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -946,7 +946,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'NE', AttributeValueList: [ { S: helpers.randomString() } ] } } },
           {
@@ -963,8 +963,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -975,7 +975,7 @@ describe('putItem', function () {
       var item = { a: { S: helpers.randomString() } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'NE', AttributeValueList: [ item.a ] } } },
           {
@@ -999,7 +999,7 @@ describe('putItem', function () {
       var item = { a: { S: 'b' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'LE', AttributeValueList: [ { S: 'c' } ] } } },
           {
@@ -1016,8 +1016,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -1028,7 +1028,7 @@ describe('putItem', function () {
       var item = { a: { S: 'd' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'LE', AttributeValueList: [ { S: 'c' } ] } } },
           {
@@ -1052,7 +1052,7 @@ describe('putItem', function () {
       var item = { a: { S: 'b' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'LT', AttributeValueList: [ { S: 'c' } ] } } },
           {
@@ -1069,8 +1069,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -1081,7 +1081,7 @@ describe('putItem', function () {
       var item = { a: { S: 'd' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'LT', AttributeValueList: [ { S: 'c' } ] } } },
           {
@@ -1105,7 +1105,7 @@ describe('putItem', function () {
       var item = { a: { S: 'b' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'GE', AttributeValueList: [ { S: 'a' } ] } } },
           {
@@ -1122,8 +1122,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -1134,7 +1134,7 @@ describe('putItem', function () {
       var item = { a: { S: 'b' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'GE', AttributeValueList: [ { S: 'c' } ] } } },
           {
@@ -1158,7 +1158,7 @@ describe('putItem', function () {
       var item = { a: { S: 'b' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'GT', AttributeValueList: [ { S: 'a' } ] } } },
           {
@@ -1175,8 +1175,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -1187,7 +1187,7 @@ describe('putItem', function () {
       var item = { a: { S: 'a' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'GT', AttributeValueList: [ { S: 'c' } ] } } },
           {
@@ -1211,7 +1211,7 @@ describe('putItem', function () {
       var item = { a: { S: 'hello' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'CONTAINS', AttributeValueList: [ { S: 'ell' } ] } } },
           {
@@ -1228,8 +1228,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -1240,7 +1240,7 @@ describe('putItem', function () {
       var item = { a: { S: 'hello' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'CONTAINS', AttributeValueList: [ { S: 'goodbye' } ] } } },
           {
@@ -1264,7 +1264,7 @@ describe('putItem', function () {
       var item = { a: { S: 'hello' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'BEGINS_WITH', AttributeValueList: [ { S: 'he' } ] } } },
           {
@@ -1281,8 +1281,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -1293,7 +1293,7 @@ describe('putItem', function () {
       var item = { a: { S: 'hello' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'BEGINS_WITH', AttributeValueList: [ { S: 'goodbye' } ] } } },
           {
@@ -1317,7 +1317,7 @@ describe('putItem', function () {
       var item = { a: { S: 'hello' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'NOT_CONTAINS', AttributeValueList: [ { S: 'goodbye' } ] } } },
           {
@@ -1334,8 +1334,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -1346,7 +1346,7 @@ describe('putItem', function () {
       var item = { a: { S: 'hello' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'NOT_CONTAINS', AttributeValueList: [ { S: 'ell' } ] } } },
           {
@@ -1370,7 +1370,7 @@ describe('putItem', function () {
       var item = { a: { S: 'b' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'IN', AttributeValueList: [ { S: 'c' }, { S: 'b' } ] } } },
           {
@@ -1387,8 +1387,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -1399,7 +1399,7 @@ describe('putItem', function () {
       var item = { a: { S: 'd' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'IN', AttributeValueList: [ { S: 'c' } ] } } },
           {
@@ -1423,7 +1423,7 @@ describe('putItem', function () {
       var item = { a: { S: 'b' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'BETWEEN', AttributeValueList: [ { S: 'a' }, { S: 'c' } ] } } },
           {
@@ -1440,8 +1440,8 @@ describe('putItem', function () {
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({})
+            should(res.statusCode).equal(200)
+            should(res.body).eql({})
             cb()
           })
         }, done)
@@ -1452,7 +1452,7 @@ describe('putItem', function () {
       var item = { a: { S: 'b' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { Expected: { a: { ComparisonOperator: 'BETWEEN', AttributeValueList: [ { S: 'c' }, { S: 'd' } ] } } },
           {
@@ -1478,13 +1478,13 @@ describe('putItem', function () {
         req = { TableName: helpers.testHashTable, Item: item, ReturnConsumedCapacity: 'TOTAL' }
       request(opts(req), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 1, TableName: helpers.testHashTable } })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 1, TableName: helpers.testHashTable } })
         req.ReturnConsumedCapacity = 'INDEXES'
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashTable } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashTable } })
           done()
         })
       })
@@ -1496,22 +1496,22 @@ describe('putItem', function () {
         req = { TableName: helpers.testHashTable, Item: item, ReturnConsumedCapacity: 'TOTAL' }
       request(opts(req), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 2, TableName: helpers.testHashTable } })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 2, TableName: helpers.testHashTable } })
         req.ReturnConsumedCapacity = 'INDEXES'
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable } })
           req.Item = { a: item.a }
           request(opts(req), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable } })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable } })
             request(opts(req), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashTable } })
+              should(res.statusCode).equal(200)
+              should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashTable } })
               done()
             })
           })

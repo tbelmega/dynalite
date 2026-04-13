@@ -74,8 +74,8 @@ describe('listTagsOfResource', function () {
 
       request(opts({ ResourceArn: resourceArn }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ Tags: [] })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ Tags: [] })
         done()
       })
     })
@@ -85,32 +85,32 @@ describe('listTagsOfResource', function () {
 
       request(opts({ ResourceArn: resourceArn }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ Tags: [] })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ Tags: [] })
 
         var tags = [ { Key: 't1', Value: 'v1' }, { Key: 't2', Value: 'v2' } ]
 
         request(helpers.opts('TagResource', { ResourceArn: resourceArn, Tags: tags }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
 
           request(opts({ ResourceArn: resourceArn }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.Tags.should.not.be.null()
-            res.body.Tags.length.should.equal(tags.length)
-            res.body.Tags.forEach(function (tag) { tags.should.containEql(tag) })
+            should(res.statusCode).equal(200)
+            should(res.body.Tags).not.be.null()
+            should(res.body.Tags.length).equal(tags.length)
+            res.body.Tags.forEach(function (tag) { should(tags).containEql(tag) })
 
             var tagKeys = tags.map(function (tag) { return tag.Key })
 
             request(helpers.opts('UntagResource', { ResourceArn: resourceArn, TagKeys: tagKeys }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
+              should(res.statusCode).equal(200)
 
               request(opts({ ResourceArn: resourceArn }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.should.eql({ Tags: [] })
+                should(res.statusCode).equal(200)
+                should(res.body).eql({ Tags: [] })
 
                 done()
               })

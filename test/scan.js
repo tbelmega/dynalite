@@ -1127,12 +1127,12 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({ TableName: helpers.testHashTable, Segment: 1, TotalSegments: 2 }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.Count.should.be.above(0)
+          should(res.statusCode).equal(200)
+          should(res.body.Count).be.above(0)
 
           assertValidation({ TableName: helpers.testHashTable,
             Segment: 0,
@@ -1169,13 +1169,13 @@ describe('scan', function () {
       var item = { a: { S: helpers.randomString() } }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         request(opts({ TableName: helpers.testHashTable }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.Items.should.containEql(item)
-          res.body.Count.should.be.above(0)
-          res.body.ScannedCount.should.be.above(0)
+          should(res.statusCode).equal(200)
+          should(res.body.Items).containEql(item)
+          should(res.body.Count).be.above(0)
+          should(res.body.ScannedCount).be.above(0)
           done()
         })
       })
@@ -1185,7 +1185,7 @@ describe('scan', function () {
       var item = { a: { S: helpers.randomString() } }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { ScanFilter: { a: { ComparisonOperator: 'EQ', AttributeValueList: [ item.a ] } } },
           { FilterExpression: 'a = :a', ExpressionAttributeValues: { ':a': item.a } },
@@ -1194,10 +1194,10 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.eql([ item ])
-            res.body.Count.should.equal(1)
-            res.body.ScannedCount.should.be.above(0)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).eql([ item ])
+            should(res.body.Count).equal(1)
+            should(res.body.ScannedCount).be.above(0)
             cb()
           })
         }, done)
@@ -1208,7 +1208,7 @@ describe('scan', function () {
       var item = { a: { S: helpers.randomString() } }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { ScanFilter: { a: { ComparisonOperator: 'EQ', AttributeValueList: [ { S: helpers.randomString() } ] } } },
           { FilterExpression: 'a = :a', ExpressionAttributeValues: { ':a': { S: helpers.randomString() } } },
@@ -1216,10 +1216,10 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.eql([])
-            res.body.Count.should.equal(0)
-            res.body.ScannedCount.should.be.above(0)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).eql([])
+            should(res.body.Count).equal(0)
+            should(res.body.ScannedCount).be.above(0)
             cb()
           })
         }, done)
@@ -1238,7 +1238,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { ScanFilter: { b: { ComparisonOperator: 'EQ', AttributeValueList: [ item.b ] } } },
           { FilterExpression: 'b = :b', ExpressionAttributeValues: { ':b': item.b } },
@@ -1246,11 +1246,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -1269,7 +1269,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             date: { ComparisonOperator: 'EQ', AttributeValueList: [ item.date ] },
@@ -1283,11 +1283,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200, res.rawBody)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200, res.rawBody)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -1306,7 +1306,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'EQ', AttributeValueList: [ item.b ] },
@@ -1319,11 +1319,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -1342,7 +1342,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'EQ', AttributeValueList: [ { SS: [ 'b', 'a' ] } ] },
@@ -1355,11 +1355,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -1378,7 +1378,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'EQ', AttributeValueList: [ { NS: [ '2', '1' ] } ] },
@@ -1391,19 +1391,19 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
+            should(res.statusCode).equal(200)
             res.body.Items.forEach(function (item) {
-              item.b.NS.should.have.length(2)
-              item.b.NS.should.containEql('1')
-              item.b.NS.should.containEql('2')
+              should(item.b.NS).have.length(2)
+              should(item.b.NS).containEql('1')
+              should(item.b.NS).containEql('2')
               delete item.b
             })
             delete item.b
             delete item2.b
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -1422,7 +1422,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'EQ', AttributeValueList: [ { BS: [ 'abcd', 'Yg==' ] } ] },
@@ -1435,11 +1435,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -1458,7 +1458,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'EQ', AttributeValueList: [ item.b ] },
@@ -1471,9 +1471,9 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.eql([ item ])
-            res.body.Count.should.equal(1)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).eql([ item ])
+            should(res.body.Count).equal(1)
             cb()
           })
         }, done)
@@ -1492,7 +1492,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NE', AttributeValueList: [ item.b ] },
@@ -1505,11 +1505,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -1528,7 +1528,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NE', AttributeValueList: [ { SS: [ 'b', 'a' ] } ] },
@@ -1541,10 +1541,10 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.have.length(1)
-            res.body.Count.should.equal(1)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).have.length(1)
+            should(res.body.Count).equal(1)
             cb()
           })
         }, done)
@@ -1563,7 +1563,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NE', AttributeValueList: [ { NS: [ '2', '1' ] } ] },
@@ -1576,10 +1576,10 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.have.length(1)
-            res.body.Count.should.equal(1)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).have.length(1)
+            should(res.body.Count).equal(1)
             cb()
           })
         }, done)
@@ -1598,7 +1598,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NE', AttributeValueList: [ { BS: [ 'abcd', 'Yg==' ] } ] },
@@ -1611,10 +1611,10 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.have.length(1)
-            res.body.Count.should.equal(1)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).have.length(1)
+            should(res.body.Count).equal(1)
             cb()
           })
         }, done)
@@ -1637,7 +1637,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'LE', AttributeValueList: [ item.b ] },
@@ -1650,13 +1650,13 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(4)
-            res.body.Count.should.equal(4)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(4)
+            should(res.body.Count).equal(4)
             cb()
           })
         }, done)
@@ -1679,7 +1679,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'LE', AttributeValueList: [ item.b ] },
@@ -1692,13 +1692,13 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(4)
-            res.body.Count.should.equal(4)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(4)
+            should(res.body.Count).equal(4)
             cb()
           })
         }, done)
@@ -1721,7 +1721,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'LE', AttributeValueList: [ item.b ] },
@@ -1734,12 +1734,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -1762,7 +1762,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'LE', AttributeValueList: [ item2.b ] },
@@ -1775,13 +1775,13 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(4)
-            res.body.Count.should.equal(4)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(4)
+            should(res.body.Count).equal(4)
             cb()
           })
         }, done)
@@ -1804,7 +1804,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'LT', AttributeValueList: [ item.b ] },
@@ -1817,12 +1817,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -1845,7 +1845,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'LT', AttributeValueList: [ item.b ] },
@@ -1858,12 +1858,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -1886,7 +1886,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'LT', AttributeValueList: [ item2.b ] },
@@ -1899,12 +1899,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -1927,7 +1927,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'GE', AttributeValueList: [ item3.b ] },
@@ -1940,13 +1940,13 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.have.length(4)
-            res.body.Count.should.equal(4)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).have.length(4)
+            should(res.body.Count).equal(4)
             cb()
           })
         }, done)
@@ -1969,7 +1969,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'GE', AttributeValueList: [ item2.b ] },
@@ -1982,12 +1982,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -2010,7 +2010,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'GE', AttributeValueList: [ item3.b ] },
@@ -2023,13 +2023,13 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(4)
-            res.body.Count.should.equal(4)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(4)
+            should(res.body.Count).equal(4)
             cb()
           })
         }, done)
@@ -2052,7 +2052,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'GT', AttributeValueList: [ item3.b ] },
@@ -2065,12 +2065,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -2093,7 +2093,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'GT', AttributeValueList: [ item2.b ] },
@@ -2106,11 +2106,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -2133,7 +2133,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'GT', AttributeValueList: [ item3.b ] },
@@ -2146,12 +2146,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -2170,7 +2170,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NOT_NULL' },
@@ -2183,11 +2183,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -2206,7 +2206,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NULL' },
@@ -2219,11 +2219,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -2254,7 +2254,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'CONTAINS', AttributeValueList: [ item5.b ] },
@@ -2267,13 +2267,13 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.containEql(item7)
-            res.body.Items.should.have.length(4)
-            res.body.Count.should.equal(4)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).containEql(item7)
+            should(res.body.Items).have.length(4)
+            should(res.body.Count).equal(4)
             cb()
           })
         }, done)
@@ -2302,7 +2302,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'CONTAINS', AttributeValueList: [ { N: '234' } ] },
@@ -2315,11 +2315,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item6)
-            res.body.Items.should.have.lengthOf(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item6)
+            should(res.body.Items).have.lengthOf(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -2350,7 +2350,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'CONTAINS', AttributeValueList: [ item5.b ] },
@@ -2363,13 +2363,13 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.containEql(item7)
-            res.body.Items.should.have.length(4)
-            res.body.Count.should.equal(4)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).containEql(item7)
+            should(res.body.Items).have.length(4)
+            should(res.body.Count).equal(4)
             cb()
           })
         }, done)
@@ -2394,7 +2394,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NOT_CONTAINS', AttributeValueList: [ item5.b ] },
@@ -2407,12 +2407,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.containEql(item6)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).containEql(item6)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -2435,7 +2435,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NOT_CONTAINS', AttributeValueList: [ { N: '234' } ] },
@@ -2448,13 +2448,13 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(4)
-            res.body.Count.should.equal(4)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(4)
+            should(res.body.Count).equal(4)
             cb()
           })
         }, done)
@@ -2479,7 +2479,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NOT_CONTAINS', AttributeValueList: [ item5.b ] },
@@ -2492,12 +2492,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item6)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item6)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -2520,7 +2520,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'BEGINS_WITH', AttributeValueList: [ item5.b ] },
@@ -2533,11 +2533,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -2560,7 +2560,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'BEGINS_WITH', AttributeValueList: [ item5.b ] },
@@ -2573,11 +2573,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -2600,7 +2600,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'IN', AttributeValueList: [ item5.b, item.b ] },
@@ -2613,11 +2613,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -2640,7 +2640,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'IN', AttributeValueList: [ item4.b, item5.b ] },
@@ -2653,11 +2653,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -2680,7 +2680,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'IN', AttributeValueList: [ item3.b, item5.b ] },
@@ -2693,11 +2693,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -2720,7 +2720,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'BETWEEN', AttributeValueList: [ item2.b, item4.b ] },
@@ -2733,12 +2733,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -2761,7 +2761,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'BETWEEN', AttributeValueList: [ item2.b, item4.b ] },
@@ -2774,12 +2774,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -2802,7 +2802,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             b: { ComparisonOperator: 'BETWEEN', AttributeValueList: [ item5.b, item4.b ] },
@@ -2815,12 +2815,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -2843,7 +2843,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           FilterExpression: '(b[1].a.b = :b OR b.a.b = :b) AND c = :c',
           ExpressionAttributeValues: { ':b': item.b.M.a.M.b, ':c': item.c },
@@ -2857,11 +2857,11 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item2)
-            res.body.Items.should.have.length(2)
-            res.body.Count.should.equal(2)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item2)
+            should(res.body.Items).have.length(2)
+            should(res.body.Count).equal(2)
             cb()
           })
         }, done)
@@ -2888,7 +2888,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           FilterExpression: 'size(b) = :b AND c = :c',
           ExpressionAttributeValues: { ':b': { N: '3' }, ':c': item.c },
@@ -2902,14 +2902,14 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(item)
-            res.body.Items.should.containEql(item3)
-            res.body.Items.should.containEql(item4)
-            res.body.Items.should.containEql(item5)
-            res.body.Items.should.containEql(item6)
-            res.body.Items.should.have.length(5)
-            res.body.Count.should.equal(5)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(item)
+            should(res.body.Items).containEql(item3)
+            should(res.body.Items).containEql(item4)
+            should(res.body.Items).containEql(item5)
+            should(res.body.Items).containEql(item6)
+            should(res.body.Items).have.length(5)
+            should(res.body.Count).equal(5)
             cb()
           })
         }, done)
@@ -2928,7 +2928,7 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([ {
           ScanFilter: {
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -2947,12 +2947,12 @@ describe('scan', function () {
           scanOpts.TableName = helpers.testHashTable
           request(opts(scanOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql({ b: { S: 'b1' }, d: { S: 'd1' } })
-            res.body.Items.should.containEql({ b: { S: 'b2' } })
-            res.body.Items.should.containEql({ b: { S: 'b3' }, d: { S: 'd3' } })
-            res.body.Items.should.have.length(3)
-            res.body.Count.should.equal(3)
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql({ b: { S: 'b1' }, d: { S: 'd1' } })
+            should(res.body.Items).containEql({ b: { S: 'b2' } })
+            should(res.body.Items).containEql({ b: { S: 'b3' }, d: { S: 'd3' } })
+            should(res.body.Items).have.length(3)
+            should(res.body.Count).equal(3)
             cb()
           })
         }, done)
@@ -2975,16 +2975,16 @@ describe('scan', function () {
       ]
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         request(opts({ TableName: helpers.testHashTable, ScanFilter: {
           b: { ComparisonOperator: 'EQ', AttributeValueList: [ item.b ] },
           c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
         }, Select: 'COUNT' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           should.not.exist(res.body.Items)
-          res.body.Count.should.equal(2)
-          res.body.ScannedCount.should.be.above(1)
+          should(res.body.Count).equal(2)
+          should(res.body.ScannedCount).be.above(1)
           done()
         })
       })
@@ -3001,17 +3001,17 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({ TableName: helpers.testHashTable, ScanFilter: scanFilter }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.Count.should.equal(10)
+          should(res.statusCode).equal(200)
+          should(res.body.Count).equal(10)
 
           request(opts({ TableName: helpers.testHashTable, ScanFilter: scanFilter, ExclusiveStartKey: { a: res.body.Items[0].a } }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.Count.should.equal(9)
+            should(res.statusCode).equal(200)
+            should(res.body.Count).equal(9)
             done()
           })
         })
@@ -3026,9 +3026,9 @@ describe('scan', function () {
         ScanFilter: { a: { ComparisonOperator: 'EQ', AttributeValueList: [ { S: hashes[0] } ] } },
       }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.Count.should.equal(0)
-        res.body.Items.should.eql([])
+        should(res.statusCode).equal(200)
+        should(res.body.Count).equal(0)
+        should(res.body.Items).eql([])
         done()
       })
     })
@@ -3043,14 +3043,14 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({ TableName: helpers.testHashTable, Limit: 3, ReturnConsumedCapacity: 'INDEXES' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.ScannedCount.should.equal(3)
-          res.body.LastEvaluatedKey.a.S.should.not.be.empty
-          Object.keys(res.body.LastEvaluatedKey).should.have.length(1)
+          should(res.statusCode).equal(200)
+          should(res.body.ScannedCount).equal(3)
+          should(res.body.LastEvaluatedKey.a.S).not.be.empty
+          should(Object.keys(res.body.LastEvaluatedKey)).have.length(1)
           done()
         })
       })
@@ -3066,14 +3066,14 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({ TableName: helpers.testHashTable, Limit: 3, Select: 'COUNT' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.ScannedCount.should.equal(3)
-          res.body.LastEvaluatedKey.a.S.should.not.be.empty
-          Object.keys(res.body.LastEvaluatedKey).should.have.length(1)
+          should(res.statusCode).equal(200)
+          should(res.body.ScannedCount).equal(3)
+          should(res.body.LastEvaluatedKey.a.S).not.be.empty
+          should(Object.keys(res.body.LastEvaluatedKey)).have.length(1)
           done()
         })
       })
@@ -3096,7 +3096,7 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({
           TableName: helpers.testHashTable,
@@ -3107,10 +3107,10 @@ describe('scan', function () {
         }), function (err, res) {
           if (err) return done(err)
 
-          res.statusCode.should.equal(200)
-          res.body.ScannedCount.should.equal(2)
-          res.body.LastEvaluatedKey.a.S.should.not.be.empty
-          Object.keys(res.body.LastEvaluatedKey).should.have.length(1)
+          should(res.statusCode).equal(200)
+          should(res.body.ScannedCount).equal(2)
+          should(res.body.LastEvaluatedKey.a.S).not.be.empty
+          should(Object.keys(res.body.LastEvaluatedKey)).have.length(1)
           helpers.clearTable(helpers.testHashTable, 'a', done)
         })
       })
@@ -3127,12 +3127,12 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({ TableName: helpers.testHashTable, AttributesToGet: [ 'a', 'b' ], Limit: 100000 }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.Count.should.equal(res.body.ScannedCount)
+          should(res.statusCode).equal(200)
+          should(res.body.Count).equal(res.body.ScannedCount)
           should.not.exist(res.body.LastEvaluatedKey)
           for (var i = 0, lastIx = 0; i < res.body.Count; i++) {
             if (res.body.Items[i].b.S == b.S) lastIx = i
@@ -3140,23 +3140,23 @@ describe('scan', function () {
           var totalItems = res.body.Count
           request(opts({ TableName: helpers.testHashTable, ScanFilter: scanFilter, Limit: lastIx }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.Count.should.equal(4)
-            res.body.LastEvaluatedKey.a.S.should.not.be.empty
+            should(res.statusCode).equal(200)
+            should(res.body.Count).equal(4)
+            should(res.body.LastEvaluatedKey.a.S).not.be.empty
             request(opts({ TableName: helpers.testHashTable, ScanFilter: scanFilter, Limit: lastIx + 1 }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.Count.should.equal(5)
-              res.body.LastEvaluatedKey.a.S.should.not.be.empty
+              should(res.statusCode).equal(200)
+              should(res.body.Count).equal(5)
+              should(res.body.LastEvaluatedKey.a.S).not.be.empty
               request(opts({ TableName: helpers.testHashTable, ScanFilter: scanFilter, Limit: totalItems }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.Count.should.equal(5)
-                res.body.LastEvaluatedKey.a.S.should.not.be.empty
+                should(res.statusCode).equal(200)
+                should(res.body.Count).equal(5)
+                should(res.body.LastEvaluatedKey.a.S).not.be.empty
                 request(opts({ TableName: helpers.testHashTable, ScanFilter: scanFilter, Limit: totalItems + 1 }), function (err, res) {
                   if (err) return done(err)
-                  res.statusCode.should.equal(200)
-                  res.body.Count.should.equal(5)
+                  should(res.statusCode).equal(200)
+                  should(res.body.Count).equal(5)
                   should.not.exist(res.body.LastEvaluatedKey)
                   done()
                 })
@@ -3179,47 +3179,47 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({ TableName: helpers.testHashTable, Segment: 0, TotalSegments: 2, ScanFilter: scanFilter }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.Count.should.be.above(0)
+          should(res.statusCode).equal(200)
+          should(res.body.Count).be.above(0)
 
           firstHalf = res.body.Items
 
           request(opts({ TableName: helpers.testHashTable, Segment: 1, TotalSegments: 2, ScanFilter: scanFilter }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.Count.should.be.above(0)
+            should(res.statusCode).equal(200)
+            should(res.body.Count).be.above(0)
 
             secondHalf = res.body.Items
 
-            secondHalf.should.have.length(items.length - firstHalf.length)
+            should(secondHalf).have.length(items.length - firstHalf.length)
 
             request(opts({ TableName: helpers.testHashTable, Segment: 0, TotalSegments: 4, ScanFilter: scanFilter }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
+              should(res.statusCode).equal(200)
 
-              res.body.Items.forEach(function (item) { firstHalf.should.containEql(item) })
+              res.body.Items.forEach(function (item) { should(firstHalf).containEql(item) })
 
               request(opts({ TableName: helpers.testHashTable, Segment: 1, TotalSegments: 4, ScanFilter: scanFilter }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
+                should(res.statusCode).equal(200)
 
-                res.body.Items.forEach(function (item) { firstHalf.should.containEql(item) })
+                res.body.Items.forEach(function (item) { should(firstHalf).containEql(item) })
 
                 request(opts({ TableName: helpers.testHashTable, Segment: 2, TotalSegments: 4, ScanFilter: scanFilter }), function (err, res) {
                   if (err) return done(err)
-                  res.statusCode.should.equal(200)
+                  should(res.statusCode).equal(200)
 
-                  res.body.Items.forEach(function (item) { secondHalf.should.containEql(item) })
+                  res.body.Items.forEach(function (item) { should(secondHalf).containEql(item) })
 
                   request(opts({ TableName: helpers.testHashTable, Segment: 3, TotalSegments: 4, ScanFilter: scanFilter }), function (err, res) {
                     if (err) return done(err)
-                    res.statusCode.should.equal(200)
+                    should(res.statusCode).equal(200)
 
-                    res.body.Items.forEach(function (item) { secondHalf.should.containEql(item) })
+                    res.body.Items.forEach(function (item) { should(secondHalf).containEql(item) })
 
                     done()
                   })
@@ -3249,14 +3249,14 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({ TableName: helpers.testHashTable, ScanFilter: scanFilter }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.Count.should.equal(14)
+          should(res.statusCode).equal(200)
+          should(res.body.Count).equal(14)
           var keys = res.body.Items.map(function (item) { return item.a.S })
-          keys.should.eql([ '2', '8', '9', '1', '6', 'hello', '0', '5', '4', 'äáöü', 'aardman', '7', '3', 'zapf' ])
+          should(keys).eql([ '2', '8', '9', '1', '6', 'hello', '0', '5', '4', 'äáöü', 'aardman', '7', '3', 'zapf' ])
           done()
         })
       })
@@ -3280,14 +3280,14 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({ TableName: helpers.testHashNTable, ScanFilter: scanFilter }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.Count.should.equal(14)
+          should(res.statusCode).equal(200)
+          should(res.body.Count).equal(14)
           var keys = res.body.Items.map(function (item) { return item.a.N })
-          keys.should.eql([ '7', '999.9', '8', '3', '2', '-999.9', '9', '4', '-0.09', '6', '1', '0', '0.012345', '5' ])
+          should(keys).eql([ '7', '999.9', '8', '3', '2', '-999.9', '9', '4', '-0.09', '6', '1', '0', '0.012345', '5' ])
           done()
         })
       })
@@ -3305,21 +3305,21 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({ TableName: helpers.testHashTable, Segment: 0, TotalSegments: 4096 }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.Items.should.containEql(items[0])
-          res.body.Items.should.containEql(items[1])
+          should(res.statusCode).equal(200)
+          should(res.body.Items).containEql(items[0])
+          should(res.body.Items).containEql(items[1])
           request(opts({ TableName: helpers.testHashTable, Segment: 1, TotalSegments: 4096 }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(items[2])
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(items[2])
             request(opts({ TableName: helpers.testHashTable, Segment: 4, TotalSegments: 4096 }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.Items.should.containEql(items[3])
+              should(res.statusCode).equal(200)
+              should(res.body.Items).containEql(items[3])
               done()
             })
           })
@@ -3337,16 +3337,16 @@ describe('scan', function () {
 
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         request(opts({ TableName: helpers.testHashNTable, Segment: 1, TotalSegments: 4096 }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.Items.should.containEql(items[0])
+          should(res.statusCode).equal(200)
+          should(res.body.Items).containEql(items[0])
           request(opts({ TableName: helpers.testHashNTable, Segment: 4095, TotalSegments: 4096 }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.Items.should.containEql(items[1])
+            should(res.statusCode).equal(200)
+            should(res.body.Items).containEql(items[1])
             done()
           })
         })
@@ -3376,8 +3376,8 @@ describe('scan', function () {
             Limit: 26,
           }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 25,
               ScannedCount: 25,
               ConsumedCapacity: {
@@ -3408,8 +3408,8 @@ describe('scan', function () {
             ReturnConsumedCapacity: 'INDEXES',
           }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 25,
               ScannedCount: 25,
               ConsumedCapacity: {
@@ -3445,8 +3445,8 @@ describe('scan', function () {
             Limit: 26,
           }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 25,
               ScannedCount: 25,
               ConsumedCapacity: {
@@ -3477,8 +3477,8 @@ describe('scan', function () {
             ReturnConsumedCapacity: 'INDEXES',
           }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({
+            should(res.statusCode).equal(200)
+            should(res.body).eql({
               Count: 25,
               ScannedCount: 25,
               ConsumedCapacity: {
@@ -3505,9 +3505,9 @@ describe('scan', function () {
 
           request(opts({ TableName: helpers.testHashTable }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
+            should(res.statusCode).equal(200)
             items = res.body.Items
-            items.should.have.length(25)
+            should(items).have.length(25)
 
             var b = new Array(43412).join('b')
 
@@ -3534,10 +3534,10 @@ describe('scan', function () {
 
               request(opts({ TableName: helpers.testHashTable, Select: 'COUNT', ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.ScannedCount.should.equal(25)
-                res.body.Count.should.equal(25)
-                res.body.ConsumedCapacity.CapacityUnits.should.equal(127.5)
+                should(res.statusCode).equal(200)
+                should(res.body.ScannedCount).equal(25)
+                should(res.body.Count).equal(25)
+                should(res.body.ConsumedCapacity.CapacityUnits).equal(127.5)
                 helpers.clearTable(helpers.testHashTable, 'a', done)
               })
             })
@@ -3557,9 +3557,9 @@ describe('scan', function () {
 
           request(opts({ TableName: helpers.testHashTable }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
+            should(res.statusCode).equal(200)
             items = res.body.Items
-            items.should.have.length(25)
+            should(items).have.length(25)
 
             var b = new Array(43412).join('b'), bAttr = b.slice(0, 255)
 
@@ -3586,10 +3586,10 @@ describe('scan', function () {
 
               request(opts({ TableName: helpers.testHashTable, Select: 'COUNT', ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.ScannedCount.should.equal(25)
-                res.body.Count.should.equal(25)
-                res.body.ConsumedCapacity.CapacityUnits.should.equal(128)
+                should(res.statusCode).equal(200)
+                should(res.body.ScannedCount).equal(25)
+                should(res.body.Count).equal(25)
+                should(res.body.ConsumedCapacity.CapacityUnits).equal(128)
                 helpers.clearTable(helpers.testHashTable, 'a', done)
               })
             })
@@ -3609,9 +3609,9 @@ describe('scan', function () {
 
           request(opts({ TableName: helpers.testHashTable }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
+            should(res.statusCode).equal(200)
             items = res.body.Items
-            items.should.have.length(25)
+            should(items).have.length(25)
 
             var b = new Array(43412).join('b')
 
@@ -3638,10 +3638,10 @@ describe('scan', function () {
 
               request(opts({ TableName: helpers.testHashTable, Select: 'COUNT', ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.ScannedCount.should.equal(24)
-                res.body.Count.should.equal(24)
-                res.body.ConsumedCapacity.CapacityUnits.should.equal(127.5)
+                should(res.statusCode).equal(200)
+                should(res.body.ScannedCount).equal(24)
+                should(res.body.Count).equal(24)
+                should(res.body.ConsumedCapacity.CapacityUnits).equal(127.5)
                 helpers.clearTable(helpers.testHashTable, 'a', done)
               })
             })
@@ -3661,9 +3661,9 @@ describe('scan', function () {
 
           request(opts({ TableName: helpers.testRangeTable }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
+            should(res.statusCode).equal(200)
             items = res.body.Items
-            items.should.have.length(25)
+            should(items).have.length(25)
 
             var b = new Array(43381).join('b'), bAttr = b.slice(0, 255)
 
@@ -3690,10 +3690,10 @@ describe('scan', function () {
 
               request(opts({ TableName: helpers.testRangeTable, Select: 'COUNT', ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.ScannedCount.should.equal(25)
-                res.body.Count.should.equal(25)
-                res.body.ConsumedCapacity.CapacityUnits.should.equal(128)
+                should(res.statusCode).equal(200)
+                should(res.body.ScannedCount).equal(25)
+                should(res.body.Count).equal(25)
+                should(res.body.ConsumedCapacity.CapacityUnits).equal(128)
                 helpers.clearTable(helpers.testRangeTable, [ 'a', 'b' ], done)
               })
             })
@@ -3713,9 +3713,9 @@ describe('scan', function () {
 
           request(opts({ TableName: helpers.testRangeTable }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
+            should(res.statusCode).equal(200)
             items = res.body.Items
-            items.should.have.length(13)
+            should(items).have.length(13)
 
             var b = new Array(86648).join('b')
 
@@ -3738,10 +3738,10 @@ describe('scan', function () {
 
               request(opts({ TableName: helpers.testRangeTable, Select: 'COUNT', ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.ScannedCount.should.equal(12)
-                res.body.Count.should.equal(12)
-                res.body.ConsumedCapacity.CapacityUnits.should.equal(127)
+                should(res.statusCode).equal(200)
+                should(res.body.ScannedCount).equal(12)
+                should(res.body.Count).equal(12)
+                should(res.body.ConsumedCapacity.CapacityUnits).equal(127)
                 helpers.clearTable(helpers.testRangeTable, [ 'a', 'b' ], done)
               })
             })
@@ -3761,9 +3761,9 @@ describe('scan', function () {
 
           request(opts({ TableName: helpers.testRangeTable }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
+            should(res.statusCode).equal(200)
             items = res.body.Items
-            items.should.have.length(25)
+            should(items).have.length(25)
 
             var b = new Array(43381).join('b')
 
@@ -3790,10 +3790,10 @@ describe('scan', function () {
 
               request(opts({ TableName: helpers.testRangeTable, Select: 'COUNT', ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.ScannedCount.should.equal(24)
-                res.body.Count.should.equal(24)
-                res.body.ConsumedCapacity.CapacityUnits.should.equal(127.5)
+                should(res.statusCode).equal(200)
+                should(res.body.ScannedCount).equal(24)
+                should(res.body.Count).equal(24)
+                should(res.body.ConsumedCapacity.CapacityUnits).equal(127.5)
                 helpers.clearTable(helpers.testRangeTable, [ 'a', 'b' ], done)
               })
             })
@@ -3813,9 +3813,9 @@ describe('scan', function () {
 
           request(opts({ TableName: helpers.testHashTable }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
+            should(res.statusCode).equal(200)
             items = res.body.Items
-            items.should.have.length(25)
+            should(items).have.length(25)
 
             var b = new Array(43412).join('b'), bAttr = b.slice(0, 255)
 
@@ -3842,10 +3842,10 @@ describe('scan', function () {
 
               request(opts({ TableName: helpers.testHashTable, Select: 'COUNT', ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.ScannedCount.should.equal(24)
-                res.body.Count.should.equal(24)
-                res.body.ConsumedCapacity.CapacityUnits.should.equal(128)
+                should(res.statusCode).equal(200)
+                should(res.body.ScannedCount).equal(24)
+                should(res.body.Count).equal(24)
+                should(res.body.ConsumedCapacity.CapacityUnits).equal(128)
                 helpers.clearTable(helpers.testHashTable, 'a', done)
               })
             })
@@ -3863,7 +3863,7 @@ describe('scan', function () {
         a: { ComparisonOperator: 'IN', AttributeValueList: attrValList },
       } }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         done()
       })
     })

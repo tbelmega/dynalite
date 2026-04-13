@@ -421,8 +421,8 @@ describe('getItem', function () {
     it('should return empty response if key does not exist', function (done) {
       request(opts({ TableName: helpers.testHashTable, Key: { a: { S: helpers.randomString() } } }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({})
+        should(res.statusCode).equal(200)
+        should(res.body).eql({})
         done()
       })
     })
@@ -431,13 +431,13 @@ describe('getItem', function () {
       var req = { TableName: helpers.testHashTable, Key: { a: { S: helpers.randomString() } }, ReturnConsumedCapacity: 'TOTAL' }
       request(opts(req), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 0.5, TableName: helpers.testHashTable } })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 0.5, TableName: helpers.testHashTable } })
         req.ReturnConsumedCapacity = 'INDEXES'
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 0.5, Table: { CapacityUnits: 0.5 }, TableName: helpers.testHashTable } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 0.5, Table: { CapacityUnits: 0.5 }, TableName: helpers.testHashTable } })
           done()
         })
       })
@@ -447,13 +447,13 @@ describe('getItem', function () {
       var req = { TableName: helpers.testHashTable, Key: { a: { S: helpers.randomString() } }, ReturnConsumedCapacity: 'TOTAL', ConsistentRead: true }
       request(opts(req), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 1, TableName: helpers.testHashTable } })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 1, TableName: helpers.testHashTable } })
         req.ReturnConsumedCapacity = 'INDEXES'
         request(opts(req), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ ConsumedCapacity: { CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashTable } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ ConsumedCapacity: { CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashTable } })
           done()
         })
       })
@@ -462,8 +462,8 @@ describe('getItem', function () {
     it('should return object by hash key', function (done) {
       request(opts({ TableName: helpers.testHashTable, Key: { a: hashItem.a }, ConsistentRead: true }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ Item: hashItem })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ Item: hashItem })
         done()
       })
     })
@@ -471,8 +471,8 @@ describe('getItem', function () {
     it('should return object by range key', function (done) {
       request(opts({ TableName: helpers.testRangeTable, Key: { a: rangeItem.a, b: rangeItem.b }, ConsistentRead: true }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ Item: rangeItem })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ Item: rangeItem })
         done()
       })
     })
@@ -488,8 +488,8 @@ describe('getItem', function () {
         getOpts.ConsistentRead = true
         request(opts(getOpts), function (err, res) {
           if (err) return cb(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Item: { b: hashItem.b, g: hashItem.g } })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Item: { b: hashItem.b, g: hashItem.g } })
           cb()
         })
       }, done)
@@ -499,7 +499,7 @@ describe('getItem', function () {
       var item = { a: { S: helpers.randomString() }, b: { M: { a: { S: 'a' }, b: { S: 'b' }, c: { S: 'c' } } }, c: { L: [ { S: 'a' }, { S: 'b' }, { S: 'c' } ] } }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach([
           { ProjectionExpression: 'b.c,c[2],b.b,c[1],c[0].a' },
           { ProjectionExpression: '#b.#c,#c[2],#b.#b,#c[1],#c[0][1]', ExpressionAttributeNames: { '#b': 'b', '#c': 'c' } },
@@ -509,8 +509,8 @@ describe('getItem', function () {
           getOpts.ConsistentRead = true
           request(opts(getOpts), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Item: { b: { M: { b: item.b.M.b, c: item.b.M.c } }, c: { L: [ item.c.L[1], item.c.L[2] ] } } })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Item: { b: { M: { b: item.b.M.b, c: item.b.M.c } }, c: { L: [ item.c.L[1], item.c.L[2] ] } } })
             cb()
           })
         }, done)
@@ -522,11 +522,11 @@ describe('getItem', function () {
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==', 'AQ==' ] } }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         request(opts({ TableName: helpers.testHashTable, Key: { a: item.a }, ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.ConsumedCapacity.should.eql({ CapacityUnits: 0.5, TableName: helpers.testHashTable })
+          should(res.statusCode).equal(200)
+          should(res.body.ConsumedCapacity).eql({ CapacityUnits: 0.5, TableName: helpers.testHashTable })
           done()
         })
       })
@@ -537,11 +537,11 @@ describe('getItem', function () {
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==' ] } }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         request(opts({ TableName: helpers.testHashTable, Key: { a: item.a }, ReturnConsumedCapacity: 'TOTAL' }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.ConsumedCapacity.should.eql({ CapacityUnits: 1, TableName: helpers.testHashTable })
+          should(res.statusCode).equal(200)
+          should(res.body.ConsumedCapacity).eql({ CapacityUnits: 1, TableName: helpers.testHashTable })
           done()
         })
       })
@@ -570,12 +570,12 @@ describe('getItem', function () {
       batchReq.RequestItems[helpers.testHashTable] = items.map(function (item) { return { PutRequest: { Item: item } } })
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach(items, function (item, cb) {
           request(opts({ TableName: helpers.testHashTable, Key: { a: item.a }, ReturnConsumedCapacity: 'TOTAL', ConsistentRead: true }), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.ConsumedCapacity.should.eql({ CapacityUnits: 1, TableName: helpers.testHashTable })
+            should(res.statusCode).equal(200)
+            should(res.body.ConsumedCapacity).eql({ CapacityUnits: 1, TableName: helpers.testHashTable })
             cb()
           })
         }, done)
@@ -605,12 +605,12 @@ describe('getItem', function () {
       batchReq.RequestItems[helpers.testHashTable] = items.map(function (item) { return { PutRequest: { Item: item } } })
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         async.forEach(items, function (item, cb) {
           request(opts({ TableName: helpers.testHashTable, Key: { a: item.a }, ReturnConsumedCapacity: 'TOTAL', ConsistentRead: true }), function (err, res) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.ConsumedCapacity.should.eql({ CapacityUnits: 2, TableName: helpers.testHashTable })
+            should(res.statusCode).equal(200)
+            should(res.body.ConsumedCapacity).eql({ CapacityUnits: 2, TableName: helpers.testHashTable })
             cb()
           })
         }, done)

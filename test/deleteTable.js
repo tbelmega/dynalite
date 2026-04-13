@@ -74,7 +74,7 @@ describe('deleteTable', function () {
       }
       request(helpers.opts('CreateTable', table), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
 
         assertInUse({ TableName: table.TableName }, 'Attempt to change a resource which is still in use: ' +
             'Table is being created: ' + table.TableName, function (err) {
@@ -85,14 +85,14 @@ describe('deleteTable', function () {
 
             request(opts(table), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
+              should(res.statusCode).equal(200)
 
-              res.body.TableDescription.TableStatus.should.equal('DELETING')
+              should(res.body.TableDescription.TableStatus).equal('DELETING')
               should.not.exist(res.body.TableDescription.GlobalSecondaryIndexes)
 
               helpers.waitUntilDeleted(table.TableName, function (err, res) {
                 if (err) return done(err)
-                res.body.__type.should.equal('com.amazonaws.dynamodb.v20120810#ResourceNotFoundException')
+                should(res.body.__type).equal('com.amazonaws.dynamodb.v20120810#ResourceNotFoundException')
                 done()
               })
             })

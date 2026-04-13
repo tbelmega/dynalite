@@ -410,7 +410,7 @@ describe('batchWriteItem', function () {
       }
       request(helpers.opts('CreateTable', table), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         var batchReq = { RequestItems: {} }
         batchReq.RequestItems[table.TableName] = [ { PutRequest: { Item: { a: { S: 'a' } } } } ]
         assertNotFound(batchReq, 'Requested resource not found', done)
@@ -430,16 +430,16 @@ describe('batchWriteItem', function () {
       batchReq.RequestItems[helpers.testRangeTable] = [ { PutRequest: { Item: item2 } } ]
       request(opts(batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.should.eql({ UnprocessedItems: {} })
+        should(res.statusCode).equal(200)
+        should(res.body).eql({ UnprocessedItems: {} })
         request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: { a: item.a }, ConsistentRead: true }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.should.eql({ Item: item })
+          should(res.statusCode).equal(200)
+          should(res.body).eql({ Item: item })
           request(helpers.opts('GetItem', { TableName: helpers.testRangeTable, Key: { a: item2.a, b: item2.b }, ConsistentRead: true }), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ Item: item2 })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ Item: item2 })
             done()
           })
         })
@@ -454,22 +454,22 @@ describe('batchWriteItem', function () {
       batchReq.RequestItems[helpers.testRangeTable] = [ { DeleteRequest: { Key: { a: item2.a, b: item2.b } } } ]
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         request(helpers.opts('PutItem', { TableName: helpers.testRangeTable, Item: item2 }), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
           request(opts(batchReq), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.should.eql({ UnprocessedItems: {} })
+            should(res.statusCode).equal(200)
+            should(res.body).eql({ UnprocessedItems: {} })
             request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: { a: item.a }, ConsistentRead: true }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.should.eql({})
+              should(res.statusCode).equal(200)
+              should(res.body).eql({})
               request(helpers.opts('GetItem', { TableName: helpers.testRangeTable, Key: { a: item2.a, b: item2.b }, ConsistentRead: true }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.should.eql({})
+                should(res.statusCode).equal(200)
+                should(res.body).eql({})
                 done()
               })
             })
@@ -484,23 +484,23 @@ describe('batchWriteItem', function () {
         batchReq = { RequestItems: {} }
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        should(res.statusCode).equal(200)
         batchReq.RequestItems[helpers.testHashTable] = [ { DeleteRequest: { Key: { a: item.a } } }, { PutRequest: { Item: item2 } } ]
         request(opts(batchReq), function (err, res) {
           if (err) return done(err)
-          res.body.should.eql({ UnprocessedItems: {} })
+          should(res.body).eql({ UnprocessedItems: {} })
           batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: item } }, { DeleteRequest: { Key: { a: item2.a } } } ]
           request(opts(batchReq), function (err, res) {
             if (err) return done(err)
-            res.body.should.eql({ UnprocessedItems: {} })
+            should(res.body).eql({ UnprocessedItems: {} })
             request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: { a: item.a }, ConsistentRead: true }), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.should.eql({ Item: item })
+              should(res.statusCode).equal(200)
+              should(res.body).eql({ Item: item })
               request(helpers.opts('GetItem', { TableName: helpers.testHashTable, Key: { a: item2.a }, ConsistentRead: true }), function (err, res) {
                 if (err) return done(err)
-                res.statusCode.should.equal(200)
-                res.body.should.eql({})
+                should(res.statusCode).equal(200)
+                should(res.body).eql({})
                 done()
               })
             })
@@ -518,29 +518,29 @@ describe('batchWriteItem', function () {
       batchReq.RequestItems[helpers.testHashNTable] = [ { PutRequest: { Item: { a: { N: key3 } } } } ]
       request(opts(batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 2, TableName: helpers.testHashTable })
-        res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
+        should(res.statusCode).equal(200)
+        should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 2, TableName: helpers.testHashTable })
+        should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
         batchReq.ReturnConsumedCapacity = 'INDEXES'
         request(opts(batchReq), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable })
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
+          should(res.statusCode).equal(200)
+          should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable })
+          should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
           batchReq.ReturnConsumedCapacity = 'TOTAL'
           batchReq.RequestItems[helpers.testHashTable] = [ { DeleteRequest: { Key: { a: item.a } } }, { DeleteRequest: { Key: { a: { S: key2 } } } } ]
           batchReq.RequestItems[helpers.testHashNTable] = [ { DeleteRequest: { Key: { a: { N: key3 } } } } ]
           request(opts(batchReq), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 2, TableName: helpers.testHashTable })
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
+            should(res.statusCode).equal(200)
+            should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 2, TableName: helpers.testHashTable })
+            should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
             batchReq.ReturnConsumedCapacity = 'INDEXES'
             request(opts(batchReq), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable })
-              res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
+              should(res.statusCode).equal(200)
+              should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable })
+              should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
               done()
             })
           })
@@ -557,29 +557,29 @@ describe('batchWriteItem', function () {
       batchReq.RequestItems[helpers.testHashNTable] = [ { PutRequest: { Item: { a: { N: key3 } } } } ]
       request(opts(batchReq), function (err, res) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 3, TableName: helpers.testHashTable })
-        res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
+        should(res.statusCode).equal(200)
+        should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 3, TableName: helpers.testHashTable })
+        should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
         batchReq.ReturnConsumedCapacity = 'INDEXES'
         request(opts(batchReq), function (err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 3, Table: { CapacityUnits: 3 }, TableName: helpers.testHashTable })
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
+          should(res.statusCode).equal(200)
+          should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 3, Table: { CapacityUnits: 3 }, TableName: helpers.testHashTable })
+          should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
           batchReq.ReturnConsumedCapacity = 'TOTAL'
           batchReq.RequestItems[helpers.testHashTable] = [ { DeleteRequest: { Key: { a: item.a } } }, { DeleteRequest: { Key: { a: { S: key2 } } } } ]
           batchReq.RequestItems[helpers.testHashNTable] = [ { DeleteRequest: { Key: { a: { N: key3 } } } } ]
           request(opts(batchReq), function (err, res) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 3, TableName: helpers.testHashTable })
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
+            should(res.statusCode).equal(200)
+            should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 3, TableName: helpers.testHashTable })
+            should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
             batchReq.ReturnConsumedCapacity = 'INDEXES'
             request(opts(batchReq), function (err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable })
-              res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
+              should(res.statusCode).equal(200)
+              should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable })
+              should(res.body.ConsumedCapacity).containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
               done()
             })
           })
@@ -637,7 +637,7 @@ describe('batchWriteItem', function () {
             // return cb(new Error(JSON.stringify(res.body)))
             return cb()
           }
-          res.statusCode.should.equal(200)
+          should(res.statusCode).equal(200)
 
           console.log([ CAPACITY, res.body.ConsumedCapacity[0].CapacityUnits, totalSize ].join())
           setTimeout(cb, res.body.ConsumedCapacity[0].CapacityUnits * 1000 / CAPACITY)
