@@ -1,18 +1,28 @@
+var should = require('should')
 var https = require('https'),
   once = require('once'),
-  dynalite = require('..'),
-  helpers = require('./helpers')
+  dynalite = require('../..'),
+  helpers = require('../../test/helpers')
 
-var request = helpers.request
+import type {
+  AsyncCallback,
+  TestDynamoResponse,
+} from '../types/types'
+
+type ConnectionResponse = Omit<TestDynamoResponse, 'body'> & {
+  body: string | Record<string, unknown>;
+}
+
+var request: (opts: Record<string, unknown>, cb: (err: unknown, res: ConnectionResponse) => void) => void = helpers.request
 
 describe('dynalite connections', function () {
 
   describe('basic', function () {
 
-    function assert404 (done) {
-      return function (err, res) {
+    function assert404 (done: AsyncCallback) {
+      return function (err: unknown, res: ConnectionResponse) {
         // Sometimes DynamoDB returns weird/bad HTTP responses
-        if (err && err.code == 'HPE_INVALID_CONSTANT') return done()
+        if (err && typeof err == 'object' && 'code' in err && err.code == 'HPE_INVALID_CONSTANT') return done()
         if (err) return done(err)
         should(res.statusCode).equal(404)
         try {
@@ -46,7 +56,7 @@ describe('dynalite connections', function () {
       for (i = 0; i < body.length; i++)
         body[i] = 'a'
 
-      request({ body: body.join(''), noSign: true }, function (err, res) {
+      request({ body: body.join(''), noSign: true }, function (err: unknown, res: ConnectionResponse) {
         if (err) return done(err)
         should(res.statusCode).equal(413)
         should(res.headers['transfer-encoding']).equal('chunked')
@@ -60,8 +70,8 @@ describe('dynalite connections', function () {
       for (i = 0; i < body.length; i++)
         body[i] = 'a'
 
-      request({ body: body.join(''), noSign: true }, function (err, res) {
-        if (err && err.code == 'HPE_INVALID_CONSTANT') return done()
+      request({ body: body.join(''), noSign: true }, function (err: unknown, res: ConnectionResponse) {
+        if (err && typeof err == 'object' && 'code' in err && err.code == 'HPE_INVALID_CONSTANT') return done()
         if (err) return done(err)
         should(res.statusCode).equal(404)
         done()
@@ -73,12 +83,14 @@ describe('dynalite connections', function () {
     })
 
     it('should return 200 if a GET', function (done) {
-      request({ method: 'GET', noSign: true }, function (err, res) {
+      request({ method: 'GET', noSign: true }, function (err: unknown, res: ConnectionResponse) {
         if (err) return done(err)
+        if (typeof res.body != 'string') return done(new Error('Expected string response body'))
+        var responseBody = res.body
         should(res.statusCode).equal(200)
-        should(res.body).equal('healthy: dynamodb.' + helpers.awsRegion + '.amazonaws.com ')
+        should(responseBody).equal('healthy: dynamodb.' + helpers.awsRegion + '.amazonaws.com ')
         should(res.headers['x-amz-crc32']).match(/^[0-9]+$/)
-        should(res.headers['content-length']).equal(res.body.length.toString())
+        should(res.headers['content-length']).equal(responseBody.length.toString())
         should(res.headers['x-amzn-requestid']).match(/^[0-9A-Z]{52}$/)
         done()
       })
@@ -111,12 +123,12 @@ describe('dynalite connections', function () {
     it('should connect to SSL', function (done) {
       var port = 10000 + Math.round(Math.random() * 10000), dynaliteServer = dynalite({ ssl: true })
 
-      dynaliteServer.listen(port, function (err) {
+      dynaliteServer.listen(port, function (err: unknown) {
         if (err) return done(err)
 
         done = once(done)
 
-        https.request({ host: '127.0.0.1', port: port, rejectUnauthorized: false }, function (res) {
+        https.request({ host: '127.0.0.1', port: port, rejectUnauthorized: false }, function (res: import('http').IncomingMessage) {
           res.on('error', done)
           res.on('data', function () {})
           res.on('end', function () {
@@ -131,58 +143,66 @@ describe('dynalite connections', function () {
 
   describe('JSON', function () {
 
-    function assertBody (body, crc32, contentType, done) {
-      if (typeof contentType == 'function') { done = contentType; contentType = 'application/json' }
-      return function (err, res) {
-        if (err) return done(err)
+    function assertBody (body: unknown, crc32: number, contentType: string | AsyncCallback, done?: AsyncCallback) {
+      var doneFn = done
+      var normalizedContentType = contentType
+      if (typeof contentType == 'function') {
+        doneFn = contentType
+        normalizedContentType = 'application/json'
+      }
+      return function (err: unknown, res: ConnectionResponse) {
+        if (doneFn == null || typeof normalizedContentType != 'string') throw new Error('Missing assertion callback')
+        var responseBody = res.body
+        if (err) return doneFn(err)
         should(res.statusCode).equal(400)
-        should(res.body).eql(body)
+        should(responseBody).eql(body)
         should(res.headers['x-amzn-requestid']).match(/^[0-9A-Z]{52}$/)
         should(res.headers['x-amz-crc32']).equal(String(crc32))
-        should(res.headers['content-type']).equal(contentType)
-        should(res.headers['content-length']).equal(String(Buffer.byteLength(JSON.stringify(res.body), 'utf8')))
-        done()
+        should(res.headers['content-type']).equal(normalizedContentType)
+        should(res.headers['content-length']).equal(String(Buffer.byteLength(JSON.stringify(responseBody), 'utf8')))
+        doneFn()
       }
     }
 
-    function assertSerialization (contentType, done) {
+    function assertSerialization (contentType: string | AsyncCallback, done?: AsyncCallback) {
       return assertBody({ __type: 'com.amazon.coral.service#SerializationException' }, 3948637019,
         contentType, done)
     }
 
-    function assertUnknownOp (contentType, done) {
+    function assertUnknownOp (contentType: string | AsyncCallback, done?: AsyncCallback) {
       return assertBody({ __type: 'com.amazon.coral.service#UnknownOperationException' }, 1368724161,
         contentType, done)
     }
 
-    function assertMissing (done) {
+    function assertMissing (done: AsyncCallback) {
       return assertBody({
         __type: 'com.amazon.coral.service#MissingAuthenticationTokenException',
         message: 'Request is missing Authentication Token',
       }, 2088342776, done)
     }
 
-    function assertInvalid (done) {
+    function assertInvalid (done: AsyncCallback) {
       return assertBody({
         __type: 'com.amazon.coral.service#InvalidSignatureException',
         message: 'Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header.',
       }, 2139606068, done)
     }
 
-    function assertIncomplete (msg, crc32, done) {
+    function assertIncomplete (msg: string, crc32: number, done: AsyncCallback) {
       return assertBody({
         __type: 'com.amazon.coral.service#IncompleteSignatureException',
         message: msg,
       }, crc32, done)
     }
 
-    function assertCors (headers, done) {
-      return function (err, res) {
+    function assertCors (headers: Record<string, string> | null, done: AsyncCallback) {
+      return function (err: unknown, res: ConnectionResponse) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
         should(res.headers['x-amzn-requestid']).match(/^[0-9A-Z]{52}$/)
         should(res.headers['access-control-allow-origin']).equal('*')
-        Object.keys(headers || {}).forEach(function (header) {
+        Object.keys(headers || {}).forEach(function (header: string) {
+          if (headers == null) return
           should(res.headers[header]).equal(headers[header])
         })
         should(res.headers['access-control-max-age']).equal('172800')
@@ -227,7 +247,7 @@ describe('dynalite connections', function () {
     })
 
     it('should return UnknownOperationException and set CORS if using Origin', function (done) {
-      request({ headers: { origin: 'whatever' } }, function (err, res) {
+      request({ headers: { origin: 'whatever' } }, function (err: unknown, res: ConnectionResponse) {
         if (err) return done(err)
         should(res.headers['access-control-allow-origin']).equal('*')
         assertUnknownOp(done)(err, res)
