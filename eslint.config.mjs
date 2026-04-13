@@ -6,10 +6,12 @@ export default [
     ignores: [
       'coverage/**',
       'db/*Parser.js',
+      'dist-test/**',
+      'test/**/*.ts',
     ],
   },
   {
-    files: [ 'test/**/*.js' ],
+    files: [ 'test/**/*.js', 'test/**/*.ts' ],
     languageOptions: {
       globals: {
         describe: 'readonly',

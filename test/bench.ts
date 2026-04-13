@@ -1,4 +1,6 @@
-var helpers = require('./helpers')
+var should = require('should');
+var helpers = require('../test/helpers');
+import type {LastEvaluatedKey, ScanCommandResponse} from '../types/ScanCommandResponse';
 
 describe.skip('benchmarks', function () {
 
@@ -10,7 +12,7 @@ describe.skip('benchmarks', function () {
     for (i = 0; i < numItems; i++)
       items[i] = { a: { S: String(i) } }
 
-    helpers.batchBulkPut(helpers.testHashTable, items, numSegments, function (err) {
+    helpers.batchBulkPut(helpers.testHashTable, items, numSegments, function (err: unknown,) {
       if (err) return done(err)
 
 
@@ -25,16 +27,20 @@ describe.skip('benchmarks', function () {
 
     scan()
 
-    function scan (key) {
+    function scan (key: LastEvaluatedKey = undefined) {
       var start = Date.now()
 
-      helpers.request(helpers.opts('Scan', { TableName: helpers.testHashTable, Limit: 1000, ExclusiveStartKey: key }), function (err, res) {
+      helpers.request(helpers.opts('Scan', { TableName: helpers.testHashTable, Limit: 1000, ExclusiveStartKey: key }), function (
+        err: unknown,
+        res: ScanCommandResponse,
+      ) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        if (res.statusCode == null) return done(new Error('Missing statusCode'))
+        should(res.statusCode).equal(200)
 
 
         console.log('Scan: %d items, %dms, %d items/sec, %s', res.body.Count, Date.now() - start,
-          1000 * res.body.Count / (Date.now() - start), JSON.stringify(res.body.LastEvaluatedKey))
+          1000 * (res.body?.Count ?? 0) / (Date.now() - start), JSON.stringify(res.body.LastEvaluatedKey))
 
         if (res.body.LastEvaluatedKey)
           return scan(res.body.LastEvaluatedKey)

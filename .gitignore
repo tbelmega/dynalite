@@ -8,3 +8,4 @@ package-lock.json
 .kiro
 .idea
 .codex
+dist
