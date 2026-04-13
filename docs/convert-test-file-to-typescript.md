@@ -26,11 +26,13 @@ If you discover a process change that would significantly reduce repeated migrat
 node scripts/rewrite-should-style.js test/yourFile.ts
 node scripts/rewrite-test-helper-paths.js test/yourFile.ts
 node scripts/ensure-should-require.js test/yourFile.ts
+node scripts/add-test-helper-types.js test/yourFile.ts
 ```
 
 These scripts are intentionally narrow and idempotent. Run them on the single file you are converting, not on the whole suite during migration work.
 Treat them as a first pass, not as a substitute for reading the converted file.
 After major manual edits, rerun any relevant helper script if needed.
+The helper-types pass adds first-pass TS annotations for the common `request`, `opts`, and `assertConditional` helper bindings plus the matching shared imports from `types/types.ts`.
 
 3. Keep existing CommonJS runtime imports with `require(...)`.
    If you need types, add `import type ...` alongside them.

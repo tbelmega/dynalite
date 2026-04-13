@@ -4,6 +4,8 @@ export type DynamoCommandResponse<TBody> = import('http').IncomingMessage & { bo
 export type ScanCommandResponse = DynamoCommandResponse<ScanCommandOutput>;
 export type LastEvaluatedKey = ScanCommandOutput['LastEvaluatedKey'];
 export type AsyncCallback = (err?: unknown) => void;
+export type TestDynamoRequest = Record<string, unknown>;
+export type TestDynamoResponse = DynamoCommandResponse<Record<string, unknown>>;
 export type RawAttributeValue = {
   B?: string;
   BOOL?: boolean;
@@ -46,3 +48,30 @@ export type CreateTableRequest = {
   ProvisionedThroughput: { ReadCapacityUnits: number; WriteCapacityUnits: number };
   TableName: string;
 };
+export type PutItemExpectedAttributeValue = {
+  AttributeValueList?: RawAttributeValue[];
+  ComparisonOperator?: string;
+  Exists?: boolean;
+  Value?: RawAttributeValue;
+} & Record<string, unknown>;
+export type PutItemExpectedMap = Record<string, PutItemExpectedAttributeValue>;
+export type PutItemRequest = {
+  ConditionExpression?: string;
+  Expected?: PutItemExpectedMap;
+  ExpressionAttributeNames?: Record<string, string>;
+  ExpressionAttributeValues?: Record<string, RawAttributeValue>;
+  Item?: DynamoItem;
+  ReturnConsumedCapacity?: string;
+  ReturnItemCollectionMetrics?: string;
+  ReturnValues?: string;
+  TableName?: string;
+} & Record<string, unknown>;
+export type PutItemResponseBody = {
+  Attributes?: DynamoItem;
+  ConsumedCapacity?: ConsumedCapacity;
+  Item?: DynamoItem;
+  TableDescription?: Record<string, unknown>;
+} & Record<string, unknown>;
+export type PutItemResponse = DynamoCommandResponse<PutItemResponseBody>;
+export type InvalidAttributeValueCase = [InvalidAttributeValue, string];
+export type StringValidationCase = [string, string];

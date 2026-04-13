@@ -1,14 +1,25 @@
+var should = require('should')
 var async = require('async'),
-  helpers = require('./helpers')
+  helpers = require('../../test/helpers')
+
+import type {
+  AsyncCallback,
+  CreateTableRequest,
+  DynamoItem,
+  InvalidAttributeValue,
+  InvalidAttributeValueCase,
+  PutItemRequest,
+  PutItemResponse,
+} from '../types/types'
 
 var target = 'PutItem',
-  request = helpers.request,
+  request: (requestOptions: Record<string, unknown>, cb: (err: unknown, res: PutItemResponse) => void) => void = helpers.request,
   randomName = helpers.randomName,
-  opts = helpers.opts.bind(null, target),
+  opts: (data: PutItemRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target),
   assertNotFound = helpers.assertNotFound.bind(null, target),
-  assertConditional = helpers.assertConditional.bind(null, target)
+  assertConditional: (data: PutItemRequest, done: AsyncCallback) => void = helpers.assertConditional.bind(null, target)
 
 describe('putItem', function () {
 
@@ -176,7 +187,7 @@ describe('putItem', function () {
         { M: { a: {} } },
         { L: [ {} ] },
         { L: [ { a: {} } ] },
-      ], function (expr, cb) {
+      ], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({ TableName: 'abc', Item: { a: expr }, Expected: { a: {} } },
           'Supplied AttributeValue is empty, must contain exactly one of the supported datatypes', cb)
       }, done)
@@ -190,7 +201,7 @@ describe('putItem', function () {
         [ { BS: [] }, 'Binary sets should not be empty' ],
         [ { SS: [ 'a', 'a' ] }, 'Input collection [a, a] contains duplicates.' ],
         [ { BS: [ 'Yg==', 'Yg==' ] }, 'Input collection [Yg==, Yg==]of type BS contains duplicates.' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Item: { a: expr[0] },
@@ -215,7 +226,7 @@ describe('putItem', function () {
         [ { N: '-1e126' }, 'Number overflow. Attempting to store a number with magnitude larger than supported range' ],
         [ { N: '1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
         [ { N: '-1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({ TableName: 'abc', Item: { a: expr[0] } }, expr[1], cb)
       }, done)
     })
@@ -333,7 +344,7 @@ describe('putItem', function () {
     })
 
     it('should return ValidationException for incorrect ReturnValues', function (done) {
-      async.forEach([ 'UPDATED_OLD', 'ALL_NEW', 'UPDATED_NEW' ], function (returnValues, cb) {
+      async.forEach([ 'UPDATED_OLD', 'ALL_NEW', 'UPDATED_NEW' ] as string[], function (returnValues: string, cb: AsyncCallback) {
         assertValidation({ TableName: 'abc', Item: {}, ReturnValues: returnValues },
           'ReturnValues can only be ALL_OLD or NONE', cb)
       }, done)
@@ -478,7 +489,7 @@ describe('putItem', function () {
       async.forEach([
         {},
         { b: { S: 'a' } },
-      ], function (expr, cb) {
+      ], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({ TableName: helpers.testHashTable, Item: expr },
           'One or more parameter values were invalid: Missing the key a in the item', cb)
       }, done)
@@ -495,7 +506,7 @@ describe('putItem', function () {
         { a: { BS: [ 'aaaa' ] } },
         { a: { M: {} } },
         { a: { L: [] } },
-      ], function (expr, cb) {
+      ], function (expr: { a: InvalidAttributeValue }, cb: AsyncCallback) {
         assertValidation({ TableName: helpers.testHashTable, Item: expr },
           'One or more parameter values were invalid: Type mismatch for key a expected: S actual: ' + Object.keys(expr.a)[0], cb)
       }, done)
@@ -537,7 +548,7 @@ describe('putItem', function () {
     })
 
     it('should return ResourceNotFoundException if table is being created', function (done) {
-      var table = {
+      var table: CreateTableRequest = {
         TableName: randomName(),
         AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' } ],
         KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
@@ -685,7 +696,7 @@ describe('putItem', function () {
     })
 
     it('should return correct old values when they exist', function (done) {
-      var item = { a: { S: helpers.randomString() }, b: { N: '-0015.789e6' }, c: { S: 'a' } }
+      var item: DynamoItem = { a: { S: helpers.randomString() }, b: { N: '-0015.789e6' }, c: { S: 'a' } }
       request(opts({ TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -728,7 +739,7 @@ describe('putItem', function () {
         { ConditionExpression: '#a = :a', ExpressionAttributeNames: { '#a': 'a' }, ExpressionAttributeValues: { ':a': { S: helpers.randomString() } } },
         { ConditionExpression: 'attribute_exists(a)' },
         { ConditionExpression: 'attribute_exists(#a)', ExpressionAttributeNames: { '#a': 'a' } },
-      ], function (putOpts, cb) {
+      ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
         putOpts.TableName = helpers.testHashTable
         putOpts.Item = { a: { S: helpers.randomString() } }
         assertConditional(putOpts, cb)
@@ -745,7 +756,7 @@ describe('putItem', function () {
           { Expected: { a: { ComparisonOperator: 'NULL' } } },
           { ConditionExpression: 'attribute_not_exists(a)' },
           { ConditionExpression: 'attribute_not_exists(#a)', ExpressionAttributeNames: { '#a': 'a' } },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -763,7 +774,7 @@ describe('putItem', function () {
           { Expected: { a: { ComparisonOperator: 'NULL' } } },
           { ConditionExpression: 'attribute_not_exists(a)' },
           { ConditionExpression: 'attribute_not_exists(#a)', ExpressionAttributeNames: { '#a': 'a' } },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = { a: { S: helpers.randomString() } }
           request(opts(putOpts), function (err, res) {
@@ -791,7 +802,7 @@ describe('putItem', function () {
           { ConditionExpression: '#a = :a', ExpressionAttributeNames: { '#a': 'a' }, ExpressionAttributeValues: { ':a': item.a } },
           { ConditionExpression: 'attribute_not_exists(b)' },
           { ConditionExpression: 'attribute_not_exists(#b)', ExpressionAttributeNames: { '#b': 'b' } },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -814,7 +825,7 @@ describe('putItem', function () {
           { Expected: { b: { ComparisonOperator: 'NULL' } } },
           { ConditionExpression: 'attribute_not_exists(b)' },
           { ConditionExpression: 'attribute_not_exists(#b)', ExpressionAttributeNames: { '#b': 'b' } },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = { a: item.a, b: { S: helpers.randomString() } }
           assertConditional(putOpts, cb)
@@ -832,7 +843,7 @@ describe('putItem', function () {
           { Expected: { b: { ComparisonOperator: 'NULL' } } },
           { ConditionExpression: 'attribute_not_exists(b)' },
           { ConditionExpression: 'attribute_not_exists(#b)', ExpressionAttributeNames: { '#b': 'b' } },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = { a: item.a }
           assertConditional(putOpts, cb)
@@ -850,7 +861,7 @@ describe('putItem', function () {
           { Expected: { b: { ComparisonOperator: 'NULL' } } },
           { ConditionExpression: 'attribute_not_exists(b)' },
           { ConditionExpression: 'attribute_not_exists(#b)', ExpressionAttributeNames: { '#b': 'b' } },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -875,7 +886,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': item.a, ':c': item.c },
             ExpressionAttributeNames: { '#b': 'b' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -905,7 +916,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': item.a, ':c': { S: helpers.randomString() } },
             ExpressionAttributeNames: { '#b': 'b' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -929,7 +940,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': item.a, ':c': { S: helpers.randomString() } },
             ExpressionAttributeNames: { '#b': 'b' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -958,7 +969,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: helpers.randomString() } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -987,7 +998,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': item.a },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -1011,7 +1022,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'c' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -1040,7 +1051,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'c' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -1064,7 +1075,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'c' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -1093,7 +1104,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'c' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -1117,7 +1128,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'a' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -1146,7 +1157,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'c' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -1170,7 +1181,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'a' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -1199,7 +1210,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'c' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -1223,7 +1234,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'ell' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -1252,7 +1263,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'goodbye' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -1276,7 +1287,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'he' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -1305,7 +1316,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'goodbye' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -1329,7 +1340,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'goodbye' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -1358,7 +1369,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'ell' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -1382,7 +1393,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'c' }, ':b': { S: 'b' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -1411,7 +1422,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'c' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -1435,7 +1446,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'a' }, ':b': { S: 'c' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           request(opts(putOpts), function (err, res) {
@@ -1464,7 +1475,7 @@ describe('putItem', function () {
             ExpressionAttributeValues: { ':a': { S: 'c' }, ':b': { S: 'd' } },
             ExpressionAttributeNames: { '#a': 'a' },
           },
-        ], function (putOpts, cb) {
+        ], function (putOpts: PutItemRequest, cb: AsyncCallback) {
           putOpts.TableName = helpers.testHashTable
           putOpts.Item = item
           assertConditional(putOpts, cb)
@@ -1475,7 +1486,7 @@ describe('putItem', function () {
     it('should return ConsumedCapacity for small item', function (done) {
       var a = helpers.randomString(), b = new Array(1010 - a.length).join('b'),
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==', 'AQ==' ] } },
-        req = { TableName: helpers.testHashTable, Item: item, ReturnConsumedCapacity: 'TOTAL' }
+        req: PutItemRequest = { TableName: helpers.testHashTable, Item: item, ReturnConsumedCapacity: 'TOTAL' }
       request(opts(req), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -1493,7 +1504,7 @@ describe('putItem', function () {
     it('should return ConsumedCapacity for larger item', function (done) {
       var a = helpers.randomString(), b = new Array(1012 - a.length).join('b'),
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==' ] } },
-        req = { TableName: helpers.testHashTable, Item: item, ReturnConsumedCapacity: 'TOTAL' }
+        req: PutItemRequest = { TableName: helpers.testHashTable, Item: item, ReturnConsumedCapacity: 'TOTAL' }
       request(opts(req), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
