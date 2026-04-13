@@ -1,14 +1,30 @@
+var should = require('should')
 var async = require('async'),
-  helpers = require('./helpers'),
-  db = require('../db')
+  helpers = require('../../test/helpers'),
+  db = require('../../db')
+
+import type {
+  AsyncCallback,
+  BatchWriteItemResponse,
+  BatchWriteRequest,
+  DynamoItem,
+  InvalidAttributeValue,
+  ValidationCase,
+  TestDynamoRequest,
+  TestDynamoResponse,
+} from '../types/types'
 
 var target = 'BatchWriteItem',
-  request = helpers.request,
+  request: (requestOptions: TestDynamoRequest, cb: (err: unknown, res: TestDynamoResponse) => void) => void = helpers.request,
   randomName = helpers.randomName,
-  opts = helpers.opts.bind(null, target),
+  opts: (data: TestDynamoRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target),
   assertNotFound = helpers.assertNotFound.bind(null, target)
+
+function createBatchWriteRequest (): BatchWriteRequest {
+  return { RequestItems: {} }
+}
 
 describe('batchWriteItem', function () {
 
@@ -176,14 +192,14 @@ describe('batchWriteItem', function () {
 
     it('should return ValidationException for puts and deletes of the same item with put first', function (done) {
       var item = { a: { S: helpers.randomString() }, c: { S: 'c' } },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: item } }, { DeleteRequest: { Key: { a: item.a } } } ]
       assertValidation(batchReq, 'Provided list of item keys contains duplicates', done)
     })
 
     it('should return ValidationException for puts and deletes of the same item with delete first', function (done) {
       var item = { a: { S: helpers.randomString() }, c: { S: 'c' } },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testHashTable] = [ { DeleteRequest: { Key: { a: item.a } } }, { PutRequest: { Item: item } } ]
       assertValidation(batchReq, 'Provided list of item keys contains duplicates', done)
     })
@@ -206,7 +222,7 @@ describe('batchWriteItem', function () {
         { M: { a: {} } },
         { L: [ {} ] },
         { L: [ { a: {} } ] },
-      ], function (expr, cb) {
+      ], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({ RequestItems: { abc: [ { PutRequest: { Item: { a: expr } } } ] } },
           'Supplied AttributeValue is empty, must contain exactly one of the supported datatypes', cb)
       }, done)
@@ -220,7 +236,7 @@ describe('batchWriteItem', function () {
         [ { BS: [] }, 'Binary sets should not be empty' ],
         [ { SS: [ 'a', 'a' ] }, 'Input collection [a, a] contains duplicates.' ],
         [ { BS: [ 'Yg==', 'Yg==' ] }, 'Input collection [Yg==, Yg==]of type BS contains duplicates.' ],
-      ], function (expr, cb) {
+      ], function (expr: ValidationCase, cb: AsyncCallback) {
         assertValidation({ RequestItems: { abc: [ { PutRequest: { Item: { a: expr[0] } } } ] } },
           'One or more parameter values were invalid: ' + expr[1], cb)
       }, done)
@@ -240,7 +256,7 @@ describe('batchWriteItem', function () {
         [ { N: '-1e126' }, 'Number overflow. Attempting to store a number with magnitude larger than supported range' ],
         [ { N: '1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
         [ { N: '-1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
-      ], function (expr, cb) {
+      ], function (expr: ValidationCase, cb: AsyncCallback) {
         assertValidation({ RequestItems: { abc: [ { PutRequest: { Item: { a: expr[0] } } } ] } }, expr[1], cb)
       }, done)
     })
@@ -343,7 +359,7 @@ describe('batchWriteItem', function () {
     })
 
     it('should return ResourceNotFoundException if key is empty and table does not exist', function (done) {
-      var batchReq = { RequestItems: {} }
+      var batchReq: BatchWriteRequest = createBatchWriteRequest()
       batchReq.RequestItems[helpers.randomString()] = [ { PutRequest: { Item: {} } } ]
       assertNotFound(batchReq,
         'Requested resource not found', done)
@@ -362,23 +378,23 @@ describe('batchWriteItem', function () {
         { a: { BS: [ 'aaaa' ] } },
         { a: { M: {} } },
         { a: { L: [] } },
-      ], function (expr, cb) {
-        var batchReq = { RequestItems: {} }
-        batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: expr } } ]
+      ], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
+        var batchReq: BatchWriteRequest = createBatchWriteRequest()
+        batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: expr as DynamoItem } } ]
         assertValidation(batchReq,
           'The provided key element does not match the schema', cb)
       }, done)
     })
 
     it('should return ValidationException if range key does not match schema', function (done) {
-      var batchReq = { RequestItems: {} }
+      var batchReq: BatchWriteRequest = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testRangeTable] = [ { PutRequest: { Item: { a: { S: 'a' } } } } ]
       assertValidation(batchReq,
         'The provided key element does not match the schema', done)
     })
 
     it('should return ValidationException if secondary index key is incorrect type', function (done) {
-      var batchReq = { RequestItems: {} }
+      var batchReq: BatchWriteRequest = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testRangeTable] = [ { PutRequest: { Item: { a: { S: 'a' }, b: { S: 'a' }, c: { N: '1' } } } } ]
       assertValidation(batchReq,
         new RegExp('^One or more parameter values were invalid: ' +
@@ -386,7 +402,8 @@ describe('batchWriteItem', function () {
     })
 
     it('should return ValidationException if hash key is too big', function (done) {
-      var batchReq = { RequestItems: {} }, keyStr = (helpers.randomString() + new Array(2048).join('a')).slice(0, 2049)
+      var batchReq: BatchWriteRequest = createBatchWriteRequest(),
+        keyStr = (helpers.randomString() + new Array(2048).join('a')).slice(0, 2049)
       batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: { a: { S: keyStr } } } } ]
       assertValidation(batchReq,
         'One or more parameter values were invalid: ' +
@@ -394,7 +411,8 @@ describe('batchWriteItem', function () {
     })
 
     it('should return ValidationException if range key is too big', function (done) {
-      var batchReq = { RequestItems: {} }, keyStr = (helpers.randomString() + new Array(1024).join('a')).slice(0, 1025)
+      var batchReq: BatchWriteRequest = createBatchWriteRequest(),
+        keyStr = (helpers.randomString() + new Array(1024).join('a')).slice(0, 1025)
       batchReq.RequestItems[helpers.testRangeTable] = [ { PutRequest: { Item: { a: { S: 'a' }, b: { S: keyStr } } } } ]
       assertValidation(batchReq,
         'One or more parameter values were invalid: ' +
@@ -411,7 +429,7 @@ describe('batchWriteItem', function () {
       request(helpers.opts('CreateTable', table), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        var batchReq = { RequestItems: {} }
+        var batchReq: BatchWriteRequest = createBatchWriteRequest()
         batchReq.RequestItems[table.TableName] = [ { PutRequest: { Item: { a: { S: 'a' } } } } ]
         assertNotFound(batchReq, 'Requested resource not found', done)
         helpers.deleteWhenActive(table.TableName)
@@ -425,7 +443,7 @@ describe('batchWriteItem', function () {
     it('should write a single item to each table', function (done) {
       var item = { a: { S: helpers.randomString() }, c: { S: 'c' } },
         item2 = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() }, c: { S: 'c' } },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: item } } ]
       batchReq.RequestItems[helpers.testRangeTable] = [ { PutRequest: { Item: item2 } } ]
       request(opts(batchReq), function (err, res) {
@@ -449,7 +467,7 @@ describe('batchWriteItem', function () {
     it('should delete an item from each table', function (done) {
       var item = { a: { S: helpers.randomString() }, c: { S: 'c' } },
         item2 = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() }, c: { S: 'c' } },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testHashTable] = [ { DeleteRequest: { Key: { a: item.a } } } ]
       batchReq.RequestItems[helpers.testRangeTable] = [ { DeleteRequest: { Key: { a: item2.a, b: item2.b } } } ]
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
@@ -481,7 +499,7 @@ describe('batchWriteItem', function () {
     it('should deal with puts and deletes together', function (done) {
       var item = { a: { S: helpers.randomString() }, c: { S: 'c' } },
         item2 = { a: { S: helpers.randomString() }, c: { S: 'c' } },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = createBatchWriteRequest()
       request(helpers.opts('PutItem', { TableName: helpers.testHashTable, Item: item }), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
@@ -513,7 +531,8 @@ describe('batchWriteItem', function () {
       var a = helpers.randomString(), b = new Array(1010 - a.length).join('b'),
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==', 'AQ==' ] } },
         key2 = helpers.randomString(), key3 = helpers.randomNumber(),
-        batchReq = { RequestItems: {}, ReturnConsumedCapacity: 'TOTAL' }
+        batchReq: BatchWriteRequest = createBatchWriteRequest()
+      batchReq.ReturnConsumedCapacity = 'TOTAL'
       batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: item } }, { PutRequest: { Item: { a: { S: key2 } } } } ]
       batchReq.RequestItems[helpers.testHashNTable] = [ { PutRequest: { Item: { a: { N: key3 } } } } ]
       request(opts(batchReq), function (err, res) {
@@ -552,7 +571,8 @@ describe('batchWriteItem', function () {
       var a = helpers.randomString(), b = new Array(1012 - a.length).join('b'),
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==' ] } },
         key2 = helpers.randomString(), key3 = helpers.randomNumber(),
-        batchReq = { RequestItems: {}, ReturnConsumedCapacity: 'TOTAL' }
+        batchReq: BatchWriteRequest = createBatchWriteRequest()
+      batchReq.ReturnConsumedCapacity = 'TOTAL'
       batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: item } }, { PutRequest: { Item: { a: { S: key2 } } } } ]
       batchReq.RequestItems[helpers.testHashNTable] = [ { PutRequest: { Item: { a: { N: key3 } } } } ]
       request(opts(batchReq), function (err, res) {
@@ -599,21 +619,24 @@ describe('batchWriteItem', function () {
 
       async.times(10, createAndWrite, done)
 
-      function createAndWrite (i, cb) {
+      function createAndWrite (i: number, cb: AsyncCallback) {
+        void i
         var name = helpers.randomName(), table = {
           TableName: name,
           AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' } ],
           KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
           ProvisionedThroughput: { ReadCapacityUnits: CAPACITY, WriteCapacityUnits: CAPACITY },
         }
-        helpers.createAndWait(table, function (err) {
+        helpers.createAndWait(table, function (err: unknown) {
           if (err) return cb(err)
-          async.timesSeries(50, function (n, cb) { batchWrite(name, n, cb) }, cb)
+          async.timesSeries(50, function (n: number, cb: AsyncCallback) { batchWrite(name, n, cb) }, cb)
         })
       }
 
-      function batchWrite (name, n, cb) {
-        var i, item, items = [], totalSize = 0, batchReq = { RequestItems: {}, ReturnConsumedCapacity: 'TOTAL' }
+      function batchWrite (name: string, n: number, cb: AsyncCallback) {
+        void n
+        var i, item, items = [], totalSize = 0, batchReq: BatchWriteRequest = createBatchWriteRequest()
+        batchReq.ReturnConsumedCapacity = 'TOTAL'
 
         for (i = 0; i < 25; i++) {
           item = { a: { S: ('0' + i).slice(-2) },
@@ -623,13 +646,13 @@ describe('batchWriteItem', function () {
         }
 
         batchReq.RequestItems[name] = items
-        request(opts(batchReq), function (err, res) {
+        request(opts(batchReq), function (err: unknown, res: BatchWriteItemResponse) {
           // if (err) return cb(err)
           if (err) {
             // console.log('Caught err: ' + err)
             return cb()
           }
-          if (/ProvisionedThroughputExceededException$/.test(res.body.__type)) {
+          if (/ProvisionedThroughputExceededException$/.test(res.body.__type || '')) {
             // console.log('ProvisionedThroughputExceededException$')
             return cb()
           }
@@ -639,8 +662,9 @@ describe('batchWriteItem', function () {
           }
           should(res.statusCode).equal(200)
 
-          console.log([ CAPACITY, res.body.ConsumedCapacity[0].CapacityUnits, totalSize ].join())
-          setTimeout(cb, res.body.ConsumedCapacity[0].CapacityUnits * 1000 / CAPACITY)
+          var consumedCapacity = res.body.ConsumedCapacity || []
+          console.log([ CAPACITY, consumedCapacity[0].CapacityUnits, totalSize ].join())
+          setTimeout(cb, Number(consumedCapacity[0].CapacityUnits) * 1000 / CAPACITY)
         })
       }
     })

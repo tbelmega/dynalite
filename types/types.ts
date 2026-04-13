@@ -32,8 +32,19 @@ export type BatchGetRequest = {
   RequestItems: Record<string, KeysAndAttributes>;
   ReturnConsumedCapacity?: string;
 };
-export type WriteRequest = { PutRequest: { Item: DynamoItem } };
-export type BatchWriteRequest = { RequestItems: Record<string, WriteRequest[]> };
+export type PutRequest = { PutRequest: { Item: DynamoItem } };
+export type DeleteRequest = { DeleteRequest: { Key: DynamoItem } };
+export type WriteRequest = PutRequest | DeleteRequest;
+export type BatchWriteRequest = {
+  RequestItems: Record<string, WriteRequest[]>;
+  ReturnConsumedCapacity?: string;
+  ReturnItemCollectionMetrics?: string;
+};
+export type BatchWriteResponseBody = {
+  ConsumedCapacity?: ConsumedCapacity[];
+  UnprocessedItems?: Record<string, WriteRequest[]>;
+  __type?: string;
+};
 export type ConsumedCapacity = { CapacityUnits?: number; Table?: { CapacityUnits?: number }; TableName?: string };
 export type BatchGetItemOutput = {
   ConsumedCapacity?: ConsumedCapacity[];
@@ -41,7 +52,7 @@ export type BatchGetItemOutput = {
   UnprocessedKeys: Record<string, KeysAndAttributes>;
 };
 export type BatchGetItemResponse = DynamoCommandResponse<BatchGetItemOutput>;
-export type BatchWriteItemResponse = DynamoCommandResponse<Record<string, unknown>>;
+export type BatchWriteItemResponse = DynamoCommandResponse<BatchWriteResponseBody>;
 export type CreateTableRequest = {
   AttributeDefinitions: Array<{ AttributeName: string; AttributeType: string }>;
   KeySchema: Array<{ AttributeName: string; KeyType: string }>;
