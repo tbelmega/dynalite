@@ -146,3 +146,17 @@ export type UpdateTableResponseBody = {
   TableDescription?: TableDescriptionSummary;
 };
 export type UpdateTableResponse = DynamoCommandResponse<UpdateTableResponseBody>;
+export type GetItemRequest = {
+  AttributesToGet?: string[];
+  ConsistentRead?: boolean;
+  ExpressionAttributeNames?: Record<string, string>;
+  Key: DynamoItem;
+  ProjectionExpression?: string;
+  ReturnConsumedCapacity?: string;
+  TableName: string;
+} & Record<string, unknown>;
+export type GetItemResponseBody = {
+  ConsumedCapacity?: ConsumedCapacity;
+  Item?: DynamoItem;
+};
+export type GetItemResponse = DynamoCommandResponse<GetItemResponseBody>;

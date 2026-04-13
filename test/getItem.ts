@@ -1,10 +1,21 @@
+var should = require('should')
 var async = require('async'),
-  helpers = require('./helpers')
+  helpers = require('../../test/helpers')
+
+import type {
+  AsyncCallback,
+  BatchWriteRequest,
+  DynamoItem,
+  GetItemRequest,
+  GetItemResponse,
+  InvalidAttributeValue,
+  InvalidAttributeValueCase,
+} from '../types/types'
 
 var target = 'GetItem',
-  request = helpers.request,
+  request: (requestOptions: Record<string, unknown>, cb: (err: unknown, res: GetItemResponse) => void) => void = helpers.request,
   randomName = helpers.randomName,
-  opts = helpers.opts.bind(null, target),
+  opts: (data: GetItemRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target),
   assertNotFound = helpers.assertNotFound.bind(null, target)
@@ -135,7 +146,7 @@ describe('getItem', function () {
         { M: { a: {} } },
         { L: [ {} ] },
         { L: [ { a: {} } ] },
-      ], function (expr, cb) {
+      ] as InvalidAttributeValue[], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({ TableName: 'abc', Key: { a: expr }, ProjectionExpression: '', ExpressionAttributeNames: {} },
           'Supplied AttributeValue is empty, must contain exactly one of the supported datatypes', cb)
       }, done)
@@ -149,7 +160,7 @@ describe('getItem', function () {
         [ { BS: [] }, 'Binary sets should not be empty' ],
         [ { SS: [ 'a', 'a' ] }, 'Input collection [a, a] contains duplicates.' ],
         [ { BS: [ 'Yg==', 'Yg==' ] }, 'Input collection [Yg==, Yg==]of type BS contains duplicates.' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({ TableName: 'abc', Key: { a: expr[0] }, AttributesToGet: [ 'a', 'a' ] },
           'One or more parameter values were invalid: ' + expr[1], cb)
       }, done)
@@ -169,7 +180,7 @@ describe('getItem', function () {
         [ { N: '-1e126' }, 'Number overflow. Attempting to store a number with magnitude larger than supported range' ],
         [ { N: '1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
         [ { N: '-1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
-      ], function (expr, cb) {
+      ] as InvalidAttributeValueCase[], function (expr: InvalidAttributeValueCase, cb: AsyncCallback) {
         assertValidation({ TableName: 'abc', Key: { a: expr[0] } }, expr[1], cb)
       }, done)
     })
@@ -223,7 +234,7 @@ describe('getItem', function () {
         '(a),(b)',
         '(a,b)',
         'a-b',
-      ], function (expr, cb) {
+      ] as string[], function (expr: string, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -236,7 +247,7 @@ describe('getItem', function () {
       async.forEach([
         'a.abORt',
         '#a,ABSoLUTE',
-      ], function (expr, cb) {
+      ] as string[], function (expr: string, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -248,7 +259,7 @@ describe('getItem', function () {
     it('should return ValidationException for missing names in ProjectionExpression', function (done) {
       async.forEach([
         'a,b,a,#a',
-      ], function (expr, cb) {
+      ] as string[], function (expr: string, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -263,7 +274,7 @@ describe('getItem', function () {
         [ 'a, #a[1]', '[a]', '[a, [1]]' ],
         // TODO: This changed at some point, now conflicts with [b] instead of [a]?
         // ['a,b,a', '[a]', '[b]'],
-      ], function (expr, cb) {
+      ] as [string, string, string][], function (expr: [string, string, string], cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -279,7 +290,7 @@ describe('getItem', function () {
         [ 'a.b, #a[1], #b', '[a, b]', '[a, [1]]' ],
         [ 'a.b[1], #a[1], #b', '[a, b, [1]]', '[a, [1]]' ],
         [ 'a[3].b, #a.#b.b', '[a, [3], b]', '[a, [3], b]' ],
-      ], function (expr, cb) {
+      ] as [string, string, string][], function (expr: [string, string, string], cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -294,7 +305,7 @@ describe('getItem', function () {
       async.forEach([
         'a',
         'a,b',
-      ], function (expr, cb) {
+      ] as string[], function (expr: string, cb: AsyncCallback) {
         assertValidation({
           TableName: 'abc',
           Key: {},
@@ -323,7 +334,7 @@ describe('getItem', function () {
         { a: { BS: [ 'aaaa' ] } },
         { a: { M: {} } },
         { a: { L: [] } },
-      ], function (expr, cb) {
+      ] as DynamoItem[], function (expr: DynamoItem, cb: AsyncCallback) {
         assertValidation({ TableName: helpers.testHashTable, Key: expr },
           'The provided key element does not match the schema', cb)
       }, done)
@@ -364,7 +375,7 @@ describe('getItem', function () {
       async.forEach([
         '#a.b.c',
         '#a[0]',
-      ], function (expr, cb) {
+      ] as string[], function (expr: string, cb: AsyncCallback) {
         assertValidation({
           TableName: helpers.testHashTable,
           Key: { a: { S: helpers.randomString() } },
@@ -378,7 +389,7 @@ describe('getItem', function () {
       async.forEach([
         '#d.b.c',
         '#d[0]',
-      ], function (expr, cb) {
+      ] as string[], function (expr: string, cb: AsyncCallback) {
         assertValidation({
           TableName: helpers.testRangeTable,
           Key: { a: { S: helpers.randomString() }, b: { S: helpers.randomString() } },
@@ -415,7 +426,7 @@ describe('getItem', function () {
         { TableName: helpers.testHashTable, Item: hashItem },
         { TableName: helpers.testRangeTable, Item: rangeItem },
       ]
-      async.forEach(putItems, function (putItem, cb) { request(helpers.opts('PutItem', putItem), cb) }, done)
+      async.forEach(putItems, function (putItem: Record<string, unknown>, cb: AsyncCallback) { request(helpers.opts('PutItem', putItem), cb) }, done)
     })
 
     it('should return empty response if key does not exist', function (done) {
@@ -482,11 +493,14 @@ describe('getItem', function () {
         { AttributesToGet: [ 'b', 'g' ] },
         { ProjectionExpression: 'b, g' },
         { ProjectionExpression: '#b, #g', ExpressionAttributeNames: { '#b': 'b', '#g': 'g' } },
-      ], function (getOpts, cb) {
-        getOpts.TableName = helpers.testHashTable
-        getOpts.Key = { a: hashItem.a }
-        getOpts.ConsistentRead = true
-        request(opts(getOpts), function (err, res) {
+      ] as Partial<GetItemRequest>[], function (getOpts: Partial<GetItemRequest>, cb: AsyncCallback) {
+        var requestData: GetItemRequest = {
+          TableName: helpers.testHashTable,
+          Key: { a: hashItem.a },
+          ConsistentRead: true,
+          ...getOpts,
+        }
+        request(opts(requestData), function (err, res) {
           if (err) return cb(err)
           should(res.statusCode).equal(200)
           should(res.body).eql({ Item: { b: hashItem.b, g: hashItem.g } })
@@ -503,11 +517,14 @@ describe('getItem', function () {
         async.forEach([
           { ProjectionExpression: 'b.c,c[2],b.b,c[1],c[0].a' },
           { ProjectionExpression: '#b.#c,#c[2],#b.#b,#c[1],#c[0][1]', ExpressionAttributeNames: { '#b': 'b', '#c': 'c' } },
-        ], function (getOpts, cb) {
-          getOpts.TableName = helpers.testHashTable
-          getOpts.Key = { a: item.a }
-          getOpts.ConsistentRead = true
-          request(opts(getOpts), function (err, res) {
+        ] as Partial<GetItemRequest>[], function (getOpts: Partial<GetItemRequest>, cb: AsyncCallback) {
+          var requestData: GetItemRequest = {
+            TableName: helpers.testHashTable,
+            Key: { a: item.a },
+            ConsistentRead: true,
+            ...getOpts,
+          }
+          request(opts(requestData), function (err, res) {
             if (err) return cb(err)
             should(res.statusCode).equal(200)
             should(res.body).eql({ Item: { b: { M: { b: item.b.M.b, c: item.b.M.c } }, c: { L: [ item.c.L[1], item.c.L[2] ] } } })
@@ -548,8 +565,8 @@ describe('getItem', function () {
     })
 
     it('should return ConsumedCapacity for small item with ConsistentRead', function (done) {
-      var batchReq = { RequestItems: {} }
-      var items = [ {
+      var batchReq: BatchWriteRequest = { RequestItems: {} }
+      var items: DynamoItem[] = [ {
         a: { S: helpers.randomString() },
         bb: { S: new Array(4000).join('b') },
         ccc: { N: '12.3456' },
@@ -567,11 +584,11 @@ describe('getItem', function () {
         abcde: { L: [ { S: 'aa' }, { N: '12.3456' }, { B: 'AQI=' } ] },
         abcdef: { M: { aa: { S: 'aa' }, bbb: { N: '12.3456' }, cccc: { B: 'AQI=' } } },
       } ]
-      batchReq.RequestItems[helpers.testHashTable] = items.map(function (item) { return { PutRequest: { Item: item } } })
+      batchReq.RequestItems[helpers.testHashTable] = items.map(function (item: DynamoItem) { return { PutRequest: { Item: item } } })
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach(items, function (item, cb) {
+        async.forEach(items, function (item: DynamoItem, cb: AsyncCallback) {
           request(opts({ TableName: helpers.testHashTable, Key: { a: item.a }, ReturnConsumedCapacity: 'TOTAL', ConsistentRead: true }), function (err, res) {
             if (err) return cb(err)
             should(res.statusCode).equal(200)
@@ -583,8 +600,8 @@ describe('getItem', function () {
     })
 
     it('should return ConsumedCapacity for larger item with ConsistentRead', function (done) {
-      var batchReq = { RequestItems: {} }
-      var items = [ {
+      var batchReq: BatchWriteRequest = { RequestItems: {} }
+      var items: DynamoItem[] = [ {
         a: { S: helpers.randomString() },
         bb: { S: new Array(4001).join('b') },
         ccc: { N: '12.3456' },
@@ -602,11 +619,11 @@ describe('getItem', function () {
         abcde: { L: [ { S: 'aa' }, { N: '12.3456' }, { B: 'AQI=' } ] },
         abcdef: { M: { aa: { S: 'aa' }, bbb: { N: '12.3456' }, cccc: { B: 'AQI=' } } },
       } ]
-      batchReq.RequestItems[helpers.testHashTable] = items.map(function (item) { return { PutRequest: { Item: item } } })
+      batchReq.RequestItems[helpers.testHashTable] = items.map(function (item: DynamoItem) { return { PutRequest: { Item: item } } })
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach(items, function (item, cb) {
+        async.forEach(items, function (item: DynamoItem, cb: AsyncCallback) {
           request(opts({ TableName: helpers.testHashTable, Key: { a: item.a }, ReturnConsumedCapacity: 'TOTAL', ConsistentRead: true }), function (err, res) {
             if (err) return cb(err)
             should(res.statusCode).equal(200)
