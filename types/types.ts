@@ -107,3 +107,42 @@ export type ListTablesResponseBody = {
   TableNames: string[];
 };
 export type ListTablesResponse = DynamoCommandResponse<ListTablesResponseBody>;
+export type TableProvisionedThroughput = {
+  LastDecreaseDateTime?: number;
+  LastIncreaseDateTime?: number;
+  NumberOfDecreasesToday?: number;
+  ReadCapacityUnits?: number;
+  WriteCapacityUnits?: number;
+};
+export type BillingModeSummary = {
+  BillingMode?: string;
+  LastUpdateToPayPerRequestDateTime?: number;
+};
+export type TableThroughputModeSummary = {
+  LastUpdateToPayPerRequestDateTime?: number;
+  TableThroughputMode?: string;
+};
+export type GlobalSecondaryIndexDescription = {
+  IndexStatus?: string;
+  ProvisionedThroughput?: TableProvisionedThroughput;
+};
+export type TableDescriptionSummary = {
+  AttributeDefinitions?: Array<{ AttributeName: string; AttributeType: string }>;
+  BillingModeSummary?: BillingModeSummary;
+  CreationDateTime?: number;
+  GlobalSecondaryIndexes?: GlobalSecondaryIndexDescription[];
+  ItemCount?: number;
+  KeySchema?: Array<{ AttributeName: string; KeyType: string }>;
+  ProvisionedThroughput?: TableProvisionedThroughput;
+  TableName?: string;
+  TableSizeBytes?: number;
+  TableStatus?: string;
+  TableThroughputModeSummary?: TableThroughputModeSummary;
+};
+export type UpdateTableResponseBody = {
+  __type?: string;
+  message?: string;
+  Table?: TableDescriptionSummary;
+  TableDescription?: TableDescriptionSummary;
+};
+export type UpdateTableResponse = DynamoCommandResponse<UpdateTableResponseBody>;

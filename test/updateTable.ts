@@ -1,8 +1,16 @@
-var helpers = require('./helpers')
+var should = require('should')
+var helpers = require('../../test/helpers')
+
+import type {
+  TestDynamoRequest,
+  UpdateTableResponse,
+  GlobalSecondaryIndexDescription,
+  TableDescriptionSummary,
+} from '../types/types'
 
 var target = 'UpdateTable',
-  request = helpers.request,
-  opts = helpers.opts.bind(null, target),
+  request: (requestOptions: TestDynamoRequest, cb: (err: unknown, res: UpdateTableResponse) => void) => void = helpers.request,
+  opts: (data: TestDynamoRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target),
   assertNotFound = helpers.assertNotFound.bind(null, target)
@@ -293,7 +301,10 @@ describe('updateTable', function () {
 
     it('should return ValidationException if read and write are same', function (done) {
       request(helpers.opts('DescribeTable', { TableName: helpers.testHashTable }), function (err, res) {
-        if (err) return err(done)
+        if (err) return done(err)
+        if (res.body.Table == null || res.body.Table.ProvisionedThroughput == null) {
+          return done(new Error('Missing table throughput description'))
+        }
         var readUnits = res.body.Table.ProvisionedThroughput.ReadCapacityUnits
         var writeUnits = res.body.Table.ProvisionedThroughput.WriteCapacityUnits
         assertValidation({ TableName: helpers.testHashTable,
@@ -337,7 +348,8 @@ describe('updateTable', function () {
         if (err) return done(err)
         should(res.statusCode).equal(200)
 
-        var desc = res.body.TableDescription
+        var desc: TableDescriptionSummary | undefined = res.body.TableDescription
+        if (desc == null || desc.ProvisionedThroughput == null) return done(new Error('Missing table description'))
         should(desc.AttributeDefinitions).eql([ { AttributeName: 'a', AttributeType: 'S' } ])
         should(desc.CreationDateTime).be.below(Date.now() / 1000)
         should(desc.ItemCount).be.above(-1)
@@ -350,18 +362,26 @@ describe('updateTable', function () {
         should(desc.TableSizeBytes).be.above(-1)
         should(desc.TableStatus).equal('UPDATING')
 
-        var numDecreases = desc.ProvisionedThroughput.NumberOfDecreasesToday
+        var numDecreasesValue = desc.ProvisionedThroughput.NumberOfDecreasesToday
+        if (numDecreasesValue == null || desc.ProvisionedThroughput.LastIncreaseDateTime == null) {
+          return done(new Error('Missing initial throughput timestamps'))
+        }
+        var numDecreases: number = numDecreasesValue
         increase = desc.ProvisionedThroughput.LastIncreaseDateTime
 
-        helpers.waitUntilActive(helpers.testHashTable, function (err, res) {
+        helpers.waitUntilActive(helpers.testHashTable, function (err: unknown, res: UpdateTableResponse) {
           if (err) return done(err)
 
           var decrease = Date.now() / 1000
           desc = res.body.Table
+          if (desc == null || desc.ProvisionedThroughput == null) return done(new Error('Missing active table description'))
           should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(newRead)
           should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(newWrite)
           should(desc.ProvisionedThroughput.LastIncreaseDateTime).be.above(increase)
 
+          if (desc.ProvisionedThroughput.LastIncreaseDateTime == null) {
+            return done(new Error('Missing increased throughput timestamp'))
+          }
           increase = desc.ProvisionedThroughput.LastIncreaseDateTime
 
           throughput = { ReadCapacityUnits: oldRead, WriteCapacityUnits: oldWrite }
@@ -370,6 +390,7 @@ describe('updateTable', function () {
             should(res.statusCode).equal(200)
 
             desc = res.body.TableDescription
+            if (desc == null || desc.ProvisionedThroughput == null) return done(new Error('Missing updated table description'))
             should(desc.ProvisionedThroughput.LastIncreaseDateTime).equal(increase)
             should(desc.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease - 5)
             should(desc.ProvisionedThroughput.NumberOfDecreasesToday).equal(numDecreases)
@@ -377,12 +398,16 @@ describe('updateTable', function () {
             should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(newWrite)
             should(desc.TableStatus).equal('UPDATING')
 
+            if (desc.ProvisionedThroughput.LastDecreaseDateTime == null) {
+              return done(new Error('Missing decreased throughput timestamp'))
+            }
             decrease = desc.ProvisionedThroughput.LastDecreaseDateTime
 
-            helpers.waitUntilActive(helpers.testHashTable, function (err, res) {
+            helpers.waitUntilActive(helpers.testHashTable, function (err: unknown, res: UpdateTableResponse) {
               if (err) return done(err)
 
               desc = res.body.Table
+              if (desc == null || desc.ProvisionedThroughput == null) return done(new Error('Missing final table description'))
               should(desc.ProvisionedThroughput.LastIncreaseDateTime).equal(increase)
               should(desc.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease)
               should(desc.ProvisionedThroughput.NumberOfDecreasesToday).equal(numDecreases + 1)
@@ -405,7 +430,11 @@ describe('updateTable', function () {
         if (err) return done(err)
         should(res.statusCode).equal(200)
 
-        var desc = res.body.TableDescription
+        var desc: TableDescriptionSummary | undefined = res.body.TableDescription
+        if (desc == null || desc.ProvisionedThroughput == null || desc.BillingModeSummary == null ||
+            desc.TableThroughputModeSummary == null || desc.GlobalSecondaryIndexes == null) {
+          return done(new Error('Missing PAY_PER_REQUEST table description'))
+        }
         should(desc.TableStatus).equal('UPDATING')
         should(desc.BillingModeSummary).eql({ BillingMode: 'PAY_PER_REQUEST' })
         should(desc.TableThroughputModeSummary).eql({ TableThroughputMode: 'PAY_PER_REQUEST' })
@@ -414,7 +443,8 @@ describe('updateTable', function () {
         should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(0)
         should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(0)
 
-        desc.GlobalSecondaryIndexes.forEach(function (index) {
+        desc.GlobalSecondaryIndexes.forEach(function (index: GlobalSecondaryIndexDescription) {
+          if (index.ProvisionedThroughput == null) throw new Error('Missing index throughput description')
           should(index.IndexStatus).equal('UPDATING')
           should(index.ProvisionedThroughput).eql({
             NumberOfDecreasesToday: 0,
@@ -423,10 +453,14 @@ describe('updateTable', function () {
           })
         })
 
-        helpers.waitUntilActive(helpers.testRangeTable, function (err, res) {
+        helpers.waitUntilActive(helpers.testRangeTable, function (err: unknown, res: UpdateTableResponse) {
           if (err) return done(err)
 
-          var desc = res.body.Table
+          var desc: TableDescriptionSummary | undefined = res.body.Table
+          if (desc == null || desc.BillingModeSummary == null || desc.TableThroughputModeSummary == null ||
+              desc.ProvisionedThroughput == null || desc.GlobalSecondaryIndexes == null) {
+            return done(new Error('Missing active PAY_PER_REQUEST description'))
+          }
           should(desc.BillingModeSummary.BillingMode).equal('PAY_PER_REQUEST')
           should(desc.BillingModeSummary.LastUpdateToPayPerRequestDateTime).be.above(decrease - 5)
           should(desc.TableThroughputModeSummary.TableThroughputMode).equal('PAY_PER_REQUEST')
@@ -434,7 +468,8 @@ describe('updateTable', function () {
           should(desc.ProvisionedThroughput.NumberOfDecreasesToday).be.above(-1)
           should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(0)
           should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(0)
-          desc.GlobalSecondaryIndexes.forEach(function (index) {
+          desc.GlobalSecondaryIndexes.forEach(function (index: GlobalSecondaryIndexDescription) {
+            if (index.ProvisionedThroughput == null) throw new Error('Missing PAY_PER_REQUEST index throughput')
             should(index.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease - 5)
             should(index.ProvisionedThroughput.NumberOfDecreasesToday).be.above(0)
             should(index.ProvisionedThroughput.ReadCapacityUnits).equal(0)
@@ -443,10 +478,10 @@ describe('updateTable', function () {
 
           assertValidation({ TableName: helpers.testRangeTable, BillingMode: 'PROVISIONED', ProvisionedThroughput: throughput },
             'One or more parameter values were invalid: ' +
-              'ProvisionedThroughput must be specified for index: index3,index4', function (err) {
+              'ProvisionedThroughput must be specified for index: index3,index4', function (err: unknown) {
               if (err) return done(err)
 
-              request(opts({
+            request(opts({
                 TableName: helpers.testRangeTable,
                 BillingMode: 'PROVISIONED',
                 ProvisionedThroughput: throughput,
@@ -461,11 +496,15 @@ describe('updateTable', function () {
                     ProvisionedThroughput: throughput,
                   },
                 } ],
-              }), function (err, res) {
-                if (err) return done(err)
-                should(res.statusCode).equal(200)
+            }), function (err, res) {
+              if (err) return done(err)
+              should(res.statusCode).equal(200)
 
-                var desc = res.body.TableDescription
+                var desc: TableDescriptionSummary | undefined = res.body.TableDescription
+                if (desc == null || desc.BillingModeSummary == null || desc.TableThroughputModeSummary == null ||
+                    desc.ProvisionedThroughput == null || desc.GlobalSecondaryIndexes == null) {
+                  return done(new Error('Missing PROVISIONED table description'))
+                }
                 should(desc.TableStatus).equal('UPDATING')
                 should(desc.BillingModeSummary.BillingMode).equal('PROVISIONED')
                 should(desc.BillingModeSummary.LastUpdateToPayPerRequestDateTime).be.above(decrease - 5)
@@ -475,7 +514,8 @@ describe('updateTable', function () {
                 should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(read)
                 should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(write)
 
-                desc.GlobalSecondaryIndexes.forEach(function (index) {
+                desc.GlobalSecondaryIndexes.forEach(function (index: GlobalSecondaryIndexDescription) {
+                  if (index.ProvisionedThroughput == null) throw new Error('Missing PROVISIONED index throughput')
                   should(index.IndexStatus).equal('UPDATING')
                   should(index.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease - 5)
                   should(index.ProvisionedThroughput.NumberOfDecreasesToday).be.above(0)
@@ -483,10 +523,14 @@ describe('updateTable', function () {
                   should(index.ProvisionedThroughput.WriteCapacityUnits).equal(write)
                 })
 
-                helpers.waitUntilActive(helpers.testRangeTable, function (err, res) {
+                helpers.waitUntilActive(helpers.testRangeTable, function (err: unknown, res: UpdateTableResponse) {
                   if (err) return done(err)
 
-                  var desc = res.body.Table
+                  var desc: TableDescriptionSummary | undefined = res.body.Table
+                  if (desc == null || desc.BillingModeSummary == null || desc.TableThroughputModeSummary == null ||
+                      desc.ProvisionedThroughput == null || desc.GlobalSecondaryIndexes == null) {
+                    return done(new Error('Missing active PROVISIONED description'))
+                  }
                   should(desc.BillingModeSummary.BillingMode).equal('PROVISIONED')
                   should(desc.BillingModeSummary.LastUpdateToPayPerRequestDateTime).be.above(decrease - 5)
                   should(desc.TableThroughputModeSummary.TableThroughputMode).equal('PROVISIONED')
@@ -495,7 +539,8 @@ describe('updateTable', function () {
                   should(desc.ProvisionedThroughput.ReadCapacityUnits).equal(read)
                   should(desc.ProvisionedThroughput.WriteCapacityUnits).equal(write)
 
-                  desc.GlobalSecondaryIndexes.forEach(function (index) {
+                  desc.GlobalSecondaryIndexes.forEach(function (index: GlobalSecondaryIndexDescription) {
+                    if (index.ProvisionedThroughput == null) throw new Error('Missing active PROVISIONED index throughput')
                     should(index.ProvisionedThroughput.LastDecreaseDateTime).be.above(decrease - 5)
                     should(index.ProvisionedThroughput.NumberOfDecreasesToday).be.above(0)
                     should(index.ProvisionedThroughput.ReadCapacityUnits).equal(read)
