@@ -1,2 +1,0 @@
-export type ScanCommandResponse = import('http').IncomingMessage & { body: import('@aws-sdk/client-dynamodb').ScanCommandOutput };
-export type LastEvaluatedKey = import('@aws-sdk/client-dynamodb').ScanCommandOutput['LastEvaluatedKey'];

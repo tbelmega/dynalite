@@ -1,5 +1,46 @@
+var should = require('should')
 var async = require('async'),
-  helpers = require('./helpers')
+  helpers = require('../../test/helpers')
+
+import type {
+  AsyncCallback,
+  BatchGetItemResponse,
+  BatchGetRequest,
+  BatchWriteItemResponse,
+  BatchWriteRequest,
+  ConsumedCapacity,
+  CreateTableRequest,
+  DynamoItem,
+  InvalidAttributeValue,
+  ValidationCase,
+} from '../types/types'
+
+function createBatchGetRequest (
+  returnConsumedCapacity?: string,
+): BatchGetRequest {
+  if (returnConsumedCapacity == null) return { RequestItems: {} }
+  return { RequestItems: {}, ReturnConsumedCapacity: returnConsumedCapacity }
+}
+
+function createBatchWriteRequest (): BatchWriteRequest {
+  return { RequestItems: {} }
+}
+
+function assertStatusCode (res: { statusCode?: number }, expected: number) {
+  if (res.statusCode == null) throw new Error('Missing statusCode')
+  should(res.statusCode).equal(expected)
+}
+
+function getStringAttribute (item: DynamoItem, attributeName: string): string | undefined {
+  var value = item[attributeName]
+  if (value == null || value.S == null) return
+  return value.S
+}
+
+function getConsumedCapacity (res: BatchGetItemResponse): ConsumedCapacity[] {
+  if (res.body.ConsumedCapacity == null) throw new Error('Missing ConsumedCapacity')
+  return res.body.ConsumedCapacity
+}
 
 var target = 'BatchGetItem',
   request = helpers.request,
@@ -218,7 +259,7 @@ describe('batchGetItem', function () {
     })
 
     it('should return ResourceNotFoundException when fetching exactly 100 keys and table does not exist', function (done) {
-      var keys = [], i
+      var keys: DynamoItem[] = [], i
       for (i = 0; i < 100; i++) {
         keys.push({ a: { S: String(i) } })
       }
@@ -233,7 +274,7 @@ describe('batchGetItem', function () {
         { M: { a: {} } },
         { L: [ {} ] },
         { L: [ { a: {} } ] },
-      ], function (expr, cb) {
+      ], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
         assertValidation({ RequestItems: { abc: { Keys: [ { a: expr } ] } } },
           'Supplied AttributeValue is empty, must contain exactly one of the supported datatypes', cb)
       }, done)
@@ -247,7 +288,7 @@ describe('batchGetItem', function () {
         [ { BS: [] }, 'Binary sets should not be empty' ],
         [ { SS: [ 'a', 'a' ] }, 'Input collection [a, a] contains duplicates.' ],
         [ { BS: [ 'Yg==', 'Yg==' ] }, 'Input collection [Yg==, Yg==]of type BS contains duplicates.' ],
-      ], function (expr, cb) {
+      ], function (expr: ValidationCase, cb: AsyncCallback) {
         assertValidation({ RequestItems: { abc: { Keys: [ { a: expr[0] } ] } } },
           'One or more parameter values were invalid: ' + expr[1], cb)
       }, done)
@@ -267,7 +308,7 @@ describe('batchGetItem', function () {
         [ { N: '-1e126' }, 'Number overflow. Attempting to store a number with magnitude larger than supported range' ],
         [ { N: '1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
         [ { N: '-1e-131' }, 'Number underflow. Attempting to store a number with magnitude smaller than supported range' ],
-      ], function (expr, cb) {
+      ], function (expr: ValidationCase, cb: AsyncCallback) {
         assertValidation({ RequestItems: { abc: { Keys: [ { a: expr[0] } ] } } }, expr[1], cb)
       }, done)
     })
@@ -332,7 +373,7 @@ describe('batchGetItem', function () {
     })
 
     it('should return ResourceNotFoundException if key is empty and table does not exist', function (done) {
-      var batchReq = { RequestItems: {} }
+      var batchReq = createBatchGetRequest()
       batchReq.RequestItems[randomName()] = { Keys: [ {} ] }
       assertNotFound(batchReq,
         'Requested resource not found', done)
@@ -352,8 +393,8 @@ describe('batchGetItem', function () {
         { a: { BS: [ 'aaaa' ] } },
         { a: { M: {} } },
         { a: { L: [] } },
-      ], function (expr, cb) {
-        var batchReq = { RequestItems: {} }
+      ], function (expr: InvalidAttributeValue, cb: AsyncCallback) {
+        var batchReq: { RequestItems: Record<string, { Keys: InvalidAttributeValue[] }> } = { RequestItems: {} }
         batchReq.RequestItems[helpers.testHashTable] = { Keys: [ expr ] }
         assertValidation(batchReq,
           'The provided key element does not match the schema', cb)
@@ -361,14 +402,14 @@ describe('batchGetItem', function () {
     })
 
     it('should return ValidationException if range key does not match schema', function (done) {
-      var batchReq = { RequestItems: {} }
+      var batchReq = createBatchGetRequest()
       batchReq.RequestItems[helpers.testRangeTable] = { Keys: [ { a: { S: 'a' } } ] }
       assertValidation(batchReq,
         'The provided key element does not match the schema', done)
     })
 
     it('should return ValidationException if hash key is too big', function (done) {
-      var batchReq = { RequestItems: {} }, keyStr = (helpers.randomString() + new Array(2048).join('a')).slice(0, 2049)
+      var batchReq = createBatchGetRequest(), keyStr = (helpers.randomString() + new Array(2048).join('a')).slice(0, 2049)
       batchReq.RequestItems[helpers.testHashTable] = { Keys: [ { a: { S: keyStr } } ] }
       assertValidation(batchReq,
         'One or more parameter values were invalid: ' +
@@ -376,7 +417,7 @@ describe('batchGetItem', function () {
     })
 
     it('should return ValidationException if range key is too big', function (done) {
-      var batchReq = { RequestItems: {} }, keyStr = (helpers.randomString() + new Array(1024).join('a')).slice(0, 1025)
+      var batchReq = createBatchGetRequest(), keyStr = (helpers.randomString() + new Array(1024).join('a')).slice(0, 1025)
       batchReq.RequestItems[helpers.testRangeTable] = { Keys: [ { a: { S: 'a' }, b: { S: keyStr } } ] }
       assertValidation(batchReq,
         'One or more parameter values were invalid: ' +
@@ -384,15 +425,15 @@ describe('batchGetItem', function () {
     })
 
     it('should return ResourceNotFoundException if table is being created', function (done) {
-      var table = {
+      var table: CreateTableRequest = {
         TableName: randomName(),
         AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' } ],
-        KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
+        KeySchema: [ { AttributeName: 'a', KeyType: 'HASH' } ],
         ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
       }
-      request(helpers.opts('CreateTable', table), function (err) {
+      request(helpers.opts('CreateTable', table), function (err: unknown) {
         if (err) return done(err)
-        var batchReq = { RequestItems: {} }
+        var batchReq = createBatchGetRequest()
         batchReq.RequestItems[table.TableName] = { Keys: [ { a: { S: 'a' } } ] }
         assertNotFound(batchReq, 'Requested resource not found', done)
         helpers.deleteWhenActive(table.TableName)
@@ -404,15 +445,15 @@ describe('batchGetItem', function () {
   describe('functionality', function () {
 
     it('should return empty responses if keys do not exist', function (done) {
-      var batchReq = { RequestItems: {} }
+      var batchReq = createBatchGetRequest()
       batchReq.RequestItems[helpers.testHashTable] = { Keys: [ { a: { S: helpers.randomString() } } ] }
       batchReq.RequestItems[helpers.testRangeTable] = { Keys: [ { a: { S: helpers.randomString() }, b: { S: helpers.randomString() } } ] }
-      request(opts(batchReq), function (err, res) {
+      request(opts(batchReq), function (err: unknown, res: BatchGetItemResponse) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.body.Responses[helpers.testHashTable].should.eql([])
-        res.body.Responses[helpers.testRangeTable].should.eql([])
-        res.body.UnprocessedKeys.should.eql({})
+        assertStatusCode(res, 200)
+        should(res.body.Responses[helpers.testHashTable]).eql([])
+        should(res.body.Responses[helpers.testRangeTable]).eql([])
+        should(res.body.UnprocessedKeys).eql({})
         done()
       })
     })
@@ -421,29 +462,29 @@ describe('batchGetItem', function () {
       var item = { a: { S: helpers.randomString() }, b: { N: helpers.randomNumber() } },
         item2 = { a: { S: helpers.randomString() }, b: item.b },
         item3 = { a: { S: helpers.randomString() }, b: { N: helpers.randomNumber() } },
-        batchReq = { RequestItems: {} }
+        batchReq = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
         { PutRequest: { Item: item3 } },
       ]
-      request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
+      request(helpers.opts('BatchWriteItem', batchReq), function (err: unknown, res: BatchWriteItemResponse) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        batchReq = { RequestItems: {} }
-        batchReq.RequestItems[helpers.testHashTable] = { Keys: [
+        assertStatusCode(res, 200)
+        var getReq = createBatchGetRequest()
+        getReq.RequestItems[helpers.testHashTable] = { Keys: [
           { a: item.a },
           { a: { S: helpers.randomString() } },
           { a: item3.a },
           { a: { S: helpers.randomString() } },
         ], ConsistentRead: true }
-        request(opts(batchReq), function (err, res) {
+        request(opts(getReq), function (err: unknown, res: BatchGetItemResponse) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.Responses[helpers.testHashTable].should.containEql(item)
-          res.body.Responses[helpers.testHashTable].should.containEql(item3)
-          res.body.Responses[helpers.testHashTable].should.have.length(2)
-          res.body.UnprocessedKeys.should.eql({})
+          assertStatusCode(res, 200)
+          should(res.body.Responses[helpers.testHashTable]).containEql(item)
+          should(res.body.Responses[helpers.testHashTable]).containEql(item3)
+          should(res.body.Responses[helpers.testHashTable]).have.length(2)
+          should(res.body.UnprocessedKeys).eql({})
           done()
         })
       })
@@ -454,23 +495,23 @@ describe('batchGetItem', function () {
         item2 = { a: { S: helpers.randomString() }, b: item.b },
         item3 = { a: { S: helpers.randomString() }, b: { N: helpers.randomNumber() } },
         item4 = { a: { S: helpers.randomString() } },
-        batchReq = { RequestItems: {} }
+        batchReq = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
         { PutRequest: { Item: item3 } },
         { PutRequest: { Item: item4 } },
       ]
-      request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
+      request(helpers.opts('BatchWriteItem', batchReq), function (err: unknown, res: BatchWriteItemResponse) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
+        assertStatusCode(res, 200)
         async.forEach([
           { AttributesToGet: [ 'b', 'c' ] },
           { ProjectionExpression: 'b, c' },
           { ProjectionExpression: '#b, #c', ExpressionAttributeNames: { '#b': 'b', '#c': 'c' } },
-        ], function (batchOpts, cb) {
-          batchReq = { RequestItems: {} }
-          batchReq.RequestItems[helpers.testHashTable] = batchOpts
+        ], function (batchOpts: BatchGetRequest['RequestItems'][string], cb: AsyncCallback) {
+          var getReq = createBatchGetRequest()
+          getReq.RequestItems[helpers.testHashTable] = batchOpts
           batchOpts.Keys = [
             { a: item.a },
             { a: { S: helpers.randomString() } },
@@ -479,14 +520,14 @@ describe('batchGetItem', function () {
             { a: item4.a },
           ]
           batchOpts.ConsistentRead = true
-          request(opts(batchReq), function (err, res) {
+          request(opts(getReq), function (err: unknown, res: BatchGetItemResponse) {
             if (err) return cb(err)
-            res.statusCode.should.equal(200)
-            res.body.Responses[helpers.testHashTable].should.containEql({ b: item.b, c: item.c })
-            res.body.Responses[helpers.testHashTable].should.containEql({ b: item3.b })
-            res.body.Responses[helpers.testHashTable].should.containEql({})
-            res.body.Responses[helpers.testHashTable].should.have.length(3)
-            res.body.UnprocessedKeys.should.eql({})
+            assertStatusCode(res, 200)
+            should(res.body.Responses[helpers.testHashTable]).containEql({ b: item.b, c: item.c })
+            should(res.body.Responses[helpers.testHashTable]).containEql({ b: item3.b })
+            should(res.body.Responses[helpers.testHashTable]).containEql({})
+            should(res.body.Responses[helpers.testHashTable]).have.length(3)
+            should(res.body.UnprocessedKeys).eql({})
             cb()
           })
         }, done)
@@ -497,27 +538,27 @@ describe('batchGetItem', function () {
       var a = helpers.randomString(), b = new Array(4082 - a.length).join('b'),
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==', 'AQ==' ] } },
         item2 = { a: { S: helpers.randomString() } },
-        batchReq = { RequestItems: {} }
+        batchReq = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: item } }, { PutRequest: { Item: item2 } } ]
-      request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
+      request(helpers.opts('BatchWriteItem', batchReq), function (err: unknown, res: BatchWriteItemResponse) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        batchReq = { RequestItems: {}, ReturnConsumedCapacity: 'TOTAL' }
-        batchReq.RequestItems[helpers.testHashTable] = { Keys: [ { a: item.a }, { a: item2.a }, { a: { S: helpers.randomString() } } ] }
-        batchReq.RequestItems[helpers.testHashNTable] = { Keys: [ { a: { N: helpers.randomNumber() } } ] }
-        request(opts(batchReq), function (err, res) {
+        assertStatusCode(res, 200)
+        var getReq = createBatchGetRequest('TOTAL')
+        getReq.RequestItems[helpers.testHashTable] = { Keys: [ { a: item.a }, { a: item2.a }, { a: { S: helpers.randomString() } } ] }
+        getReq.RequestItems[helpers.testHashNTable] = { Keys: [ { a: { N: helpers.randomNumber() } } ] }
+        request(opts(getReq), function (err: unknown, res: BatchGetItemResponse) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1.5, TableName: helpers.testHashTable })
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 0.5, TableName: helpers.testHashNTable })
-          res.body.Responses[helpers.testHashTable].should.have.length(2)
-          res.body.Responses[helpers.testHashNTable].should.have.length(0)
-          batchReq.ReturnConsumedCapacity = 'INDEXES'
-          request(opts(batchReq), function (err, res) {
+          assertStatusCode(res, 200)
+          should(getConsumedCapacity(res)).containEql({ CapacityUnits: 1.5, TableName: helpers.testHashTable })
+          should(getConsumedCapacity(res)).containEql({ CapacityUnits: 0.5, TableName: helpers.testHashNTable })
+          should(res.body.Responses[helpers.testHashTable]).have.length(2)
+          should(res.body.Responses[helpers.testHashNTable]).have.length(0)
+          getReq.ReturnConsumedCapacity = 'INDEXES'
+          request(opts(getReq), function (err: unknown, res: BatchGetItemResponse) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1.5, Table: { CapacityUnits: 1.5 }, TableName: helpers.testHashTable })
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 0.5, Table: { CapacityUnits: 0.5 }, TableName: helpers.testHashNTable })
+            assertStatusCode(res, 200)
+            should(getConsumedCapacity(res)).containEql({ CapacityUnits: 1.5, Table: { CapacityUnits: 1.5 }, TableName: helpers.testHashTable })
+            should(getConsumedCapacity(res)).containEql({ CapacityUnits: 0.5, Table: { CapacityUnits: 0.5 }, TableName: helpers.testHashNTable })
             done()
           })
         })
@@ -528,27 +569,27 @@ describe('batchGetItem', function () {
       var a = helpers.randomString(), b = new Array(4084 - a.length).join('b'),
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==' ] } },
         item2 = { a: { S: helpers.randomString() } },
-        batchReq = { RequestItems: {} }
+        batchReq = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: item } }, { PutRequest: { Item: item2 } } ]
-      request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
+      request(helpers.opts('BatchWriteItem', batchReq), function (err: unknown, res: BatchWriteItemResponse) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        batchReq = { RequestItems: {}, ReturnConsumedCapacity: 'TOTAL' }
-        batchReq.RequestItems[helpers.testHashTable] = { Keys: [ { a: item.a }, { a: item2.a }, { a: { S: helpers.randomString() } } ] }
-        batchReq.RequestItems[helpers.testHashNTable] = { Keys: [ { a: { N: helpers.randomNumber() } } ] }
-        request(opts(batchReq), function (err, res) {
+        assertStatusCode(res, 200)
+        var getReq = createBatchGetRequest('TOTAL')
+        getReq.RequestItems[helpers.testHashTable] = { Keys: [ { a: item.a }, { a: item2.a }, { a: { S: helpers.randomString() } } ] }
+        getReq.RequestItems[helpers.testHashNTable] = { Keys: [ { a: { N: helpers.randomNumber() } } ] }
+        request(opts(getReq), function (err: unknown, res: BatchGetItemResponse) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 2, TableName: helpers.testHashTable })
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 0.5, TableName: helpers.testHashNTable })
-          res.body.Responses[helpers.testHashTable].should.have.length(2)
-          res.body.Responses[helpers.testHashNTable].should.have.length(0)
-          batchReq.ReturnConsumedCapacity = 'INDEXES'
-          request(opts(batchReq), function (err, res) {
+          assertStatusCode(res, 200)
+          should(getConsumedCapacity(res)).containEql({ CapacityUnits: 2, TableName: helpers.testHashTable })
+          should(getConsumedCapacity(res)).containEql({ CapacityUnits: 0.5, TableName: helpers.testHashNTable })
+          should(res.body.Responses[helpers.testHashTable]).have.length(2)
+          should(res.body.Responses[helpers.testHashNTable]).have.length(0)
+          getReq.ReturnConsumedCapacity = 'INDEXES'
+          request(opts(getReq), function (err: unknown, res: BatchGetItemResponse) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable })
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 0.5, Table: { CapacityUnits: 0.5 }, TableName: helpers.testHashNTable })
+            assertStatusCode(res, 200)
+            should(getConsumedCapacity(res)).containEql({ CapacityUnits: 2, Table: { CapacityUnits: 2 }, TableName: helpers.testHashTable })
+            should(getConsumedCapacity(res)).containEql({ CapacityUnits: 0.5, Table: { CapacityUnits: 0.5 }, TableName: helpers.testHashNTable })
             done()
           })
         })
@@ -559,27 +600,27 @@ describe('batchGetItem', function () {
       var a = helpers.randomString(), b = new Array(4082 - a.length).join('b'),
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==', 'AQ==' ] } },
         item2 = { a: { S: helpers.randomString() } },
-        batchReq = { RequestItems: {} }
+        batchReq = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: item } }, { PutRequest: { Item: item2 } } ]
-      request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
+      request(helpers.opts('BatchWriteItem', batchReq), function (err: unknown, res: BatchWriteItemResponse) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        batchReq = { RequestItems: {}, ReturnConsumedCapacity: 'TOTAL' }
-        batchReq.RequestItems[helpers.testHashTable] = { Keys: [ { a: item.a }, { a: item2.a }, { a: { S: helpers.randomString() } } ], ConsistentRead: true }
-        batchReq.RequestItems[helpers.testHashNTable] = { Keys: [ { a: { N: helpers.randomNumber() } } ], ConsistentRead: true }
-        request(opts(batchReq), function (err, res) {
+        assertStatusCode(res, 200)
+        var getReq = createBatchGetRequest('TOTAL')
+        getReq.RequestItems[helpers.testHashTable] = { Keys: [ { a: item.a }, { a: item2.a }, { a: { S: helpers.randomString() } } ], ConsistentRead: true }
+        getReq.RequestItems[helpers.testHashNTable] = { Keys: [ { a: { N: helpers.randomNumber() } } ], ConsistentRead: true }
+        request(opts(getReq), function (err: unknown, res: BatchGetItemResponse) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 3, TableName: helpers.testHashTable })
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
-          res.body.Responses[helpers.testHashTable].should.have.length(2)
-          res.body.Responses[helpers.testHashNTable].should.have.length(0)
-          batchReq.ReturnConsumedCapacity = 'INDEXES'
-          request(opts(batchReq), function (err, res) {
+          assertStatusCode(res, 200)
+          should(getConsumedCapacity(res)).containEql({ CapacityUnits: 3, TableName: helpers.testHashTable })
+          should(getConsumedCapacity(res)).containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
+          should(res.body.Responses[helpers.testHashTable]).have.length(2)
+          should(res.body.Responses[helpers.testHashNTable]).have.length(0)
+          getReq.ReturnConsumedCapacity = 'INDEXES'
+          request(opts(getReq), function (err: unknown, res: BatchGetItemResponse) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 3, Table: { CapacityUnits: 3 }, TableName: helpers.testHashTable })
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
+            assertStatusCode(res, 200)
+            should(getConsumedCapacity(res)).containEql({ CapacityUnits: 3, Table: { CapacityUnits: 3 }, TableName: helpers.testHashTable })
+            should(getConsumedCapacity(res)).containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
             done()
           })
         })
@@ -590,27 +631,27 @@ describe('batchGetItem', function () {
       var a = helpers.randomString(), b = new Array(4084 - a.length).join('b'),
         item = { a: { S: a }, b: { S: b }, c: { N: '12.3456' }, d: { B: 'AQI=' }, e: { BS: [ 'AQI=', 'Ag==' ] } },
         item2 = { a: { S: helpers.randomString() } },
-        batchReq = { RequestItems: {} }
+        batchReq = createBatchWriteRequest()
       batchReq.RequestItems[helpers.testHashTable] = [ { PutRequest: { Item: item } }, { PutRequest: { Item: item2 } } ]
-      request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
+      request(helpers.opts('BatchWriteItem', batchReq), function (err: unknown, res: BatchWriteItemResponse) {
         if (err) return done(err)
-        res.statusCode.should.equal(200)
-        batchReq = { RequestItems: {}, ReturnConsumedCapacity: 'TOTAL' }
-        batchReq.RequestItems[helpers.testHashTable] = { Keys: [ { a: item.a }, { a: item2.a }, { a: { S: helpers.randomString() } } ], ConsistentRead: true }
-        batchReq.RequestItems[helpers.testHashNTable] = { Keys: [ { a: { N: helpers.randomNumber() } } ], ConsistentRead: true }
-        request(opts(batchReq), function (err, res) {
+        assertStatusCode(res, 200)
+        var getReq = createBatchGetRequest('TOTAL')
+        getReq.RequestItems[helpers.testHashTable] = { Keys: [ { a: item.a }, { a: item2.a }, { a: { S: helpers.randomString() } } ], ConsistentRead: true }
+        getReq.RequestItems[helpers.testHashNTable] = { Keys: [ { a: { N: helpers.randomNumber() } } ], ConsistentRead: true }
+        request(opts(getReq), function (err: unknown, res: BatchGetItemResponse) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 4, TableName: helpers.testHashTable })
-          res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
-          res.body.Responses[helpers.testHashTable].should.have.length(2)
-          res.body.Responses[helpers.testHashNTable].should.have.length(0)
-          batchReq.ReturnConsumedCapacity = 'INDEXES'
-          request(opts(batchReq), function (err, res) {
+          assertStatusCode(res, 200)
+          should(getConsumedCapacity(res)).containEql({ CapacityUnits: 4, TableName: helpers.testHashTable })
+          should(getConsumedCapacity(res)).containEql({ CapacityUnits: 1, TableName: helpers.testHashNTable })
+          should(res.body.Responses[helpers.testHashTable]).have.length(2)
+          should(res.body.Responses[helpers.testHashNTable]).have.length(0)
+          getReq.ReturnConsumedCapacity = 'INDEXES'
+          request(opts(getReq), function (err: unknown, res: BatchGetItemResponse) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 4, Table: { CapacityUnits: 4 }, TableName: helpers.testHashTable })
-            res.body.ConsumedCapacity.should.containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
+            assertStatusCode(res, 200)
+            should(getConsumedCapacity(res)).containEql({ CapacityUnits: 4, Table: { CapacityUnits: 4 }, TableName: helpers.testHashTable })
+            should(getConsumedCapacity(res)).containEql({ CapacityUnits: 1, Table: { CapacityUnits: 1 }, TableName: helpers.testHashNTable })
             done()
           })
         })
@@ -622,8 +663,8 @@ describe('batchGetItem', function () {
       it('should return all items if just under limit', function (done) {
         this.timeout(200000)
 
-        var i, item, items = [], b = new Array(helpers.MAX_SIZE - 6).join('b'),
-          batchReq = { RequestItems: {}, ReturnConsumedCapacity: 'TOTAL' }
+        var i, item, items: DynamoItem[] = [], b = new Array(helpers.MAX_SIZE - 6).join('b'),
+          batchReq = createBatchGetRequest('TOTAL')
         for (i = 0; i < 4; i++) {
           if (i < 3) {
             item = { a: { S: ('0' + i).slice(-2) }, b: { S: b } }
@@ -634,17 +675,17 @@ describe('batchGetItem', function () {
           }
           items.push(item)
         }
-        helpers.clearTable(helpers.testHashTable, 'a', function (err) {
+        helpers.clearTable(helpers.testHashTable, 'a', function (err: unknown) {
           if (err) return done(err)
-          helpers.batchWriteUntilDone(helpers.testHashTable, { puts: items }, function (err) {
+          helpers.batchWriteUntilDone(helpers.testHashTable, { puts: items }, function (err: unknown) {
             if (err) return done(err)
             batchReq.RequestItems[helpers.testHashTable] = { Keys: items.map(function (item) { return { a: item.a } }), ConsistentRead: true }
-            request(opts(batchReq), function (err, res) {
+            request(opts(batchReq), function (err: unknown, res: BatchGetItemResponse) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
-              res.body.ConsumedCapacity.should.eql([ { CapacityUnits: 357, TableName: helpers.testHashTable } ])
-              res.body.UnprocessedKeys.should.eql({})
-              res.body.Responses[helpers.testHashTable].should.have.length(4)
+              assertStatusCode(res, 200)
+              should(getConsumedCapacity(res)).eql([ { CapacityUnits: 357, TableName: helpers.testHashTable } ])
+              should(res.body.UnprocessedKeys).eql({})
+              should(res.body.Responses[helpers.testHashTable]).have.length(4)
               helpers.clearTable(helpers.testHashTable, 'a', done)
             })
           })
@@ -655,8 +696,8 @@ describe('batchGetItem', function () {
       it.skip('should return an unprocessed item if just over limit', function (done) {
         this.timeout(200000)
 
-        var i, item, items = [], b = new Array(helpers.MAX_SIZE - 6).join('b'),
-          batchReq = { RequestItems: {}, ReturnConsumedCapacity: 'TOTAL' }
+        var i, item, items: DynamoItem[] = [], b = new Array(helpers.MAX_SIZE - 6).join('b'),
+          batchReq = createBatchGetRequest('TOTAL')
         for (i = 0; i < 4; i++) {
           if (i < 3) {
             item = { a: { S: ('0' + i).slice(-2) }, b: { S: b } }
@@ -667,24 +708,26 @@ describe('batchGetItem', function () {
           }
           items.push(item)
         }
-        helpers.batchWriteUntilDone(helpers.testHashTable, { puts: items }, function (err) {
+        helpers.batchWriteUntilDone(helpers.testHashTable, { puts: items }, function (err: unknown) {
           if (err) return done(err)
           batchReq.RequestItems[helpers.testHashTable] = { Keys: items.map(function (item) { return { a: item.a } }), ConsistentRead: true }
-          request(opts(batchReq), function (err, res) {
+          request(opts(batchReq), function (err: unknown, res: BatchGetItemResponse) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.UnprocessedKeys[helpers.testHashTable].ConsistentRead.should.equal(true)
-            res.body.UnprocessedKeys[helpers.testHashTable].Keys.should.have.length(1)
-            Object.keys(res.body.UnprocessedKeys[helpers.testHashTable].Keys[0]).should.have.length(1)
-            if (res.body.UnprocessedKeys[helpers.testHashTable].Keys[0].a.S == '03') {
-              res.body.ConsumedCapacity.should.eql([ { CapacityUnits: 301, TableName: helpers.testHashTable } ])
+            assertStatusCode(res, 200)
+            var unprocessed = res.body.UnprocessedKeys[helpers.testHashTable]
+            if (unprocessed == null || unprocessed.Keys == null) return done(new Error('Missing unprocessed keys'))
+            should(unprocessed.ConsistentRead).equal(true)
+            should(unprocessed.Keys).have.length(1)
+            should(Object.keys(unprocessed.Keys[0])).have.length(1)
+            if (getStringAttribute(unprocessed.Keys[0], 'a') == '03') {
+              should(getConsumedCapacity(res)).eql([ { CapacityUnits: 301, TableName: helpers.testHashTable } ])
             }
             else {
-              res.body.UnprocessedKeys[helpers.testHashTable].Keys[0].a.S.should.be.above(-1)
-              res.body.UnprocessedKeys[helpers.testHashTable].Keys[0].a.S.should.be.below(4)
-              res.body.ConsumedCapacity.should.eql([ { CapacityUnits: 258, TableName: helpers.testHashTable } ])
+              should(Number(getStringAttribute(unprocessed.Keys[0], 'a'))).be.above(-1)
+              should(Number(getStringAttribute(unprocessed.Keys[0], 'a'))).be.below(4)
+              should(getConsumedCapacity(res)).eql([ { CapacityUnits: 258, TableName: helpers.testHashTable } ])
             }
-            res.body.Responses[helpers.testHashTable].should.have.length(3)
+            should(res.body.Responses[helpers.testHashTable]).have.length(3)
             helpers.clearTable(helpers.testHashTable, 'a', done)
           })
         })
@@ -693,8 +736,8 @@ describe('batchGetItem', function () {
       it('should return many unprocessed items if very over the limit', function (done) {
         this.timeout(200000)
 
-        var i, item, items = [], b = new Array(helpers.MAX_SIZE - 3).join('b'),
-          batchReq = { RequestItems: {}, ReturnConsumedCapacity: 'TOTAL' }
+        var i, item, items: DynamoItem[] = [], b = new Array(helpers.MAX_SIZE - 3).join('b'),
+          batchReq = createBatchGetRequest('TOTAL')
         for (i = 0; i < 20; i++) {
           if (i < 3) {
             item = { a: { S: ('0' + i).slice(-2) }, b: { S: b } }
@@ -704,26 +747,30 @@ describe('batchGetItem', function () {
           }
           items.push(item)
         }
-        helpers.batchBulkPut(helpers.testHashTable, items, function (err) {
+        helpers.batchBulkPut(helpers.testHashTable, items, function (err: unknown) {
           if (err) return done(err)
           batchReq.RequestItems[helpers.testHashTable] = { Keys: items.map(function (item) { return { a: item.a } }), ConsistentRead: true }
-          request(opts(batchReq), function (err, res) {
+          request(opts(batchReq), function (err: unknown, res: BatchGetItemResponse) {
             if (err) return done(err)
-            res.statusCode.should.equal(200)
-            res.body.UnprocessedKeys[helpers.testHashTable].ConsistentRead.should.equal(true)
-            res.body.UnprocessedKeys[helpers.testHashTable].Keys.length.should.be.above(0)
-            res.body.Responses[helpers.testHashTable].length.should.be.above(0)
+            assertStatusCode(res, 200)
+            var unprocessed = res.body.UnprocessedKeys[helpers.testHashTable]
+            var responses = res.body.Responses[helpers.testHashTable]
+            if (unprocessed == null || unprocessed.Keys == null) return done(new Error('Missing unprocessed keys'))
+            if (responses == null) return done(new Error('Missing responses'))
+            should(unprocessed.ConsistentRead).equal(true)
+            should(unprocessed.Keys.length).be.above(0)
+            should(responses.length).be.above(0)
 
             var totalLength, totalCapacity
 
-            totalLength = res.body.Responses[helpers.testHashTable].length +
-              res.body.UnprocessedKeys[helpers.testHashTable].Keys.length
-            totalLength.should.equal(20)
+            totalLength = responses.length + unprocessed.Keys.length
+            should(totalLength).equal(20)
 
-            totalCapacity = res.body.ConsumedCapacity[0].CapacityUnits
-            for (i = 0; i < res.body.UnprocessedKeys[helpers.testHashTable].Keys.length; i++)
-              totalCapacity += res.body.UnprocessedKeys[helpers.testHashTable].Keys[i].a.S < 3 ? 99 : 4
-            totalCapacity.should.equal(385)
+            totalCapacity = getConsumedCapacity(res)[0].CapacityUnits
+            if (totalCapacity == null) return done(new Error('Missing total consumed capacity'))
+            for (i = 0; i < unprocessed.Keys.length; i++)
+              totalCapacity += Number(getStringAttribute(unprocessed.Keys[i], 'a')) < 3 ? 99 : 4
+            should(totalCapacity).equal(385)
 
             helpers.clearTable(helpers.testHashTable, 'a', done)
           })

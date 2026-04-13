@@ -14,7 +14,7 @@
     "t": "mocha --require should --timeout 10000 test/listTables.js",
     "build": "for file in ./db/*.pegjs; do pegjs \"$file\"; done",
     "build:test-ts": "bun x tsgo -p tsconfig.test.json",
-    "test": "npm run lint && npm run build:test-ts && mocha --require should --reporter spec -t $([ $REMOTE ] && echo 30s || echo 4s) \"test/**/*.js\" \"dist/bench.js\"",
+    "test": "npm run lint && npm run build:test-ts && mocha --require should --reporter spec -t $([ $REMOTE ] && echo 30s || echo 4s) \"test/**/*.js\" \"dist/test/**/*.js\"",
     "typecheck": "tsgo --noEmit",
     "coverage": "npx nyc@latest mocha --require should -t 4s",
     "lint": "eslint . --fix"

@@ -6,6 +6,7 @@ export default [
     ignores: [
       'coverage/**',
       'db/*Parser.js',
+      'dist/**',
       'dist-test/**',
       'test/**/*.ts',
     ],

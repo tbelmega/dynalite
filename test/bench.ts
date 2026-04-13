@@ -1,6 +1,6 @@
 var should = require('should');
-var helpers = require('../test/helpers');
-import type {LastEvaluatedKey, ScanCommandResponse} from '../types/ScanCommandResponse';
+var helpers = require('../../test/helpers');
+import type {LastEvaluatedKey, ScanCommandResponse} from '../types/types';
 
 describe.skip('benchmarks', function () {
 

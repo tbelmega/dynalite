@@ -1,0 +1,48 @@
+import type {ScanCommandOutput} from "@aws-sdk/client-dynamodb";
+
+export type DynamoCommandResponse<TBody> = import('http').IncomingMessage & { body: TBody };
+export type ScanCommandResponse = DynamoCommandResponse<ScanCommandOutput>;
+export type LastEvaluatedKey = ScanCommandOutput['LastEvaluatedKey'];
+export type AsyncCallback = (err?: unknown) => void;
+export type RawAttributeValue = {
+  B?: string;
+  BOOL?: boolean;
+  BS?: string[];
+  L?: RawAttributeValue[];
+  M?: Record<string, RawAttributeValue>;
+  N?: string;
+  NS?: string[];
+  NULL?: boolean;
+  S?: string;
+  SS?: string[];
+} & Record<string, unknown>;
+export type DynamoItem = Record<string, RawAttributeValue>;
+export type InvalidAttributeValue = Record<string, unknown>;
+export type ValidationCase = [InvalidAttributeValue, string];
+export type KeysAndAttributes = {
+  AttributesToGet?: string[];
+  ConsistentRead?: boolean;
+  ExpressionAttributeNames?: Record<string, string>;
+  Keys?: DynamoItem[];
+  ProjectionExpression?: string;
+};
+export type BatchGetRequest = {
+  RequestItems: Record<string, KeysAndAttributes>;
+  ReturnConsumedCapacity?: string;
+};
+export type WriteRequest = { PutRequest: { Item: DynamoItem } };
+export type BatchWriteRequest = { RequestItems: Record<string, WriteRequest[]> };
+export type ConsumedCapacity = { CapacityUnits?: number; Table?: { CapacityUnits?: number }; TableName?: string };
+export type BatchGetItemOutput = {
+  ConsumedCapacity?: ConsumedCapacity[];
+  Responses: Record<string, DynamoItem[]>;
+  UnprocessedKeys: Record<string, KeysAndAttributes>;
+};
+export type BatchGetItemResponse = DynamoCommandResponse<BatchGetItemOutput>;
+export type BatchWriteItemResponse = DynamoCommandResponse<Record<string, unknown>>;
+export type CreateTableRequest = {
+  AttributeDefinitions: Array<{ AttributeName: string; AttributeType: string }>;
+  KeySchema: Array<{ AttributeName: string; KeyType: string }>;
+  ProvisionedThroughput: { ReadCapacityUnits: number; WriteCapacityUnits: number };
+  TableName: string;
+};

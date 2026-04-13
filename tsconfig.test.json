@@ -4,10 +4,11 @@
     "allowJs": false,
     "noEmit": false,
     "outDir": "dist",
-    "rootDir": "test"
+    "rootDir": "."
   },
   "include": [
-    "test/**/*.ts"
+    "test/**/*.ts",
+    "types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
