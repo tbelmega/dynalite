@@ -112,6 +112,37 @@ export type UpdateItemResponseBody = {
   Item?: DynamoItem;
 } & Record<string, unknown>;
 export type UpdateItemResponse = DynamoCommandResponse<UpdateItemResponseBody>;
+export type QueryCondition = {
+  AttributeValueList?: RawAttributeValue[];
+  ComparisonOperator?: string;
+} & Record<string, unknown>;
+export type QueryRequest = {
+  AttributesToGet?: string[];
+  ConditionalOperator?: string;
+  ConsistentRead?: boolean;
+  ExclusiveStartKey?: DynamoItem;
+  ExpressionAttributeNames?: Record<string, string>;
+  ExpressionAttributeValues?: Record<string, RawAttributeValue>;
+  FilterExpression?: string;
+  IndexName?: string;
+  KeyConditionExpression?: string;
+  KeyConditions?: Record<string, QueryCondition>;
+  Limit?: number;
+  ProjectionExpression?: string;
+  QueryFilter?: Record<string, QueryCondition>;
+  ReturnConsumedCapacity?: string;
+  ScanIndexForward?: boolean;
+  Select?: string;
+  TableName?: string;
+} & Record<string, unknown>;
+export type QueryResponseBody = {
+  ConsumedCapacity?: ConsumedCapacity;
+  Count?: number;
+  Items?: DynamoItem[];
+  LastEvaluatedKey?: DynamoItem;
+  ScannedCount?: number;
+} & Record<string, unknown>;
+export type QueryResponse = DynamoCommandResponse<QueryResponseBody>;
 export type InvalidAttributeValueCase = [InvalidAttributeValue, string];
 export type StringValidationCase = [string, string];
 export type ResourceTag = { Key: string; Value: string };
