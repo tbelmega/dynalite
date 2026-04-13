@@ -6,6 +6,11 @@ export type LastEvaluatedKey = ScanCommandOutput['LastEvaluatedKey'];
 export type AsyncCallback = (err?: unknown) => void;
 export type TestDynamoRequest = Record<string, unknown>;
 export type TestDynamoResponse = DynamoCommandResponse<Record<string, unknown>>;
+export type TestRequestHeaders = Record<string, string>;
+export type TestRequestOptions = TestDynamoRequest & {
+  headers: TestRequestHeaders;
+  signQuery?: boolean;
+};
 export type RawAttributeValue = {
   B?: string;
   BOOL?: boolean;
@@ -97,3 +102,8 @@ export type DeleteTableResponseBody = {
   __type?: string;
 } & Record<string, unknown>;
 export type DeleteTableResponse = DynamoCommandResponse<DeleteTableResponseBody>;
+export type ListTablesResponseBody = {
+  LastEvaluatedTableName?: string;
+  TableNames: string[];
+};
+export type ListTablesResponse = DynamoCommandResponse<ListTablesResponseBody>;

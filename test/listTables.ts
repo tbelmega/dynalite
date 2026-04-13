@@ -1,11 +1,18 @@
 var should = require('should'),
   async = require('async'),
-  helpers = require('./helpers')
+  helpers = require('../../test/helpers')
+
+import type {
+  AsyncCallback,
+  ListTablesResponse,
+  TestDynamoRequest,
+  TestRequestOptions,
+} from '../types/types'
 
 var target = 'ListTables',
-  request = helpers.request,
+  request: (requestOptions: TestDynamoRequest, cb: (err: unknown, res: ListTablesResponse) => void) => void = helpers.request,
   randomName = helpers.randomName,
-  opts = helpers.opts.bind(null, target),
+  opts: (data: TestDynamoRequest) => TestRequestOptions = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target)
 
@@ -200,11 +207,11 @@ describe('listTables', function () {
       async.parallel([
         request.bind(null, helpers.opts('CreateTable', table1)),
         request.bind(null, helpers.opts('CreateTable', table2)),
-      ], function (err) {
+      ], function (err: unknown) {
         if (err) return done(err)
 
         async.parallel([
-          function (done) {
+          function (done: AsyncCallback) {
             request(opts({ ExclusiveStartTableName: names[0] }), function (err, res) {
               if (err) return done(err)
               should(res.statusCode).equal(200)
@@ -213,7 +220,7 @@ describe('listTables', function () {
               done()
             })
           },
-          function (done) {
+          function (done: AsyncCallback) {
             request(opts({ ExclusiveStartTableName: beforeName }), function (err, res) {
               if (err) return done(err)
               should(res.statusCode).equal(200)
@@ -222,7 +229,7 @@ describe('listTables', function () {
               done()
             })
           },
-          function (done) {
+          function (done: AsyncCallback) {
             request(opts({ Limit: 1 }), function (err, res) {
               if (err) return done(err)
               should(res.statusCode).equal(200)
@@ -230,7 +237,7 @@ describe('listTables', function () {
               done()
             })
           },
-          function (done) {
+          function (done: AsyncCallback) {
             request(opts({ ExclusiveStartTableName: beforeName, Limit: 1 }), function (err, res) {
               if (err) return done(err)
               should(res.statusCode).equal(200)
@@ -239,7 +246,7 @@ describe('listTables', function () {
               done()
             })
           },
-        ], function (err) {
+        ], function (err: unknown) {
           helpers.deleteWhenActive(names[0])
           helpers.deleteWhenActive(names[1])
           done(err)
