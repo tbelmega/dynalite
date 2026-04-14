@@ -1,3 +1,4 @@
+// @ts-nocheck
 var async = require('async')
 
 function attachInstanceTableData (helper) {

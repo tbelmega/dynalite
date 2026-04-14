@@ -1,6 +1,6 @@
 var should = require('should'),
   async = require('async'),
-  helpers = require('../../test/helpers')
+  helpers = require('./helpers')
 
 import type {
   AsyncCallback,

@@ -1,6 +1,7 @@
+// @ts-nocheck
 var http = require('http'),
   async = require('async'),
-  dynalite = require('../../..'),
+  dynalite = require('../../../..'),
   requestUtils = require('./request'),
   assertions = require('./assertions'),
   naming = require('./naming'),

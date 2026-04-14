@@ -1,3 +1,4 @@
+// @ts-nocheck
 function attachInstanceTableLifecycle (helper) {
   helper.createAndWait = function (table, done) {
     helper.request(helper.opts('CreateTable', table), function (err, res) {

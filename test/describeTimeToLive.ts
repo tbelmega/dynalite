@@ -1,5 +1,5 @@
 var should = require('should')
-var helpers = require('../../test/helpers')
+var helpers = require('./helpers')
 
 import type {
   TestDynamoRequest,

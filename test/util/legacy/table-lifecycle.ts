@@ -1,3 +1,4 @@
+// @ts-nocheck
 function createLegacyTableLifecycle (dependencies) {
   var request = dependencies.request
   var opts = dependencies.opts

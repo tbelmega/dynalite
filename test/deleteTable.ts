@@ -1,5 +1,5 @@
 var should = require('should'),
-  helpers = require('../../test/helpers')
+  helpers = require('./helpers')
 
 import type {
   DeleteTableResponse,

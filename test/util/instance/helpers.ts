@@ -1,3 +1,4 @@
+// @ts-nocheck
 var http = require('http')
 var requestHelpers = require('./request')
 var safeCleanup = require('./safe-cleanup')

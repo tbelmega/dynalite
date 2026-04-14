@@ -1,3 +1,4 @@
+// @ts-nocheck
 var legacyHelpers = require('./util/legacy/helpers')
 var instanceHelpers = require('./util/instance/helpers')
 

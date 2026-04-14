@@ -1,4 +1,4 @@
-var helpers = require('../../test/helpers'),
+var helpers = require('./helpers'),
   should = require('should')
 
 import type {

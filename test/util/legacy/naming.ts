@@ -1,3 +1,4 @@
+// @ts-nocheck
 function createLegacyNaming (options) {
   options = options || {}
   var prefix = options.prefix || ''

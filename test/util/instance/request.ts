@@ -1,7 +1,8 @@
+// @ts-nocheck
 var http = require('http')
 var aws4 = require('aws4')
 var once = require('once')
-var dynalite = require('../../..')
+var dynalite = require('../../../..')
 
 function attachInstanceRequest (helper) {
   helper.startServer = function () {

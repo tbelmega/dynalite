@@ -1,6 +1,6 @@
 var should = require('should')
 var async = require('async'),
-  helpers = require('../../test/helpers'),
+  helpers = require('./helpers'),
   db = require('../../db')
 
 import type {

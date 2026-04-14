@@ -2,7 +2,7 @@ var should = require('should')
 var https = require('https'),
   once = require('once'),
   dynalite = require('../..'),
-  helpers = require('../../test/helpers')
+  helpers = require('./helpers')
 
 import type {
   AsyncCallback,
