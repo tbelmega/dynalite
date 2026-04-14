@@ -1,10 +1,26 @@
-var helpers = require('./helpers'),
+var helpers = require('../../test/helpers'),
   should = require('should')
 
+import type {
+  DynamoItem,
+  ScanRequest,
+  ScanResponse,
+} from '../types/types'
+
 var target = 'Scan',
-  request = helpers.request,
-  opts = helpers.opts.bind(null, target),
+  request: <TResponse extends ScanResponse>(requestOptions: ScanRequest, cb: (err: unknown, res: TResponse) => void) => void = helpers.request,
+  opts: (data: ScanRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   runSlowTests = helpers.runSlowTests
+
+function expectItems (res: ScanResponse, message: string) {
+  if (!res.body.Items) throw new Error(message)
+  return res.body.Items
+}
+
+function expectConsumedCapacity (res: ScanResponse, message: string) {
+  if (!res.body.ConsumedCapacity) throw new Error(message)
+  return res.body.ConsumedCapacity
+}
 
 describe('scan - functionality', function () {
 
@@ -16,15 +32,15 @@ describe('scan - functionality', function () {
       it('should not return LastEvaluatedKey if just under limit for range table', function (done) {
         this.timeout(200000)
 
-        var i, items = [], id = helpers.randomString(), e = new Array(41583).join('e'), eAttr = e.slice(0, 255)
+        var i, items: DynamoItem[] = [], id = helpers.randomString(), e = new Array(41583).join('e'), eAttr = e.slice(0, 255)
         for (i = 0; i < 25; i++) {
-          var item = { a: { S: id }, b: { S: ('000000' + i).slice(-6) }, c: { S: 'abcde' } }
+          var item: DynamoItem = { a: { S: id }, b: { S: ('000000' + i).slice(-6) }, c: { S: 'abcde' } }
           item[eAttr] = { S: e }
           items.push(item)
         }
         items[24][eAttr].S = new Array(41583).join('e')
 
-        helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, function (err) {
+        helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({
@@ -52,12 +68,12 @@ describe('scan - functionality', function () {
       it('should return LastEvaluatedKey if just over limit for range table', function (done) {
         this.timeout(200000)
 
-        var i, items = [], id = helpers.randomString(), e = new Array(41597).join('e')
+        var i, items: DynamoItem[] = [], id = helpers.randomString(), e = new Array(41597).join('e')
         for (i = 0; i < 25; i++)
           items.push({ a: { S: id }, b: { S: ('00000' + i).slice(-5) }, c: { S: 'abcde' }, e: { S: e } })
         items[24].e.S = new Array(41598).join('e')
 
-        helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, function (err) {
+        helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({
@@ -85,15 +101,15 @@ describe('scan - functionality', function () {
       it('should not return LastEvaluatedKey if just under limit for number range table', function (done) {
         this.timeout(200000)
 
-        var i, items = [], id = helpers.randomString(), e = new Array(41639).join('e'), eAttr = e.slice(0, 255)
+        var i, items: DynamoItem[] = [], id = helpers.randomString(), e = new Array(41639).join('e'), eAttr = e.slice(0, 255)
         for (i = 0; i < 25; i++) {
-          var item = { a: { S: id }, b: { N: ('00' + i).slice(-2) }, c: { S: 'abcde' } }
+          var item: DynamoItem = { a: { S: id }, b: { N: ('00' + i).slice(-2) }, c: { S: 'abcde' } }
           item[eAttr] = { S: e }
           items.push(item)
         }
         items[24][eAttr].S = new Array(41653).join('e')
 
-        helpers.replaceTable(helpers.testRangeNTable, [ 'a', 'b' ], items, function (err) {
+        helpers.replaceTable(helpers.testRangeNTable, [ 'a', 'b' ], items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({
@@ -121,12 +137,12 @@ describe('scan - functionality', function () {
       it('should return LastEvaluatedKey if just over limit for number range table', function (done) {
         this.timeout(200000)
 
-        var i, items = [], id = helpers.randomString(), e = new Array(41639).join('e')
+        var i, items: DynamoItem[] = [], id = helpers.randomString(), e = new Array(41639).join('e')
         for (i = 0; i < 25; i++)
           items.push({ a: { S: id }, b: { N: ('00' + i).slice(-2) }, c: { S: 'abcde' }, e: { S: e } })
         items[24].e.S = new Array(41654).join('e')
 
-        helpers.replaceTable(helpers.testRangeNTable, [ 'a', 'b' ], items, function (err) {
+        helpers.replaceTable(helpers.testRangeNTable, [ 'a', 'b' ], items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({
@@ -154,17 +170,17 @@ describe('scan - functionality', function () {
       it('should return all if just under limit with small attribute for hash table', function (done) {
         this.timeout(200000)
 
-        var i, items = []
+        var i, items: DynamoItem[] = []
         for (i = 0; i < 25; i++)
           items.push({ a: { S: ('0' + i).slice(-2) } })
 
-        helpers.replaceTable(helpers.testHashTable, 'a', items, function (err) {
+        helpers.replaceTable(helpers.testHashTable, 'a', items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({ TableName: helpers.testHashTable }), function (err, res) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
-            items = res.body.Items
+            items = expectItems(res, 'Expected scan items while preparing size-limit fixtures')
             should(items).have.length(25)
 
             var b = new Array(43412).join('b')
@@ -187,7 +203,7 @@ describe('scan - functionality', function () {
               }
             }
 
-            helpers.replaceTable(helpers.testHashTable, 'a', items, 10, function (err) {
+            helpers.replaceTable(helpers.testHashTable, 'a', items, 10, function (err: unknown) {
               if (err) return done(err)
 
               request(opts({
@@ -199,7 +215,7 @@ describe('scan - functionality', function () {
                 should(res.statusCode).equal(200)
                 should(res.body.ScannedCount).equal(25)
                 should(res.body.Count).equal(25)
-                should(res.body.ConsumedCapacity.CapacityUnits).equal(127.5)
+                should(expectConsumedCapacity(res, 'Expected consumed capacity for size-limit scan').CapacityUnits).equal(127.5)
                 helpers.clearTable(helpers.testHashTable, 'a', done)
               })
             })
@@ -210,17 +226,17 @@ describe('scan - functionality', function () {
       it('should return all if just under limit with large attribute', function (done) {
         this.timeout(200000)
 
-        var i, items = []
+        var i, items: DynamoItem[] = []
         for (i = 0; i < 25; i++)
           items.push({ a: { S: ('0' + i).slice(-2) } })
 
-        helpers.replaceTable(helpers.testHashTable, 'a', items, function (err) {
+        helpers.replaceTable(helpers.testHashTable, 'a', items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({ TableName: helpers.testHashTable }), function (err, res) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
-            items = res.body.Items
+            items = expectItems(res, 'Expected scan items while preparing size-limit fixtures')
             should(items).have.length(25)
 
             var b = new Array(43412).join('b'), bAttr = b.slice(0, 255)
@@ -243,7 +259,7 @@ describe('scan - functionality', function () {
               }
             }
 
-            helpers.replaceTable(helpers.testHashTable, 'a', items, 10, function (err) {
+            helpers.replaceTable(helpers.testHashTable, 'a', items, 10, function (err: unknown) {
               if (err) return done(err)
 
               request(opts({
@@ -255,7 +271,7 @@ describe('scan - functionality', function () {
                 should(res.statusCode).equal(200)
                 should(res.body.ScannedCount).equal(25)
                 should(res.body.Count).equal(25)
-                should(res.body.ConsumedCapacity.CapacityUnits).equal(128)
+                should(expectConsumedCapacity(res, 'Expected consumed capacity for size-limit scan').CapacityUnits).equal(128)
                 helpers.clearTable(helpers.testHashTable, 'a', done)
               })
             })
@@ -266,17 +282,17 @@ describe('scan - functionality', function () {
       it('should return one less than all if just over limit with small attribute for hash table', function (done) {
         this.timeout(100000)
 
-        var i, items = []
+        var i, items: DynamoItem[] = []
         for (i = 0; i < 25; i++)
           items.push({ a: { S: ('0' + i).slice(-2) } })
 
-        helpers.replaceTable(helpers.testHashTable, 'a', items, function (err) {
+        helpers.replaceTable(helpers.testHashTable, 'a', items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({ TableName: helpers.testHashTable }), function (err, res) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
-            items = res.body.Items
+            items = expectItems(res, 'Expected scan items while preparing size-limit fixtures')
             should(items).have.length(25)
 
             var b = new Array(43412).join('b')
@@ -299,7 +315,7 @@ describe('scan - functionality', function () {
               }
             }
 
-            helpers.replaceTable(helpers.testHashTable, 'a', items, 10, function (err) {
+            helpers.replaceTable(helpers.testHashTable, 'a', items, 10, function (err: unknown) {
               if (err) return done(err)
 
               request(opts({
@@ -311,7 +327,7 @@ describe('scan - functionality', function () {
                 should(res.statusCode).equal(200)
                 should(res.body.ScannedCount).equal(24)
                 should(res.body.Count).equal(24)
-                should(res.body.ConsumedCapacity.CapacityUnits).equal(127.5)
+                should(expectConsumedCapacity(res, 'Expected consumed capacity for size-limit scan').CapacityUnits).equal(127.5)
                 helpers.clearTable(helpers.testHashTable, 'a', done)
               })
             })
@@ -322,17 +338,17 @@ describe('scan - functionality', function () {
       it('should return all if just under limit for range table', function (done) {
         this.timeout(200000)
 
-        var i, items = []
+        var i, items: DynamoItem[] = []
         for (i = 0; i < 25; i++)
           items.push({ a: { S: ('0' + i).slice(-2) }, b: { S: ('0' + i).slice(-2) } })
 
-        helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, function (err) {
+        helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({ TableName: helpers.testRangeTable }), function (err, res) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
-            items = res.body.Items
+            items = expectItems(res, 'Expected scan items while preparing size-limit fixtures')
             should(items).have.length(25)
 
             var b = new Array(43381).join('b'), bAttr = b.slice(0, 255)
@@ -355,7 +371,7 @@ describe('scan - functionality', function () {
               }
             }
 
-            helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, 10, function (err) {
+            helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, 10, function (err: unknown) {
               if (err) return done(err)
 
               request(opts({
@@ -367,7 +383,7 @@ describe('scan - functionality', function () {
                 should(res.statusCode).equal(200)
                 should(res.body.ScannedCount).equal(25)
                 should(res.body.Count).equal(25)
-                should(res.body.ConsumedCapacity.CapacityUnits).equal(128)
+                should(expectConsumedCapacity(res, 'Expected consumed capacity for size-limit scan').CapacityUnits).equal(128)
                 helpers.clearTable(helpers.testRangeTable, [ 'a', 'b' ], done)
               })
             })
@@ -378,17 +394,17 @@ describe('scan - functionality', function () {
       it('should return all if just over limit with less items for range table', function (done) {
         this.timeout(200000)
 
-        var i, items = []
+        var i, items: DynamoItem[] = []
         for (i = 0; i < 13; i++)
           items.push({ a: { S: ('0' + i).slice(-2) }, b: { S: ('0000000' + i).slice(-7) } })
 
-        helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, function (err) {
+        helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({ TableName: helpers.testRangeTable }), function (err, res) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
-            items = res.body.Items
+            items = expectItems(res, 'Expected scan items while preparing size-limit fixtures')
             should(items).have.length(13)
 
             var b = new Array(86648).join('b')
@@ -407,7 +423,7 @@ describe('scan - functionality', function () {
               }
             }
 
-            helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, 10, function (err) {
+            helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, 10, function (err: unknown) {
               if (err) return done(err)
 
               request(opts({
@@ -419,7 +435,7 @@ describe('scan - functionality', function () {
                 should(res.statusCode).equal(200)
                 should(res.body.ScannedCount).equal(12)
                 should(res.body.Count).equal(12)
-                should(res.body.ConsumedCapacity.CapacityUnits).equal(127)
+                should(expectConsumedCapacity(res, 'Expected consumed capacity for size-limit scan').CapacityUnits).equal(127)
                 helpers.clearTable(helpers.testRangeTable, [ 'a', 'b' ], done)
               })
             })
@@ -430,17 +446,17 @@ describe('scan - functionality', function () {
       it('should return all if just over limit for range table', function (done) {
         this.timeout(200000)
 
-        var i, items = []
+        var i, items: DynamoItem[] = []
         for (i = 0; i < 25; i++)
           items.push({ a: { S: ('0' + i).slice(-2) }, b: { S: ('0' + i).slice(-2) } })
 
-        helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, function (err) {
+        helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({ TableName: helpers.testRangeTable }), function (err, res) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
-            items = res.body.Items
+            items = expectItems(res, 'Expected scan items while preparing size-limit fixtures')
             should(items).have.length(25)
 
             var b = new Array(43381).join('b')
@@ -463,7 +479,7 @@ describe('scan - functionality', function () {
               }
             }
 
-            helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, 10, function (err) {
+            helpers.replaceTable(helpers.testRangeTable, [ 'a', 'b' ], items, 10, function (err: unknown) {
               if (err) return done(err)
 
               request(opts({
@@ -475,7 +491,7 @@ describe('scan - functionality', function () {
                 should(res.statusCode).equal(200)
                 should(res.body.ScannedCount).equal(24)
                 should(res.body.Count).equal(24)
-                should(res.body.ConsumedCapacity.CapacityUnits).equal(127.5)
+                should(expectConsumedCapacity(res, 'Expected consumed capacity for size-limit scan').CapacityUnits).equal(127.5)
                 helpers.clearTable(helpers.testRangeTable, [ 'a', 'b' ], done)
               })
             })
@@ -486,17 +502,17 @@ describe('scan - functionality', function () {
       it('should return one less than all if just over limit with large attribute', function (done) {
         this.timeout(100000)
 
-        var i, items = []
+        var i, items: DynamoItem[] = []
         for (i = 0; i < 25; i++)
           items.push({ a: { S: ('0' + i).slice(-2) } })
 
-        helpers.replaceTable(helpers.testHashTable, 'a', items, function (err) {
+        helpers.replaceTable(helpers.testHashTable, 'a', items, function (err: unknown) {
           if (err) return done(err)
 
           request(opts({ TableName: helpers.testHashTable }), function (err, res) {
             if (err) return done(err)
             should(res.statusCode).equal(200)
-            items = res.body.Items
+            items = expectItems(res, 'Expected scan items while preparing size-limit fixtures')
             should(items).have.length(25)
 
             var b = new Array(43412).join('b'), bAttr = b.slice(0, 255)
@@ -519,7 +535,7 @@ describe('scan - functionality', function () {
               }
             }
 
-            helpers.replaceTable(helpers.testHashTable, 'a', items, 10, function (err) {
+            helpers.replaceTable(helpers.testHashTable, 'a', items, 10, function (err: unknown) {
               if (err) return done(err)
 
               request(opts({
@@ -531,7 +547,7 @@ describe('scan - functionality', function () {
                 should(res.statusCode).equal(200)
                 should(res.body.ScannedCount).equal(24)
                 should(res.body.Count).equal(24)
-                should(res.body.ConsumedCapacity.CapacityUnits).equal(128)
+                should(expectConsumedCapacity(res, 'Expected consumed capacity for size-limit scan').CapacityUnits).equal(128)
                 helpers.clearTable(helpers.testHashTable, 'a', done)
               })
             })
