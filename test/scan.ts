@@ -1,13 +1,24 @@
-var helpers = require('./helpers'),
+var helpers = require('../../test/helpers'),
   should = require('should'),
   async = require('async')
 
+import type {
+  AsyncCallback,
+  DynamoItem,
+  ScanRequest,
+  ScanResponse,
+} from '../types/types'
+
 var target = 'Scan',
-  request = helpers.request,
-  opts = helpers.opts.bind(null, target),
+  request: <TResponse extends ScanResponse>(requestOptions: ScanRequest, cb: (err: unknown, res: TResponse) => void) => void = helpers.request,
+  opts: (data: ScanRequest) => Record<string, unknown> = helpers.opts.bind(null, target),
   assertType = helpers.assertType.bind(null, target),
   assertValidation = helpers.assertValidation.bind(null, target),
   assertNotFound = helpers.assertNotFound.bind(null, target)
+
+function forEach<T> (items: T[], iterator: (item: T, cb: AsyncCallback) => void, done: AsyncCallback) {
+  async.forEach(items, iterator, done)
+}
 
 describe('scan', function () {
 
@@ -227,7 +238,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for bad attribute values in ScanFilter', function (done) {
-      async.forEach([
+      forEach([
         {},
         { a: '' },
       ], function (expr, cb) {
@@ -241,7 +252,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for invalid values in ScanFilter', function (done) {
-      async.forEach([
+      forEach([
         [ { NULL: 'no' }, 'Null attribute value types must have the value of true' ],
         [ { SS: [] }, 'An string set  may not be empty' ],
         [ { NS: [] }, 'An number set  may not be empty' ],
@@ -259,7 +270,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for empty/invalid numbers in ScanFilter', function (done) {
-      async.forEach([
+      forEach([
         [ { S: '', N: '' }, 'The parameter cannot be converted to a numeric value' ],
         [ { S: 'a', N: '' }, 'The parameter cannot be converted to a numeric value' ],
         [ { S: 'a', N: 'b' }, 'The parameter cannot be converted to a numeric value: b' ],
@@ -292,7 +303,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for incorrect number of ScanFilter arguments', function (done) {
-      async.forEach([
+      forEach([
         { a: { ComparisonOperator: 'EQ' }, b: { ComparisonOperator: 'NULL' }, c: { ComparisonOperator: 'NULL' } },
         { a: { ComparisonOperator: 'EQ' } },
         { a: { ComparisonOperator: 'EQ', AttributeValueList: [] } },
@@ -331,14 +342,14 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for invalid ComparisonOperator types', function (done) {
-      async.forEach([
+      forEach([
         'LT',
         'LE',
         'GT',
         'GE',
         'IN',
       ], function (cond, cb) {
-        async.forEach([
+        forEach([
           [ { BOOL: true } ],
           [ { NULL: true } ],
           [ { SS: [ 'a' ] } ],
@@ -360,11 +371,11 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for invalid CONTAINS ComparisonOperator types', function (done) {
-      async.forEach([
+      forEach([
         'CONTAINS',
         'NOT_CONTAINS',
       ], function (cond, cb) {
-        async.forEach([
+        forEach([
           [ { SS: [ 'a' ] } ],
           [ { NS: [ '1' ] } ],
           [ { BS: [ 'abcd' ] } ],
@@ -384,7 +395,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for invalid BETWEEN ComparisonOperator types', function (done) {
-      async.forEach([
+      forEach([
         [ { BOOL: true }, { BOOL: true } ],
         [ { NULL: true }, { NULL: true } ],
         [ { SS: [ 'a' ] }, { SS: [ 'a' ] } ],
@@ -405,7 +416,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for invalid BEGINS_WITH ComparisonOperator types', function (done) {
-      async.forEach([
+      forEach([
         [ { N: '1' } ],
         // [{B: 'YQ=='}], // B is fine
         [ { BOOL: true } ],
@@ -437,7 +448,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for unsupported datatype in ExclusiveStartKey', function (done) {
-      async.forEach([
+      forEach([
         {},
         { a: '' },
         { M: { a: {} } },
@@ -457,7 +468,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for invalid values in ExclusiveStartKey', function (done) {
-      async.forEach([
+      forEach([
         [ { NULL: 'no' }, 'Null attribute value types must have the value of true' ],
         [ { SS: [] }, 'An string set  may not be empty' ],
         [ { BS: [] }, 'Binary sets should not be empty' ],
@@ -475,7 +486,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for invalid values in ExclusiveStartKey with no provided message', function (done) {
-      async.forEach([
+      forEach([
         [ { NS: [] }, 'An number set  may not be empty' ],
         [ { SS: [ 'a', 'a' ] }, 'Input collection [a, a] contains duplicates.' ],
         [ { BS: [ 'Yg==', 'Yg==' ] }, 'Input collection [Yg==, Yg==]of type BS contains duplicates.' ],
@@ -492,7 +503,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for empty/invalid numbers in ExclusiveStartKey', function (done) {
-      async.forEach([
+      forEach([
         [ { S: '', N: '' }, 'The parameter cannot be converted to a numeric value' ],
         [ { S: 'a', N: '' }, 'The parameter cannot be converted to a numeric value' ],
         [ { S: 'a', N: 'b' }, 'The parameter cannot be converted to a numeric value: b' ],
@@ -639,7 +650,7 @@ describe('scan', function () {
         'size(a)[0] > a',
         '(size(a))[0] > a',
       ]
-      async.forEach(expressions, function (expression, cb) {
+      forEach(expressions, function (expression, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expression,
@@ -657,7 +668,7 @@ describe('scan', function () {
         'a=a AND ((a=a AND (a=a AND a=a)))',
         'a=a OR ((a=a OR (a=a OR a=a)))',
       ]
-      async.forEach(expressions, function (expression, cb) {
+      forEach(expressions, function (expression, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expression,
@@ -670,7 +681,7 @@ describe('scan', function () {
         [ 'a=a and whatever((:things)) > a', 'whatever' ],
         [ 'attRIbute_exIsts((views), #a)', 'attRIbute_exIsts' ],
       ]
-      async.forEach(expressions, function (expr, cb) {
+      forEach(expressions, function (expr, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expr[0],
@@ -690,7 +701,7 @@ describe('scan', function () {
         [ 'a between b and attribute_exists(things)', 'attribute_exists' ],
         [ 'a in (b, attribute_exists(things))', 'attribute_exists' ],
       ]
-      async.forEach(expressions, function (expr, cb) {
+      forEach(expressions, function (expr, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expr[0],
@@ -703,7 +714,7 @@ describe('scan', function () {
         [ 'attribute_exists(views, #a)', 'views' ],
         [ ':a < abOrT', 'abOrT' ],
       ]
-      async.forEach(expressions, function (expr, cb) {
+      forEach(expressions, function (expr, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expr[0],
@@ -722,7 +733,7 @@ describe('scan', function () {
         [ '#_ > a', '#_' ],
         [ '(a)between(b.c[45].#d)and(:a)', '#d' ],
       ]
-      async.forEach(expressions, function (expr, cb) {
+      forEach(expressions, function (expr, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expr[0],
@@ -736,7 +747,7 @@ describe('scan', function () {
         [ ':a < :b', ':a' ],
         [ ':_ > a', ':_' ],
       ]
-      async.forEach(expressions, function (expr, cb) {
+      forEach(expressions, function (expr, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expr[0],
@@ -754,7 +765,7 @@ describe('scan', function () {
         [ 'contains(things)', 'contains', 1 ],
         [ 'size(things, a) > b', 'size', 2 ],
       ]
-      async.forEach(expressions, function (expr, cb) {
+      forEach(expressions, function (expr, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expr[0],
@@ -799,7 +810,7 @@ describe('scan', function () {
         [ 'size(:a) > a', 'size', { 'BOOL': true } ],
         [ 'size(:a) > a', 'size', { 'NULL': true } ],
       ]
-      async.forEach(expressions, function (expr, cb) {
+      forEach(expressions, function (expr, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expr[0],
@@ -822,7 +833,7 @@ describe('scan', function () {
         [ 'attribute_exists(:a) and a=a', 'attribute_exists' ],
         [ 'attribute_not_exists(size(:a))', 'attribute_not_exists' ],
       ]
-      async.forEach(expressions, function (expr, cb) {
+      forEach(expressions, function (expr, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expr[0],
@@ -843,7 +854,7 @@ describe('scan', function () {
         [ 'begins_with(ab.bc[1].a, ab.bc[1].#a)', 'begins_with', '[ab, bc, [1], a]' ],
         // ':a > :a', ... is ok
       ]
-      async.forEach(expressions, function (expr, cb) {
+      forEach(expressions, function (expr, cb) {
         assertValidation({
           TableName: 'abc',
           FilterExpression: expr[0],
@@ -854,7 +865,7 @@ describe('scan', function () {
     })
 
     it('should check table exists before checking key validity', function (done) {
-      async.forEach([
+      forEach([
         {},
         { b: { S: 'a' } },
         { a: { S: 'a' }, b: { S: 'a' } },
@@ -867,7 +878,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if unknown index and bad ExclusiveStartKey in hash table', function (done) {
-      async.forEach([
+      forEach([
         {},
         // {z: {S: 'a'}}, // Returns a 500
         // {a: {S: 'a'}, b: {S: 'a'}}, // Returns a 500
@@ -884,7 +895,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if unknown index and bad ExclusiveStartKey in range table', function (done) {
-      async.forEach([
+      forEach([
         {},
         { z: { S: 'a' } },
         // {a: {S: 'a'}, b: {S: 'a'}}, // Returns a 500
@@ -901,7 +912,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if ExclusiveStartKey is invalid for local index', function (done) {
-      async.forEach([
+      forEach([
         {},
         { z: { N: '1' } },
         { a: { B: 'abcd' } },
@@ -922,7 +933,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if ExclusiveStartKey is invalid for global index', function (done) {
-      async.forEach([
+      forEach([
         {},
         { z: { N: '1' } },
         { a: { B: 'abcd' } },
@@ -943,7 +954,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if global range in ExclusiveStartKey is invalid', function (done) {
-      async.forEach([
+      forEach([
         { c: { S: '1' } },
         { a: { N: '1' }, c: { S: '1' } },
         { a: { N: '1' }, b: { N: '1' }, c: { S: '1' } },
@@ -960,7 +971,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException for non-existent index name', function (done) {
-      async.forEach([
+      forEach([
         helpers.testHashTable,
         helpers.testRangeTable,
       ], function (table, cb) {
@@ -985,7 +996,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if ExclusiveStartKey does not match schema for local index', function (done) {
-      async.forEach([
+      forEach([
         { a: { N: '1' }, x: { S: '1' }, y: { S: '1' } },
         { a: { B: 'YQ==' }, b: { S: '1' }, c: { S: '1' } },
         { a: { S: 'a' }, b: { N: '1' }, c: { N: '1' } },
@@ -1002,7 +1013,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if ExclusiveStartKey does not match schema for global index', function (done) {
-      async.forEach([
+      forEach([
         { x: { S: '1' }, y: { S: '1' }, c: { N: '1' } },
         { a: { S: '1' }, b: { S: '1' }, c: { B: 'YQ==' } },
       ], function (expr, cb) {
@@ -1015,7 +1026,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if ExclusiveStartKey does not match schema for global compound index', function (done) {
-      async.forEach([
+      forEach([
         { x: { N: '1' }, y: { N: '1' }, c: { S: '1' }, d: { N: '1' } },
         { x: { N: '1' }, y: { N: '1' }, c: { N: '1' }, d: { S: '1' } },
       ], function (expr, cb) {
@@ -1028,7 +1039,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if ExclusiveStartKey does not match schema', function (done) {
-      async.forEach([
+      forEach([
         {},
         { b: { S: 'a' } },
         { a: { S: 'a' }, b: { S: 'a' } },
@@ -1051,7 +1062,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if ExclusiveStartKey for range table is invalid', function (done) {
-      async.forEach([
+      forEach([
         {},
         { z: { N: '1' } },
         { b: { S: 'a' }, c: { S: 'b' } },
@@ -1076,7 +1087,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if range in ExclusiveStartKey is invalid, but hash and local are ok', function (done) {
-      async.forEach([
+      forEach([
         { a: { S: '1' }, b: { N: '1' }, c: { S: 'a' } },
         { a: { S: '1' }, b: { B: 'YQ==' }, c: { S: 'a' } },
       ], function (expr, cb) {
@@ -1089,7 +1100,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if global hash in ExclusiveStartKey but bad in query', function (done) {
-      async.forEach([
+      forEach([
         { x: { N: '1' }, y: { N: '1' }, c: { S: 'a' } },
         { a: { N: '1' }, b: { S: '1' }, c: { S: 'a' } },
         { a: { S: '1' }, b: { N: '1' }, c: { S: 'a' } },
@@ -1103,7 +1114,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if global range in ExclusiveStartKey but bad in query', function (done) {
-      async.forEach([
+      forEach([
         { x: { N: '1' }, y: { N: '1' }, c: { S: 'a' }, d: { S: 'a' } },
         { a: { N: '1' }, b: { S: '1' }, c: { S: 'a' }, d: { S: 'a' } },
         { a: { S: '1' }, b: { N: '1' }, c: { S: 'a' }, d: { S: 'a' } },
@@ -1117,7 +1128,7 @@ describe('scan', function () {
     })
 
     it('should return ValidationException if ExclusiveStartKey is from different segment', function (done) {
-      var i, items = [], batchReq = { RequestItems: {} }
+      var i, items: DynamoItem[] = [], batchReq: { RequestItems: Record<string, Array<{ PutRequest: { Item: DynamoItem } }>> } = { RequestItems: {} }
 
       for (i = 0; i < 10; i++)
         items.push({ a: { S: String(i) } })
@@ -1132,6 +1143,7 @@ describe('scan', function () {
           if (err) return done(err)
           should(res.statusCode).equal(200)
           should(res.body.Count).be.above(0)
+          if (!res.body.Items || !res.body.Items[0]) return done(new Error('Expected segmented scan items for ExclusiveStartKey validation'))
 
           assertValidation({ TableName: helpers.testHashTable,
             Segment: 0,
@@ -1151,7 +1163,7 @@ describe('scan', function () {
         'attribute_exists(#a.b.c)',
         'attribute_exists(#a[0])',
       ]
-      async.forEach(expressions, function (expression, cb) {
+      forEach(expressions, function (expression, cb) {
         assertValidation({
           TableName: helpers.testHashTable,
           FilterExpression: expression,
