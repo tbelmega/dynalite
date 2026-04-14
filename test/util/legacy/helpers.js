@@ -3,7 +3,8 @@ var http = require('http'),
   dynalite = require('../../..'),
   requestUtils = require('./request'),
   assertions = require('./assertions'),
-  naming = require('./naming')
+  naming = require('./naming'),
+  tableLifecycle = require('./table-lifecycle')
 
 var useRemoteDynamo = process.env.REMOTE
 var runSlowTests = true
@@ -55,6 +56,15 @@ var legacyAssertions = assertions.createLegacyAssertions({
   opts: opts,
   assertSerialization: assertSerialization,
 })
+var legacyTableLifecycle = tableLifecycle.createLegacyTableLifecycle({
+  request: request,
+  opts: opts,
+})
+var createAndWait = legacyTableLifecycle.createAndWait
+var waitUntilActive = legacyTableLifecycle.waitUntilActive
+var waitUntilDeleted = legacyTableLifecycle.waitUntilDeleted
+var waitUntilIndexesActive = legacyTableLifecycle.waitUntilIndexesActive
+var deleteWhenActive = legacyTableLifecycle.deleteWhenActive
 
 // Global server instance for legacy tests
 var globalServer = null
@@ -178,59 +188,6 @@ if (typeof after !== 'undefined') {
 }
 
 // Legacy functions removed - they are now encapsulated within TestHelper instances
-
-function createAndWait (table, done) {
-  request(opts('CreateTable', table), function (err, res) {
-    if (err) return done(err)
-    if (res.statusCode != 200) return done(new Error(res.statusCode + ': ' + JSON.stringify(res.body)))
-    setTimeout(waitUntilActive, 1000, table.TableName, done)
-  })
-}
-
-// deleteAndWait function removed - now encapsulated within TestHelper instances
-
-function waitUntilActive (name, done) {
-  request(opts('DescribeTable', { TableName: name }), function (err, res) {
-    if (err) return done(err)
-    if (res.statusCode != 200) return done(new Error(res.statusCode + ': ' + JSON.stringify(res.body)))
-    if (res.body.Table.TableStatus == 'ACTIVE' &&
-        (!res.body.Table.GlobalSecondaryIndexes ||
-          res.body.Table.GlobalSecondaryIndexes.every(function (index) { return index.IndexStatus == 'ACTIVE' }))) {
-      return done(null, res)
-    }
-    setTimeout(waitUntilActive, 1000, name, done)
-  })
-}
-
-function waitUntilDeleted (name, done) {
-  request(opts('DescribeTable', { TableName: name }), function (err, res) {
-    if (err) return done(err)
-    if (res.body && res.body.__type == 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException')
-      return done(null, res)
-    else if (res.statusCode != 200)
-      return done(new Error(res.statusCode + ': ' + JSON.stringify(res.body)))
-    setTimeout(waitUntilDeleted, 1000, name, done)
-  })
-}
-
-function waitUntilIndexesActive (name, done) {
-  request(opts('DescribeTable', { TableName: name }), function (err, res) {
-    if (err) return done(err)
-    if (res.statusCode != 200)
-      return done(new Error(res.statusCode + ': ' + JSON.stringify(res.body)))
-    else if (res.body.Table.GlobalSecondaryIndexes.every(function (index) { return index.IndexStatus == 'ACTIVE' }))
-      return done(null, res)
-    setTimeout(waitUntilIndexesActive, 1000, name, done)
-  })
-}
-
-function deleteWhenActive (name, done) {
-  if (!done) done = function () { }
-  waitUntilActive(name, function (err) {
-    if (err) return done(err)
-    request(opts('DeleteTable', { TableName: name }), done)
-  })
-}
 
 function clearTable (name, keyNames, segments, done) {
   if (!done) { done = segments; segments = 2 }
