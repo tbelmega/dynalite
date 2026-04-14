@@ -3,6 +3,7 @@ var aws4 = require('aws4')
 var async = require('async')
 var once = require('once')
 var dynalite = require('../../..')
+var safeCleanup = require('./safe-cleanup')
 
 var useRemoteDynamo = process.env.REMOTE
 var runSlowTests = true
@@ -147,6 +148,17 @@ function createTestHelper (options) {
     }
   }
 
+  helper.getAccountId = function (done) {
+    helper.request(helper.opts('DescribeTable', { TableName: helper.testHashTable }), function (err, res) {
+      if (err) return done(err)
+      helper.awsAccountId = res.body.Table.TableArn.split(':')[4]
+      done()
+    })
+  }
+  safeCleanup.attachInstanceSafeCleanup(helper, {
+    deleteRemoteTables: DELETE_REMOTE_TABLES,
+  })
+
   helper.createTestTables = function (done) {
     if (helper.useRemoteDynamo && !CREATE_REMOTE_TABLES) return done()
 
@@ -209,182 +221,6 @@ function createTestHelper (options) {
 
       async.forEach(tables, helper.createAndWaitWithRetry, done)
     })
-  }
-
-  helper.getAccountId = function (done) {
-    helper.request(helper.opts('DescribeTable', { TableName: helper.testHashTable }), function (err, res) {
-      if (err) return done(err)
-      helper.awsAccountId = res.body.Table.TableArn.split(':')[4]
-      done()
-    })
-  }
-
-  helper.deleteTestTables = function (done) {
-    if (helper.useRemoteDynamo && !DELETE_REMOTE_TABLES) return done()
-
-    var maxRetries = 3
-    var retryCount = 0
-
-    function attemptCleanup () {
-      helper.request(helper.opts('ListTables', {}), function (err, res) {
-        if (err) {
-          if (retryCount < maxRetries) {
-            retryCount++
-            return setTimeout(attemptCleanup, 1000)
-          }
-          return done(err)
-        }
-
-        var names = res.body.TableNames.filter(function (name) {
-          return name.indexOf(helper.prefix) === 0
-        })
-
-        if (names.length === 0) {
-          return done() // No tables to delete
-        }
-
-        // Delete tables with enhanced error handling, ignoring individual failures
-        async.forEach(names, function (name, callback) {
-          helper.deleteAndWaitSafe(name, callback)
-        }, function () {
-          // Ignore errors from individual table deletions
-          // Verify all tables are actually deleted
-          helper.verifyTablesDeleted(names, function (verifyErr) {
-            if (verifyErr && retryCount < maxRetries) {
-              retryCount++
-              return setTimeout(attemptCleanup, 2000)
-            }
-            // Even if verification fails, continue - we've done our best
-            done()
-          })
-        })
-      })
-    }
-
-    attemptCleanup()
-  }
-
-  helper.deleteAndWaitSafe = function (name, done) {
-    // This function handles database corruption gracefully
-    // It tries to delete the table but doesn't fail if there are issues
-
-    var maxAttempts = 3
-    var attemptCount = 0
-
-    function attemptDelete () {
-      attemptCount++
-
-      helper.request(helper.opts('DeleteTable', { TableName: name }), function (err, res) {
-        if (err) {
-          // Network error, try again if we have attempts left
-          if (attemptCount < maxAttempts) {
-            return setTimeout(attemptDelete, 1000)
-          }
-          // Give up, but don't fail the overall cleanup
-          return done()
-        }
-
-        if (res.statusCode === 200) {
-          // Table deletion initiated successfully
-          return helper.waitUntilDeletedSafe(name, done)
-        }
-
-        if (res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException') {
-          // Table doesn't exist, consider it deleted
-          return done()
-        }
-
-        if (res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceInUseException') {
-          // Table is being created or is in use, try again
-          if (attemptCount < maxAttempts) {
-            return setTimeout(attemptDelete, 2000)
-          }
-          // Give up, but don't fail the overall cleanup
-          return done()
-        }
-
-        // Any other error - try again if we have attempts left
-        if (attemptCount < maxAttempts) {
-          return setTimeout(attemptDelete, 1000)
-        }
-
-        // Give up, but don't fail the overall cleanup
-        done()
-      })
-    }
-
-    attemptDelete()
-  }
-
-  helper.waitUntilDeletedSafe = function (name, done) {
-    var maxWaitTime = 15000 // 15 seconds max wait (shorter than normal)
-    var startTime = Date.now()
-    var checkInterval = 1000
-
-    function checkDeleted () {
-      if (Date.now() - startTime > maxWaitTime) {
-        // Timeout, but don't fail the overall cleanup
-        return done()
-      }
-
-      helper.request(helper.opts('DescribeTable', { TableName: name }), function (err, res) {
-        if (err) {
-          // Network error, but don't fail the cleanup
-          return done()
-        }
-
-        if (res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException') {
-          return done() // Table successfully deleted
-        }
-
-        if (res.statusCode !== 200) {
-          // Some other error, but don't fail the cleanup
-          return done()
-        }
-
-        // Table still exists, check again
-        setTimeout(checkDeleted, checkInterval)
-      })
-    }
-
-    checkDeleted()
-  }
-
-  helper.verifyTablesDeleted = function (tableNames, done) {
-    var maxVerifyRetries = 3
-    var verifyRetryCount = 0
-
-    function verifyDeletion () {
-      helper.request(helper.opts('ListTables', {}), function (err, res) {
-        if (err) {
-          if (verifyRetryCount < maxVerifyRetries) {
-            verifyRetryCount++
-            return setTimeout(verifyDeletion, 1000)
-          }
-          // Network error, but don't fail the cleanup
-          return done()
-        }
-
-        var remainingTables = res.body.TableNames.filter(function (name) {
-          return tableNames.indexOf(name) !== -1
-        })
-
-        if (remainingTables.length === 0) {
-          return done() // All tables successfully deleted
-        }
-
-        if (verifyRetryCount < maxVerifyRetries) {
-          verifyRetryCount++
-          return setTimeout(verifyDeletion, 2000)
-        }
-
-        // Some tables still exist, but don't fail the cleanup
-        // This might be due to database corruption or timing issues
-        return done()
-      })
-    }
-
-    verifyDeletion()
   }
 
   helper.createAndWait = function (table, done) {
