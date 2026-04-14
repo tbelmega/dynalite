@@ -1,9 +1,9 @@
 var http = require('http')
-var async = require('async')
 var requestHelpers = require('./request')
 var safeCleanup = require('./safe-cleanup')
 var tableLifecycle = require('./table-lifecycle')
 var tableData = require('./table-data')
+var testTables = require('./test-tables')
 
 var useRemoteDynamo = process.env.REMOTE
 var runSlowTests = true
@@ -58,83 +58,14 @@ function createTestHelper (options) {
     { host: '127.0.0.1', port: helper.port, method: 'POST' }
 
   requestHelpers.attachInstanceRequest(helper)
-
-  helper.getAccountId = function (done) {
-    helper.request(helper.opts('DescribeTable', { TableName: helper.testHashTable }), function (err, res) {
-      if (err) return done(err)
-      helper.awsAccountId = res.body.Table.TableArn.split(':')[4]
-      done()
-    })
-  }
   safeCleanup.attachInstanceSafeCleanup(helper, {
     deleteRemoteTables: DELETE_REMOTE_TABLES,
   })
   tableLifecycle.attachInstanceTableLifecycle(helper)
   tableData.attachInstanceTableData(helper)
-
-  helper.createTestTables = function (done) {
-    if (helper.useRemoteDynamo && !CREATE_REMOTE_TABLES) return done()
-
-    // First, ensure any existing test tables are cleaned up
-    helper.deleteTestTables(function (err) {
-      if (err) return done(err)
-
-      var readCapacity = helper.readCapacity, writeCapacity = helper.writeCapacity
-      var tables = [ {
-        TableName: helper.testHashTable,
-        AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' } ],
-        KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
-        ProvisionedThroughput: { ReadCapacityUnits: readCapacity, WriteCapacityUnits: writeCapacity },
-      }, {
-        TableName: helper.testHashNTable,
-        AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'N' } ],
-        KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
-        BillingMode: 'PAY_PER_REQUEST',
-      }, {
-        TableName: helper.testRangeTable,
-        AttributeDefinitions: [
-          { AttributeName: 'a', AttributeType: 'S' },
-          { AttributeName: 'b', AttributeType: 'S' },
-          { AttributeName: 'c', AttributeType: 'S' },
-          { AttributeName: 'd', AttributeType: 'S' },
-        ],
-        KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' }, { KeyType: 'RANGE', AttributeName: 'b' } ],
-        ProvisionedThroughput: { ReadCapacityUnits: readCapacity, WriteCapacityUnits: writeCapacity },
-        LocalSecondaryIndexes: [ {
-          IndexName: 'index1',
-          KeySchema: [ { AttributeName: 'a', KeyType: 'HASH' }, { AttributeName: 'c', KeyType: 'RANGE' } ],
-          Projection: { ProjectionType: 'ALL' },
-        }, {
-          IndexName: 'index2',
-          KeySchema: [ { AttributeName: 'a', KeyType: 'HASH' }, { AttributeName: 'd', KeyType: 'RANGE' } ],
-          Projection: { ProjectionType: 'INCLUDE', NonKeyAttributes: [ 'c' ] },
-        } ],
-        GlobalSecondaryIndexes: [ {
-          IndexName: 'index3',
-          KeySchema: [ { AttributeName: 'c', KeyType: 'HASH' } ],
-          ProvisionedThroughput: { ReadCapacityUnits: readCapacity, WriteCapacityUnits: writeCapacity },
-          Projection: { ProjectionType: 'ALL' },
-        }, {
-          IndexName: 'index4',
-          KeySchema: [ { AttributeName: 'c', KeyType: 'HASH' }, { AttributeName: 'd', KeyType: 'RANGE' } ],
-          ProvisionedThroughput: { ReadCapacityUnits: readCapacity, WriteCapacityUnits: writeCapacity },
-          Projection: { ProjectionType: 'INCLUDE', NonKeyAttributes: [ 'e' ] },
-        } ],
-      }, {
-        TableName: helper.testRangeNTable,
-        AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' }, { AttributeName: 'b', AttributeType: 'N' } ],
-        KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' }, { KeyType: 'RANGE', AttributeName: 'b' } ],
-        ProvisionedThroughput: { ReadCapacityUnits: readCapacity, WriteCapacityUnits: writeCapacity },
-      }, {
-        TableName: helper.testRangeBTable,
-        AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' }, { AttributeName: 'b', AttributeType: 'B' } ],
-        KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' }, { KeyType: 'RANGE', AttributeName: 'b' } ],
-        ProvisionedThroughput: { ReadCapacityUnits: readCapacity, WriteCapacityUnits: writeCapacity },
-      } ]
-
-      async.forEach(tables, helper.createAndWaitWithRetry, done)
-    })
-  }
+  testTables.attachInstanceTestTables(helper, {
+    createRemoteTables: CREATE_REMOTE_TABLES,
+  })
 
   return helper
 }
