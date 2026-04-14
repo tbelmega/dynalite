@@ -1,6 +1,6 @@
 import type {ScanCommandOutput} from "@aws-sdk/client-dynamodb";
 
-export type DynamoCommandResponse<TBody> = import('http').IncomingMessage & { body: TBody };
+export type DynamoCommandResponse<TBody> = import('http').IncomingMessage & { body: TBody; rawBody?: string };
 export type ScanCommandResponse = DynamoCommandResponse<ScanCommandOutput>;
 export type LastEvaluatedKey = ScanCommandOutput['LastEvaluatedKey'];
 export type AsyncCallback = (err?: unknown) => void;
@@ -143,6 +143,33 @@ export type QueryResponseBody = {
   ScannedCount?: number;
 } & Record<string, unknown>;
 export type QueryResponse = DynamoCommandResponse<QueryResponseBody>;
+export type ScanCondition = QueryCondition;
+export type ScanRequest = {
+  AttributesToGet?: string[];
+  ConditionalOperator?: string;
+  ConsistentRead?: boolean;
+  ExclusiveStartKey?: DynamoItem;
+  ExpressionAttributeNames?: Record<string, string>;
+  ExpressionAttributeValues?: Record<string, RawAttributeValue>;
+  FilterExpression?: string;
+  IndexName?: string;
+  Limit?: number;
+  ProjectionExpression?: string;
+  ReturnConsumedCapacity?: string;
+  ScanFilter?: Record<string, ScanCondition>;
+  Segment?: number;
+  Select?: string;
+  TableName?: string;
+  TotalSegments?: number;
+} & Record<string, unknown>;
+export type ScanResponseBody = {
+  ConsumedCapacity?: ConsumedCapacity;
+  Count?: number;
+  Items?: DynamoItem[];
+  LastEvaluatedKey?: DynamoItem;
+  ScannedCount?: number;
+} & Record<string, unknown>;
+export type ScanResponse = DynamoCommandResponse<ScanResponseBody>;
 export type InvalidAttributeValueCase = [InvalidAttributeValue, string];
 export type StringValidationCase = [string, string];
 export type ResourceTag = { Key: string; Value: string };
