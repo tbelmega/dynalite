@@ -1,10 +1,22 @@
-var helpers = require('./helpers'),
+var helpers = require('../../test/helpers'),
   should = require('should'),
   async = require('async')
 
+import type {
+  AsyncCallback,
+  BatchWriteRequest,
+  ScanRequest,
+  ScanResponse,
+  TestDynamoRequest,
+} from '../types/types'
+
 var target = 'Scan',
-  request = helpers.request,
-  opts = helpers.opts.bind(null, target)
+  request: <TResponse extends ScanResponse>(requestOptions: TestDynamoRequest, cb: (err: unknown, res: TResponse) => void) => void = helpers.request,
+  opts: (data: ScanRequest) => Record<string, unknown> = helpers.opts.bind(null, target)
+
+function forEach<T> (items: T[], iterator: (item: T, cb: AsyncCallback) => void, done: AsyncCallback) {
+  async.forEach(items, iterator, done)
+}
 
 describe('scan - functionality', function () {
 
@@ -15,7 +27,7 @@ describe('scan - functionality', function () {
       var item = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() }, c: { S: helpers.randomString() } },
         item2 = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() }, c: item.c },
         item3 = { a: { S: helpers.randomString() }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -24,7 +36,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NOT_NULL' },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -51,7 +63,7 @@ describe('scan - functionality', function () {
       var item = { a: { S: helpers.randomString() }, c: { S: helpers.randomString() } },
         item2 = { a: { S: helpers.randomString() }, c: item.c },
         item3 = { a: { S: helpers.randomString() }, b: { S: helpers.randomString() }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -60,7 +72,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NULL' },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -97,7 +109,7 @@ describe('scan - functionality', function () {
         item7 = { a: { S: helpers.randomString() }, b: { L: [ { 'N': '123' }, { 'S': 'bde' } ] }, c: item.c },
         item8 = { a: { S: helpers.randomString() }, b: { L: [ { 'S': 'abd' } ] }, c: item.c },
         item9 = { a: { S: helpers.randomString() }, b: { L: [ { 'S': 'abde' } ] }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -112,7 +124,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'CONTAINS', AttributeValueList: [ item5.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -146,7 +158,7 @@ describe('scan - functionality', function () {
         item6 = { a: { S: helpers.randomString() }, b: { L: [ { 'S': 'abd' }, { 'N': '234' } ] }, c: item.c },
         item7 = { a: { S: helpers.randomString() }, b: { L: [ { 'N': '123' } ] }, c: item.c },
         item8 = { a: { S: helpers.randomString() }, b: { L: [ { 'N': '1234' } ] }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -160,7 +172,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'CONTAINS', AttributeValueList: [ { N: '234' } ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -205,7 +217,7 @@ describe('scan - functionality', function () {
           b: { L: [ { 'B': Buffer.from('abde').toString('base64') } ] },
           c: item.c,
         },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -220,7 +232,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'CONTAINS', AttributeValueList: [ item5.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -256,7 +268,7 @@ describe('scan - functionality', function () {
         },
         item5 = { a: { S: helpers.randomString() }, b: { S: 'bde' }, c: item.c },
         item6 = { a: { S: helpers.randomString() }, b: { S: 'abd' }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -268,7 +280,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NOT_CONTAINS', AttributeValueList: [ item5.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -298,7 +310,7 @@ describe('scan - functionality', function () {
         item3 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('1234').toString('base64') }, c: item.c },
         item4 = { a: { S: helpers.randomString() }, b: { BS: [ Buffer.from('234').toString('base64') ] }, c: item.c },
         item5 = { a: { S: helpers.randomString() }, b: { SS: [ '234' ] }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -309,7 +321,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NOT_CONTAINS', AttributeValueList: [ { N: '234' } ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -345,7 +357,7 @@ describe('scan - functionality', function () {
         },
         item5 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('bde').toString('base64') }, c: item.c },
         item6 = { a: { S: helpers.randomString() }, b: { S: 'abd' }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -357,7 +369,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'NOT_CONTAINS', AttributeValueList: [ item5.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -387,7 +399,7 @@ describe('scan - functionality', function () {
         item3 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('abdef').toString('base64') }, c: item.c },
         item4 = { a: { S: helpers.randomString() }, b: { S: 'ab' }, c: item.c },
         item5 = { a: { S: helpers.randomString() }, b: { S: 'abd' }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -398,7 +410,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'BEGINS_WITH', AttributeValueList: [ item5.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -427,7 +439,7 @@ describe('scan - functionality', function () {
         item3 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('abdef').toString('base64') }, c: item.c },
         item4 = { a: { S: helpers.randomString() }, b: { S: 'ab' }, c: item.c },
         item5 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('abd').toString('base64') }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -438,7 +450,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'BEGINS_WITH', AttributeValueList: [ item5.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -467,7 +479,7 @@ describe('scan - functionality', function () {
         item3 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('abdef').toString('base64') }, c: item.c },
         item4 = { a: { S: helpers.randomString() }, b: { S: 'ab' }, c: item.c },
         item5 = { a: { S: helpers.randomString() }, b: { S: 'abd' }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -478,7 +490,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'IN', AttributeValueList: [ item5.b, item.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -507,7 +519,7 @@ describe('scan - functionality', function () {
         item3 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('1234').toString('base64') }, c: item.c },
         item4 = { a: { S: helpers.randomString() }, b: { N: '1234' }, c: item.c },
         item5 = { a: { S: helpers.randomString() }, b: { N: '123.45' }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -518,7 +530,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'IN', AttributeValueList: [ item4.b, item5.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -547,7 +559,7 @@ describe('scan - functionality', function () {
         item3 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('1234').toString('base64') }, c: item.c },
         item4 = { a: { S: helpers.randomString() }, b: { N: '1234' }, c: item.c },
         item5 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('12345').toString('base64') }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -558,7 +570,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'IN', AttributeValueList: [ item3.b, item5.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -587,7 +599,7 @@ describe('scan - functionality', function () {
         item3 = { a: { S: helpers.randomString() }, b: { S: 'abd\x00' }, c: item.c },
         item4 = { a: { S: helpers.randomString() }, b: { S: 'abe' }, c: item.c },
         item5 = { a: { S: helpers.randomString() }, b: { S: 'abe\x00' }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -598,7 +610,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'BETWEEN', AttributeValueList: [ item2.b, item4.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -628,7 +640,7 @@ describe('scan - functionality', function () {
         item3 = { a: { S: helpers.randomString() }, b: { N: '124.99999' }, c: item.c },
         item4 = { a: { S: helpers.randomString() }, b: { N: '125' }, c: item.c },
         item5 = { a: { S: helpers.randomString() }, b: { N: '125.000001' }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -639,7 +651,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'BETWEEN', AttributeValueList: [ item2.b, item4.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
@@ -673,7 +685,7 @@ describe('scan - functionality', function () {
         item3 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('cf', 'hex').toString('base64') }, c: item.c },
         item4 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('d000', 'hex').toString('base64') }, c: item.c },
         item5 = { a: { S: helpers.randomString() }, b: { B: Buffer.from('cfff', 'hex').toString('base64') }, c: item.c },
-        batchReq = { RequestItems: {} }
+        batchReq: BatchWriteRequest = { RequestItems: {} }
       batchReq.RequestItems[helpers.testHashTable] = [
         { PutRequest: { Item: item } },
         { PutRequest: { Item: item2 } },
@@ -684,7 +696,7 @@ describe('scan - functionality', function () {
       request(helpers.opts('BatchWriteItem', batchReq), function (err, res) {
         if (err) return done(err)
         should(res.statusCode).equal(200)
-        async.forEach([ {
+        forEach<ScanRequest>([ {
           ScanFilter: {
             b: { ComparisonOperator: 'BETWEEN', AttributeValueList: [ item5.b, item4.b ] },
             c: { ComparisonOperator: 'EQ', AttributeValueList: [ item.c ] },
