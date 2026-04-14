@@ -2,7 +2,8 @@ var http = require('http'),
   async = require('async'),
   dynalite = require('../../..'),
   requestUtils = require('./request'),
-  assertions = require('./assertions')
+  assertions = require('./assertions'),
+  naming = require('./naming')
 
 var useRemoteDynamo = process.env.REMOTE
 var runSlowTests = true
@@ -16,6 +17,11 @@ var awsRegion = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-
 var awsAccountId = process.env.AWS_ACCOUNT_ID
 var version = 'DynamoDB_20120810'
 var prefix = '__dynalite_test_'
+var legacyNaming = naming.createLegacyNaming({ prefix: prefix })
+var randomString = legacyNaming.randomString
+var randomNumber = legacyNaming.randomNumber
+var randomName = legacyNaming.randomName
+var strDecrement = legacyNaming.strDecrement
 var readCapacity = 10
 var writeCapacity = 5
 var testHashTable = useRemoteDynamo ? '__dynalite_test_1' : randomName()
@@ -171,18 +177,6 @@ if (typeof after !== 'undefined') {
   })
 }
 
-function randomString () {
-  return ('AAAAAAAAA' + randomNumber()).slice(-10)
-}
-
-function randomNumber () {
-  return String(Math.random() * 0x100000000)
-}
-
-function randomName () {
-  return prefix + randomString()
-}
-
 // Legacy functions removed - they are now encapsulated within TestHelper instances
 
 function createAndWait (table, done) {
@@ -334,19 +328,6 @@ var assertValidation = legacyAssertions.assertValidation
 var assertNotFound = legacyAssertions.assertNotFound
 var assertInUse = legacyAssertions.assertInUse
 var assertConditional = legacyAssertions.assertConditional
-
-function strDecrement (str, regex, length) {
-  regex = regex || /.?/
-  length = length || 255
-  var lastIx = str.length - 1, lastChar = str.charCodeAt(lastIx) - 1, prefix = str.slice(0, lastIx), finalChar = 255
-  while (lastChar >= 0 && !regex.test(String.fromCharCode(lastChar))) lastChar--
-  if (lastChar < 0) return prefix
-  prefix += String.fromCharCode(lastChar)
-  while (finalChar >= 0 && !regex.test(String.fromCharCode(finalChar))) finalChar--
-  if (lastChar < 0) return prefix
-  while (prefix.length < length) prefix += String.fromCharCode(finalChar)
-  return prefix
-}
 
 // Legacy exports - maintain backward compatibility
 exports.MAX_SIZE = MAX_SIZE
