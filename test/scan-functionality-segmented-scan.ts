@@ -1,9 +1,17 @@
-var helpers = require('./helpers'),
+var helpers = require('../../test/helpers'),
   should = require('should')
 
+import type {
+  BatchWriteRequest,
+  DynamoItem,
+  ScanRequest,
+  ScanResponse,
+  TestDynamoRequest,
+} from '../types/types'
+
 var target = 'Scan',
-  request = helpers.request,
-  opts = helpers.opts.bind(null, target)
+  request: <TResponse extends ScanResponse>(requestOptions: TestDynamoRequest, cb: (err: unknown, res: TResponse) => void) => void = helpers.request,
+  opts: (data: ScanRequest) => Record<string, unknown> = helpers.opts.bind(null, target)
 
 describe('scan - functionality', function () {
 
@@ -11,8 +19,8 @@ describe('scan - functionality', function () {
   describe('segmented scan behavior', function () {
 
     it('should return items in same segment order', function (done) {
-      var i, b = { S: helpers.randomString() }, items = [],
-        firstHalf, secondHalf, batchReq = { RequestItems: {} },
+      var i, b = { S: helpers.randomString() }, items: DynamoItem[] = [],
+        firstHalf: DynamoItem[], secondHalf: DynamoItem[], batchReq: BatchWriteRequest = { RequestItems: {} },
         scanFilter = { b: { ComparisonOperator: 'EQ', AttributeValueList: [ b ] } }
 
       for (i = 0; i < 20; i++)
@@ -35,6 +43,7 @@ describe('scan - functionality', function () {
           if (err) return done(err)
           should(res.statusCode).equal(200)
           should(res.body.Count).be.above(0)
+          if (!res.body.Items) return done(new Error('Expected segmented scan items for first segment'))
 
           firstHalf = res.body.Items
 
@@ -47,6 +56,7 @@ describe('scan - functionality', function () {
             if (err) return done(err)
             should(res.statusCode).equal(200)
             should(res.body.Count).be.above(0)
+            if (!res.body.Items) return done(new Error('Expected segmented scan items for second segment'))
 
             secondHalf = res.body.Items
 
@@ -60,8 +70,9 @@ describe('scan - functionality', function () {
             }), function (err, res) {
               if (err) return done(err)
               should(res.statusCode).equal(200)
+              if (!res.body.Items) return done(new Error('Expected segmented scan items for quarter segment 0'))
 
-              res.body.Items.forEach(function (item) {
+              res.body.Items.forEach(function (item: DynamoItem) {
                 should(firstHalf).containEql(item)
               })
 
@@ -73,8 +84,9 @@ describe('scan - functionality', function () {
               }), function (err, res) {
                 if (err) return done(err)
                 should(res.statusCode).equal(200)
+                if (!res.body.Items) return done(new Error('Expected segmented scan items for quarter segment 1'))
 
-                res.body.Items.forEach(function (item) {
+                res.body.Items.forEach(function (item: DynamoItem) {
                   should(firstHalf).containEql(item)
                 })
 
@@ -86,8 +98,9 @@ describe('scan - functionality', function () {
                 }), function (err, res) {
                   if (err) return done(err)
                   should(res.statusCode).equal(200)
+                  if (!res.body.Items) return done(new Error('Expected segmented scan items for quarter segment 2'))
 
-                  res.body.Items.forEach(function (item) {
+                  res.body.Items.forEach(function (item: DynamoItem) {
                     should(secondHalf).containEql(item)
                   })
 
@@ -99,8 +112,9 @@ describe('scan - functionality', function () {
                   }), function (err, res) {
                     if (err) return done(err)
                     should(res.statusCode).equal(200)
+                    if (!res.body.Items) return done(new Error('Expected segmented scan items for quarter segment 3'))
 
-                    res.body.Items.forEach(function (item) {
+                    res.body.Items.forEach(function (item: DynamoItem) {
                       should(secondHalf).containEql(item)
                     })
 
@@ -116,8 +130,8 @@ describe('scan - functionality', function () {
 
     // XXX: This is very brittle, relies on knowing the hashing scheme
     it('should return items in string hash order', function (done) {
-      var i, b = { S: helpers.randomString() }, items = [],
-        batchReq = { RequestItems: {} },
+      var i, b = { S: helpers.randomString() }, items: DynamoItem[] = [],
+        batchReq: BatchWriteRequest = { RequestItems: {} },
         scanFilter = { b: { ComparisonOperator: 'EQ', AttributeValueList: [ b ] } }
 
       for (i = 0; i < 10; i++)
@@ -140,7 +154,8 @@ describe('scan - functionality', function () {
           if (err) return done(err)
           should(res.statusCode).equal(200)
           should(res.body.Count).equal(14)
-          var keys = res.body.Items.map(function (item) {
+          if (!res.body.Items) return done(new Error('Expected segmented scan items for string hash order'))
+          var keys = res.body.Items.map(function (item: DynamoItem) {
             return item.a.S
           })
           should(keys).eql([ '2', '8', '9', '1', '6', 'hello', '0', '5', '4', 'äáöü', 'aardman', '7', '3', 'zapf' ])
@@ -151,8 +166,8 @@ describe('scan - functionality', function () {
 
     // XXX: This is very brittle, relies on knowing the hashing scheme
     it('should return items in number hash order', function (done) {
-      var i, b = { S: helpers.randomString() }, items = [],
-        batchReq = { RequestItems: {} },
+      var i, b = { S: helpers.randomString() }, items: DynamoItem[] = [],
+        batchReq: BatchWriteRequest = { RequestItems: {} },
         scanFilter = { b: { ComparisonOperator: 'EQ', AttributeValueList: [ b ] } }
 
       for (i = 0; i < 10; i++)
@@ -175,7 +190,8 @@ describe('scan - functionality', function () {
           if (err) return done(err)
           should(res.statusCode).equal(200)
           should(res.body.Count).equal(14)
-          var keys = res.body.Items.map(function (item) {
+          if (!res.body.Items) return done(new Error('Expected segmented scan items for number hash order'))
+          var keys = res.body.Items.map(function (item: DynamoItem) {
             return item.a.N
           })
           should(keys).eql([ '7', '999.9', '8', '3', '2', '-999.9', '9', '4', '-0.09', '6', '1', '0', '0.012345', '5' ])
@@ -186,7 +202,7 @@ describe('scan - functionality', function () {
 
     // XXX: This is very brittle, relies on knowing the hashing scheme
     it('should return items from correct string hash segments', function (done) {
-      var batchReq = { RequestItems: {} }, items = [
+      var batchReq: BatchWriteRequest = { RequestItems: {} }, items: DynamoItem[] = [
         { a: { S: '3635' } },
         { a: { S: '228' } },
         { a: { S: '1668' } },
@@ -226,7 +242,7 @@ describe('scan - functionality', function () {
 
     // XXX: This is very brittle, relies on knowing the hashing scheme
     it('should return items from correct number hash segments', function (done) {
-      var batchReq = { RequestItems: {} }, items = [
+      var batchReq: BatchWriteRequest = { RequestItems: {} }, items: DynamoItem[] = [
         { a: { N: '251' } },
         { a: { N: '2388' } },
       ]
