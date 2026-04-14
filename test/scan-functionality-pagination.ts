@@ -1,9 +1,17 @@
-var helpers = require('./helpers'),
+var helpers = require('../../test/helpers'),
   should = require('should')
 
+import type {
+  BatchWriteRequest,
+  DynamoItem,
+  ScanRequest,
+  ScanResponse,
+  TestDynamoRequest,
+} from '../types/types'
+
 var target = 'Scan',
-  request = helpers.request,
-  opts = helpers.opts.bind(null, target)
+  request: <TResponse extends ScanResponse>(requestOptions: TestDynamoRequest, cb: (err: unknown, res: TResponse) => void) => void = helpers.request,
+  opts: (data: ScanRequest) => Record<string, unknown> = helpers.opts.bind(null, target)
 
 describe('scan - functionality', function () {
 
@@ -11,7 +19,7 @@ describe('scan - functionality', function () {
   describe('pagination', function () {
 
     it('should return after but not including ExclusiveStartKey', function (done) {
-      var i, b = { S: helpers.randomString() }, items = [], batchReq = { RequestItems: {} },
+      var i, b = { S: helpers.randomString() }, items: DynamoItem[] = [], batchReq: BatchWriteRequest = { RequestItems: {} },
         scanFilter = { b: { ComparisonOperator: 'EQ', AttributeValueList: [ b ] } }
 
       for (i = 0; i < 10; i++)
@@ -29,6 +37,7 @@ describe('scan - functionality', function () {
           if (err) return done(err)
           should(res.statusCode).equal(200)
           should(res.body.Count).equal(10)
+          if (!res.body.Items || !res.body.Items[0]) return done(new Error('Expected scan items for ExclusiveStartKey test'))
 
           request(opts({
             TableName: helpers.testHashTable,
@@ -60,7 +69,7 @@ describe('scan - functionality', function () {
     })
 
     it('should return LastEvaluatedKey if Limit not reached', function (done) {
-      var i, b = { S: helpers.randomString() }, items = [], batchReq = { RequestItems: {} }
+      var i, b = { S: helpers.randomString() }, items: DynamoItem[] = [], batchReq: BatchWriteRequest = { RequestItems: {} }
 
       for (i = 0; i < 5; i++)
         items.push({ a: { S: String(i) }, b: b })
@@ -79,6 +88,7 @@ describe('scan - functionality', function () {
           ReturnConsumedCapacity: 'INDEXES',
         }), function (err, res) {
           if (err) return done(err)
+          if (!res.body.LastEvaluatedKey) return done(new Error('Expected LastEvaluatedKey when limit truncates scan results'))
           should(res.statusCode).equal(200)
           should(res.body.ScannedCount).equal(3)
           should(res.body.LastEvaluatedKey.a.S).not.be.empty
@@ -89,7 +99,7 @@ describe('scan - functionality', function () {
     })
 
     it('should return LastEvaluatedKey even if selecting Count', function (done) {
-      var i, b = { S: helpers.randomString() }, items = [], batchReq = { RequestItems: {} }
+      var i, b = { S: helpers.randomString() }, items: DynamoItem[] = [], batchReq: BatchWriteRequest = { RequestItems: {} }
 
       for (i = 0; i < 5; i++)
         items.push({ a: { S: String(i) }, b: b })
@@ -104,6 +114,7 @@ describe('scan - functionality', function () {
 
         request(opts({ TableName: helpers.testHashTable, Limit: 3, Select: 'COUNT' }), function (err, res) {
           if (err) return done(err)
+          if (!res.body.LastEvaluatedKey) return done(new Error('Expected LastEvaluatedKey when selecting count with limited scan'))
           should(res.statusCode).equal(200)
           should(res.body.ScannedCount).equal(3)
           should(res.body.LastEvaluatedKey.a.S).not.be.empty
@@ -114,7 +125,7 @@ describe('scan - functionality', function () {
     })
 
     it('should return LastEvaluatedKey while filtering, even if Limit is smaller than the expected return list', function (done) {
-      var i, items = [], batchReq = { RequestItems: {} }
+      var i, items: DynamoItem[] = [], batchReq: BatchWriteRequest = { RequestItems: {} }
 
       // This bug manifests itself when the sought after item is not among the first .Limit number of
       // items in the scan.  Because we can't guarantee the order of the returned scan items, we can't
@@ -142,6 +153,7 @@ describe('scan - functionality', function () {
           Limit: 2,
         }), function (err, res) {
           if (err) return done(err)
+          if (!res.body.LastEvaluatedKey) return done(new Error('Expected LastEvaluatedKey while filtering limited scan results'))
 
           should(res.statusCode).equal(200)
           should(res.body.ScannedCount).equal(2)
@@ -153,7 +165,7 @@ describe('scan - functionality', function () {
     })
 
     it('should not return LastEvaluatedKey if Limit is large', function (done) {
-      var i, b = { S: helpers.randomString() }, items = [], batchReq = { RequestItems: {} },
+      var i, b = { S: helpers.randomString() }, items: DynamoItem[] = [], batchReq: BatchWriteRequest = { RequestItems: {} },
         scanFilter = { b: { ComparisonOperator: 'EQ', AttributeValueList: [ b ] } }
 
       for (i = 0; i < 5; i++)
@@ -173,6 +185,8 @@ describe('scan - functionality', function () {
           Limit: 100000,
         }), function (err, res) {
           if (err) return done(err)
+          if (res.body.Count == null) return done(new Error('Expected scan count when testing large limit pagination'))
+          if (!res.body.Items) return done(new Error('Expected scan items when testing large limit pagination'))
           should(res.statusCode).equal(200)
           should(res.body.Count).equal(res.body.ScannedCount)
           should.not.exist(res.body.LastEvaluatedKey)
@@ -186,6 +200,7 @@ describe('scan - functionality', function () {
             Limit: lastIx,
           }), function (err, res) {
             if (err) return done(err)
+            if (!res.body.LastEvaluatedKey) return done(new Error('Expected LastEvaluatedKey when scan limit stops before final filtered item'))
             should(res.statusCode).equal(200)
             should(res.body.Count).equal(4)
             should(res.body.LastEvaluatedKey.a.S).not.be.empty
@@ -195,6 +210,7 @@ describe('scan - functionality', function () {
               Limit: lastIx + 1,
             }), function (err, res) {
               if (err) return done(err)
+              if (!res.body.LastEvaluatedKey) return done(new Error('Expected LastEvaluatedKey when scan limit equals final filtered item index'))
               should(res.statusCode).equal(200)
               should(res.body.Count).equal(5)
               should(res.body.LastEvaluatedKey.a.S).not.be.empty
@@ -204,6 +220,7 @@ describe('scan - functionality', function () {
                 Limit: totalItems,
               }), function (err, res) {
                 if (err) return done(err)
+                if (!res.body.LastEvaluatedKey) return done(new Error('Expected LastEvaluatedKey when scan limit matches total scanned items'))
                 should(res.statusCode).equal(200)
                 should(res.body.Count).equal(5)
                 should(res.body.LastEvaluatedKey.a.S).not.be.empty
