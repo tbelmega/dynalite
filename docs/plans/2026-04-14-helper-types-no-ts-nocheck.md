@@ -117,17 +117,17 @@ The repository should end with all helper modules participating in normal TypeSc
 - [x] Update this plan file to mark the completed subtasks as done.
 - [x] Commit with message: `Type instance data and cleanup helpers`
 
-## [ ] Task 5: Type the legacy naming, request, and table helper modules
+## [x] Task 5: Type the legacy naming, request, and table helper modules
 
-- [ ] Spawn a fresh worker with `fork_context: false` and a self-contained prompt that owns `test/util/legacy/naming.ts`, `test/util/legacy/request.ts`, `test/util/legacy/table-lifecycle.ts`, `test/util/legacy/table-data.ts`, optional `types/types.ts` edits, and nothing else.
-- [ ] Remove `// @ts-nocheck` from `test/util/legacy/naming.ts`, `test/util/legacy/request.ts`, `test/util/legacy/table-lifecycle.ts`, and `test/util/legacy/table-data.ts`, then run `bun run typecheck` to expose the remaining legacy helper contract mismatches.
-- [ ] Give `createLegacyNaming`, `createLegacyRequestApi`, `createLegacyTableLifecycle`, and `createLegacyTableData` explicit dependency parameter types and explicit returned API shapes.
-- [ ] Type every nested function in these modules, including string-decrement helpers, retry loops, request callbacks, scan iteration callbacks, and batch write helpers.
-- [ ] Reuse the shared request/response and table-definition types from `types/types.ts` wherever the legacy and instance stacks describe the same runtime shape.
-- [ ] Run `bun run typecheck`, `bun run build:test-ts`, and `bun run test:migration`.
-- [ ] Review the post-verification diff and confirm it is limited to the owned files plus intentional shared-type additions.
-- [ ] Update this plan file to mark the completed subtasks as done.
-- [ ] Commit with message: `Type legacy request and table helpers`
+- [x] Spawn a fresh worker with `fork_context: false` and a self-contained prompt that owns `test/util/legacy/naming.ts`, `test/util/legacy/request.ts`, `test/util/legacy/table-lifecycle.ts`, `test/util/legacy/table-data.ts`, optional `types/types.ts` edits, and nothing else.
+- [x] Remove `// @ts-nocheck` from `test/util/legacy/naming.ts`, `test/util/legacy/request.ts`, `test/util/legacy/table-lifecycle.ts`, and `test/util/legacy/table-data.ts`, then run `bun run typecheck` to expose the remaining legacy helper contract mismatches.
+- [x] Give `createLegacyNaming`, `createLegacyRequestApi`, `createLegacyTableLifecycle`, and `createLegacyTableData` explicit dependency parameter types and explicit returned API shapes.
+- [x] Type every nested function in these modules, including string-decrement helpers, retry loops, request callbacks, scan iteration callbacks, and batch write helpers.
+- [x] Reuse the shared request/response and table-definition types from `types/types.ts` wherever the legacy and instance stacks describe the same runtime shape.
+- [x] Run `bun run typecheck`, `bun run build:test-ts`, and `bun run test:migration`.
+- [x] Review the post-verification diff and confirm it is limited to the owned files plus intentional shared-type additions.
+- [x] Update this plan file to mark the completed subtasks as done.
+- [x] Commit with message: `Type legacy request and table helpers`
 
 ## [ ] Task 6: Type the legacy assertion and aggregate helper surface
 

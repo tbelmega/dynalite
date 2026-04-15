@@ -1,9 +1,18 @@
-// @ts-nocheck
 var http = require('http')
 var aws4 = require('aws4')
 var once = require('once')
+var should = require('should')
+import type {
+  HelperCallback,
+  HelperHttpResponse,
+  HelperResponseBody,
+  HelperResponseCallback,
+  InstanceRequestOptions,
+  LegacyRequestApi,
+  LegacyRequestApiDeps,
+} from '../../../types/types';
 
-function buildTargetOpts (version, target, data) {
+function buildTargetOpts (version: string, target: string, data: unknown): InstanceRequestOptions {
   return {
     headers: {
       'Content-Type': 'application/x-amz-json-1.0',
@@ -13,73 +22,87 @@ function buildTargetOpts (version, target, data) {
   }
 }
 
-function createLegacyRequestApi (deps) {
+function createLegacyRequestApi (deps: LegacyRequestApiDeps): LegacyRequestApi {
   var startGlobalServer = deps.startGlobalServer
   var requestOpts = deps.requestOpts
   var useRemoteDynamo = deps.useRemoteDynamo
   var version = deps.version
   var maxRetries = deps.maxRetries
 
-  function opts (target, data) {
+  function opts (target: string, data: unknown): InstanceRequestOptions {
     return buildTargetOpts(version, target, data)
   }
 
   // Legacy request function used by the old helpers exported from `test/helpers.js`.
-  function request (reqOpts, cb) {
-    if (typeof reqOpts === 'function') { cb = reqOpts; reqOpts = {} }
+  function request (reqOpts: InstanceRequestOptions | HelperResponseCallback, cb?: HelperResponseCallback): void {
+    var requestOptions: InstanceRequestOptions
+    var callback: HelperResponseCallback | undefined
+
+    if (typeof reqOpts === 'function') {
+      callback = reqOpts
+      requestOptions = {}
+    }
+    else {
+      requestOptions = reqOpts
+      callback = cb
+    }
+    if (callback == null) throw new Error('Missing request callback')
+    var requestCallback: HelperResponseCallback = callback
 
     // Ensure global server is started for legacy tests.
-    startGlobalServer(function (err) {
-      if (err) return cb(err)
+    startGlobalServer(function (err: unknown): void {
+      if (err) return requestCallback(err)
 
-      reqOpts.retries = reqOpts.retries || 0
-      cb = once(cb)
+      requestOptions.retries = requestOptions.retries ?? 0
+      var safeCallback: HelperResponseCallback = once(function (callbackErr?: unknown, res?: HelperHttpResponse): void {
+        requestCallback(callbackErr, res)
+      })
 
-      for (var key in requestOpts) {
-        if (reqOpts[key] === undefined)
-          reqOpts[key] = requestOpts[key]
+      if (requestOptions.host == null) requestOptions.host = requestOpts.host
+      if (requestOptions.method == null) requestOptions.method = requestOpts.method
+      if (requestOptions.port == null && requestOpts.port != null) requestOptions.port = requestOpts.port
+
+      if (!requestOptions.noSign) {
+        aws4.sign(requestOptions)
+        requestOptions.noSign = true
       }
 
-      if (!reqOpts.noSign) {
-        aws4.sign(reqOpts)
-        reqOpts.noSign = true // don't sign twice if calling recursively
-      }
-
-      http.request(reqOpts, function (res) {
+      http.request(requestOptions, function (res: HelperHttpResponse): void {
         res.setEncoding('utf8')
-        res.on('error', cb)
+        res.on('error', safeCallback)
         res.rawBody = ''
-        res.on('data', function (chunk) { res.rawBody += chunk })
-        res.on('end', function () {
+        res.on('data', function (chunk: string): void { res.rawBody += chunk })
+        res.on('end', function (): void {
           try {
-            res.body = JSON.parse(res.rawBody)
+            res.body = JSON.parse(res.rawBody) as HelperResponseBody
           }
           catch {
             res.body = res.rawBody
           }
 
-          if (useRemoteDynamo && reqOpts.retries <= maxRetries &&
-              (res.body.__type == 'com.amazon.coral.availability#ThrottlingException' ||
-              res.body.__type == 'com.amazonaws.dynamodb.v20120810#LimitExceededException')) {
-            reqOpts.retries++
-            return setTimeout(request, Math.floor(Math.random() * 1000), reqOpts, cb)
+          if (useRemoteDynamo && (requestOptions.retries ?? 0) <= maxRetries && isRetryableDynamoBody(res.body)) {
+            requestOptions.retries = (requestOptions.retries ?? 0) + 1
+            setTimeout(request, Math.floor(Math.random() * 1000), requestOptions, safeCallback)
+            return
           }
 
-          cb(null, res)
+          safeCallback(null, res)
         })
-      }).on('error', function (err) {
-        if (err && ~[ 'ECONNRESET', 'EMFILE', 'ENOTFOUND' ].indexOf(err.code) && reqOpts.retries <= maxRetries) {
-          reqOpts.retries++
-          return setTimeout(request, Math.floor(Math.random() * 100), reqOpts, cb)
+      }).on('error', function (requestErr: unknown): void {
+        if (isRetryableNetworkError(requestErr) && (requestOptions.retries ?? 0) <= maxRetries) {
+          requestOptions.retries = (requestOptions.retries ?? 0) + 1
+          setTimeout(request, Math.floor(Math.random() * 100), requestOptions, safeCallback)
+          return
         }
-        cb(err)
-      }).end(reqOpts.body)
+        safeCallback(requestErr)
+      }).end(requestOptions.body)
     })
   }
 
-  function assertSerialization (target, data, msg, done) {
-    request(opts(target, data), function (err, res) {
+  function assertSerialization (target: string, data: unknown, msg: string, done: HelperCallback): void {
+    request(opts(target, data), function (err: unknown, res?: HelperHttpResponse): void {
       if (err) return done(err)
+      if (res == null || res.statusCode == null) return done(new Error('Missing response statusCode'))
       should(res.statusCode).equal(400)
       should(res.body).eql({
         __type: 'com.amazon.coral.service#SerializationException',
@@ -94,6 +117,18 @@ function createLegacyRequestApi (deps) {
     opts: opts,
     assertSerialization: assertSerialization,
   }
+}
+
+function isRetryableDynamoBody (body: HelperResponseBody): boolean {
+  return typeof body !== 'string' &&
+    (body.__type == 'com.amazon.coral.availability#ThrottlingException' ||
+    body.__type == 'com.amazonaws.dynamodb.v20120810#LimitExceededException')
+}
+
+function isRetryableNetworkError (err: unknown): err is NodeJS.ErrnoException {
+  return typeof err === 'object' && err != null && 'code' in err &&
+    typeof err.code === 'string' &&
+    [ 'ECONNRESET', 'EMFILE', 'ENOTFOUND' ].indexOf(err.code) !== -1
 }
 
 module.exports = {

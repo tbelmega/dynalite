@@ -391,3 +391,36 @@ export type InstanceTestHelper = ConfiguredInstanceTestHelper & {
   waitUntilDeletedSafe: (name: string, done: HelperCallback) => void;
   waitUntilIndexesActive: (name: string, done: HelperResponseCallback) => void;
 };
+export type LegacyRequestApiDeps = {
+  maxRetries: number;
+  requestOpts: HelperRequestDefaults;
+  startGlobalServer: (done: HelperCallback) => void;
+  useRemoteDynamo?: boolean | string;
+  version: string;
+};
+export type LegacyRequestApi = {
+  assertSerialization: (target: string, data: unknown, msg: string, done: HelperCallback) => void;
+  opts: (target: string, data: unknown) => InstanceRequestOptions;
+  request: (opts: InstanceRequestOptions | HelperResponseCallback, cb?: HelperResponseCallback) => void;
+};
+export type LegacyTableLifecycleDependencies = {
+  opts: (target: string, data: unknown) => InstanceRequestOptions;
+  request: LegacyRequestApi['request'];
+};
+export type LegacyTableLifecycleApi = {
+  createAndWait: (table: HelperTableDefinition, done: HelperResponseCallback) => void;
+  deleteWhenActive: (name: string, done?: HelperCallback) => void;
+  waitUntilActive: (name: string, done: HelperResponseCallback) => void;
+  waitUntilDeleted: (name: string, done: HelperResponseCallback) => void;
+  waitUntilIndexesActive: (name: string, done: HelperResponseCallback) => void;
+};
+export type LegacyTableDataDependencies = {
+  opts: (target: string, data: unknown) => InstanceRequestOptions;
+  request: LegacyRequestApi['request'];
+};
+export type LegacyTableDataApi = {
+  batchBulkPut: (name: string, items: DynamoItem[], segmentsOrDone: number | HelperCallback, done?: HelperCallback) => void;
+  batchWriteUntilDone: (name: string, actions: BatchWriteActions, cb: HelperCallback) => void;
+  clearTable: (name: string, keyNames: string | string[], segmentsOrDone: number | HelperCallback, done?: HelperCallback) => void;
+  replaceTable: (name: string, keyNames: string | string[], items: DynamoItem[], segmentsOrDone: number | HelperCallback, done?: HelperCallback) => void;
+};
