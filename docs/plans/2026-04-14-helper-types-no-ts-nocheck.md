@@ -105,17 +105,17 @@ The repository should end with all helper modules participating in normal TypeSc
 - [x] Update this plan file to mark the completed subtasks as done.
 - [x] Commit with message: `Type instance request and lifecycle helpers`
 
-## [ ] Task 4: Type the instance cleanup, table-data, and test-table modules
+## [x] Task 4: Type the instance cleanup, table-data, and test-table modules
 
-- [ ] Spawn a fresh worker with `fork_context: false` and a self-contained prompt that owns `test/util/instance/safe-cleanup.ts`, `test/util/instance/table-data.ts`, `test/util/instance/test-tables.ts`, optional `types/types.ts` edits, and nothing else.
-- [ ] Remove `// @ts-nocheck` from `test/util/instance/safe-cleanup.ts`, `test/util/instance/table-data.ts`, and `test/util/instance/test-tables.ts`, then run `bun run typecheck` to expose the remaining instance-helper gaps.
-- [ ] Type every public attachment and every nested retry/scanning helper, including segment counts, batch write action shapes, table-name arrays, and cleanup callbacks.
-- [ ] Replace vague request/response assumptions with explicit types for `ListTables`, `Scan`, `BatchWriteItem`, `DeleteTable`, and `DescribeTable` response bodies as used by these modules.
-- [ ] Encode the seeded test-table definitions with named types for attribute definitions, key schema, projections, and provisioned throughput so the literal table array no longer relies on unchecked inference.
-- [ ] Run `bun run typecheck`, `bun run build:test-ts`, and `bun run test:migration`.
-- [ ] Review the post-verification diff and confirm it is limited to the owned files plus intentional shared-type additions.
-- [ ] Update this plan file to mark the completed subtasks as done.
-- [ ] Commit with message: `Type instance data and cleanup helpers`
+- [x] Spawn a fresh worker with `fork_context: false` and a self-contained prompt that owns `test/util/instance/safe-cleanup.ts`, `test/util/instance/table-data.ts`, `test/util/instance/test-tables.ts`, optional `types/types.ts` edits, and nothing else.
+- [x] Remove `// @ts-nocheck` from `test/util/instance/safe-cleanup.ts`, `test/util/instance/table-data.ts`, and `test/util/instance/test-tables.ts`, then run `bun run typecheck` to expose the remaining instance-helper gaps.
+- [x] Type every public attachment and every nested retry/scanning helper, including segment counts, batch write action shapes, table-name arrays, and cleanup callbacks.
+- [x] Replace vague request/response assumptions with explicit types for `ListTables`, `Scan`, `BatchWriteItem`, `DeleteTable`, and `DescribeTable` response bodies as used by these modules.
+- [x] Encode the seeded test-table definitions with named types for attribute definitions, key schema, projections, and provisioned throughput so the literal table array no longer relies on unchecked inference.
+- [x] Run `bun run typecheck`, `bun run build:test-ts`, and `bun run test:migration`.
+- [x] Review the post-verification diff and confirm it is limited to the owned files plus intentional shared-type additions.
+- [x] Update this plan file to mark the completed subtasks as done.
+- [x] Commit with message: `Type instance data and cleanup helpers`
 
 ## [ ] Task 5: Type the legacy naming, request, and table helper modules
 

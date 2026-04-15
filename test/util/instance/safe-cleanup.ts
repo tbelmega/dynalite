@@ -1,27 +1,40 @@
-// @ts-nocheck
 var async = require('async')
+import type {
+  HelperCallback,
+  HelperHttpResponse,
+  HelperResponseBody,
+  InstanceSafeCleanupOptions,
+  InstanceTestHelper,
+} from '../../../types/types';
 
-function attachInstanceSafeCleanup (helper, options) {
-  options = options || {}
+function attachInstanceSafeCleanup (
+  helper: InstanceTestHelper,
+  options: InstanceSafeCleanupOptions = {},
+): void {
   var deleteRemoteTables = options.deleteRemoteTables
 
-  helper.deleteTestTables = function (done) {
+  helper.deleteTestTables = function (done: HelperCallback): void {
     if (helper.useRemoteDynamo && !deleteRemoteTables) return done()
 
     var maxRetries = 3
     var retryCount = 0
 
-    function attemptCleanup () {
-      helper.request(helper.opts('ListTables', {}), function (err, res) {
+    function attemptCleanup (): void {
+      helper.request(helper.opts('ListTables', {}), function (err: unknown, res?: HelperHttpResponse): void {
         if (err) {
           if (retryCount < maxRetries) {
             retryCount++
-            return setTimeout(attemptCleanup, 1000)
+            setTimeout(attemptCleanup, 1000)
+            return
           }
           return done(err)
         }
+        if (res == null) return done(new Error('Missing response'))
 
-        var names = res.body.TableNames.filter(function (name) {
+        var tableNames = getTableNames(res.body)
+        if (tableNames == null) return done(new Error('Missing table names'))
+
+        var names = tableNames.filter(function (name: string): boolean {
           return name.indexOf(helper.prefix) === 0
         })
 
@@ -29,13 +42,14 @@ function attachInstanceSafeCleanup (helper, options) {
           return done()
         }
 
-        async.forEach(names, function (name, callback) {
+        async.forEach(names, function (name: string, callback: HelperCallback): void {
           helper.deleteAndWaitSafe(name, callback)
-        }, function () {
-          helper.verifyTablesDeleted(names, function (verifyErr) {
+        }, function (): void {
+          helper.verifyTablesDeleted(names, function (verifyErr: unknown): void {
             if (verifyErr && retryCount < maxRetries) {
               retryCount++
-              return setTimeout(attemptCleanup, 2000)
+              setTimeout(attemptCleanup, 2000)
+              return
             }
             done()
           })
@@ -46,38 +60,42 @@ function attachInstanceSafeCleanup (helper, options) {
     attemptCleanup()
   }
 
-  helper.deleteAndWaitSafe = function (name, done) {
+  helper.deleteAndWaitSafe = function (name: string, done: HelperCallback): void {
     var maxAttempts = 3
     var attemptCount = 0
 
-    function attemptDelete () {
+    function attemptDelete (): void {
       attemptCount++
 
-      helper.request(helper.opts('DeleteTable', { TableName: name }), function (err, res) {
+      helper.request(helper.opts('DeleteTable', { TableName: name }), function (err: unknown, res?: HelperHttpResponse): void {
         if (err) {
           if (attemptCount < maxAttempts) {
-            return setTimeout(attemptDelete, 1000)
+            setTimeout(attemptDelete, 1000)
+            return
           }
           return done()
         }
+        if (res == null || res.statusCode == null) return done()
 
         if (res.statusCode === 200) {
           return helper.waitUntilDeletedSafe(name, done)
         }
 
-        if (res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException') {
+        if (hasDynamoErrorType(res.body, 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException')) {
           return done()
         }
 
-        if (res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceInUseException') {
+        if (hasDynamoErrorType(res.body, 'com.amazonaws.dynamodb.v20120810#ResourceInUseException')) {
           if (attemptCount < maxAttempts) {
-            return setTimeout(attemptDelete, 2000)
+            setTimeout(attemptDelete, 2000)
+            return
           }
           return done()
         }
 
         if (attemptCount < maxAttempts) {
-          return setTimeout(attemptDelete, 1000)
+          setTimeout(attemptDelete, 1000)
+          return
         }
 
         done()
@@ -87,22 +105,23 @@ function attachInstanceSafeCleanup (helper, options) {
     attemptDelete()
   }
 
-  helper.waitUntilDeletedSafe = function (name, done) {
+  helper.waitUntilDeletedSafe = function (name: string, done: HelperCallback): void {
     var maxWaitTime = 15000
     var startTime = Date.now()
     var checkInterval = 1000
 
-    function checkDeleted () {
+    function checkDeleted (): void {
       if (Date.now() - startTime > maxWaitTime) {
         return done()
       }
 
-      helper.request(helper.opts('DescribeTable', { TableName: name }), function (err, res) {
+      helper.request(helper.opts('DescribeTable', { TableName: name }), function (err: unknown, res?: HelperHttpResponse): void {
         if (err) {
           return done()
         }
+        if (res == null || res.statusCode == null) return done()
 
-        if (res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException') {
+        if (hasDynamoErrorType(res.body, 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException')) {
           return done()
         }
 
@@ -117,21 +136,26 @@ function attachInstanceSafeCleanup (helper, options) {
     checkDeleted()
   }
 
-  helper.verifyTablesDeleted = function (tableNames, done) {
+  helper.verifyTablesDeleted = function (tableNames: string[], done: HelperCallback): void {
     var maxVerifyRetries = 3
     var verifyRetryCount = 0
 
-    function verifyDeletion () {
-      helper.request(helper.opts('ListTables', {}), function (err, res) {
+    function verifyDeletion (): void {
+      helper.request(helper.opts('ListTables', {}), function (err: unknown, res?: HelperHttpResponse): void {
         if (err) {
           if (verifyRetryCount < maxVerifyRetries) {
             verifyRetryCount++
-            return setTimeout(verifyDeletion, 1000)
+            setTimeout(verifyDeletion, 1000)
+            return
           }
           return done()
         }
+        if (res == null) return done()
 
-        var remainingTables = res.body.TableNames.filter(function (name) {
+        var currentTables = getTableNames(res.body)
+        if (currentTables == null) return done()
+
+        var remainingTables = currentTables.filter(function (name: string): boolean {
           return tableNames.indexOf(name) !== -1
         })
 
@@ -141,7 +165,8 @@ function attachInstanceSafeCleanup (helper, options) {
 
         if (verifyRetryCount < maxVerifyRetries) {
           verifyRetryCount++
-          return setTimeout(verifyDeletion, 2000)
+          setTimeout(verifyDeletion, 2000)
+          return
         }
 
         return done()
@@ -150,6 +175,17 @@ function attachInstanceSafeCleanup (helper, options) {
 
     verifyDeletion()
   }
+}
+
+function getTableNames (body: HelperResponseBody): string[] | undefined {
+  if (typeof body === 'string' || !Array.isArray(body.TableNames)) return
+  return body.TableNames.filter(function (name: unknown): name is string {
+    return typeof name === 'string'
+  })
+}
+
+function hasDynamoErrorType (body: HelperResponseBody, errorType: string): boolean {
+  return typeof body !== 'string' && body.__type === errorType
 }
 
 module.exports = {

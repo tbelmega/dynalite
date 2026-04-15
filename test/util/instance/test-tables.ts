@@ -1,26 +1,38 @@
-// @ts-nocheck
 var async = require('async')
+import type {
+  HelperCallback,
+  HelperHttpResponse,
+  HelperTableDefinition,
+  InstanceTestHelper,
+  InstanceTestTablesOptions,
+} from '../../../types/types';
 
-function attachInstanceTestTables (helper, options) {
-  options = options || {}
+function attachInstanceTestTables (
+  helper: InstanceTestHelper,
+  options: InstanceTestTablesOptions = {},
+): void {
   var createRemoteTables = options.createRemoteTables
 
-  helper.getAccountId = function (done) {
-    helper.request(helper.opts('DescribeTable', { TableName: helper.testHashTable }), function (err, res) {
+  helper.getAccountId = function (done: HelperCallback): void {
+    helper.request(helper.opts('DescribeTable', { TableName: helper.testHashTable }), function (err: unknown, res?: HelperHttpResponse): void {
       if (err) return done(err)
-      helper.awsAccountId = res.body.Table.TableArn.split(':')[4]
+      var tableArn = getTableArn(res)
+      if (tableArn == null) {
+        return done(new Error('Missing table ARN'))
+      }
+      helper.awsAccountId = tableArn.split(':')[4]
       done()
     })
   }
 
-  helper.createTestTables = function (done) {
+  helper.createTestTables = function (done: HelperCallback): void {
     if (helper.useRemoteDynamo && !createRemoteTables) return done()
 
-    helper.deleteTestTables(function (err) {
+    helper.deleteTestTables(function (err: unknown): void {
       if (err) return done(err)
 
       var readCapacity = helper.readCapacity, writeCapacity = helper.writeCapacity
-      var tables = [ {
+      var tables: HelperTableDefinition[] = [ {
         TableName: helper.testHashTable,
         AttributeDefinitions: [ { AttributeName: 'a', AttributeType: 'S' } ],
         KeySchema: [ { KeyType: 'HASH', AttributeName: 'a' } ],
@@ -75,6 +87,13 @@ function attachInstanceTestTables (helper, options) {
       async.forEach(tables, helper.createAndWaitWithRetry, done)
     })
   }
+}
+
+function getTableArn (res?: HelperHttpResponse): string | undefined {
+  if (res == null || typeof res.body === 'string') return
+  var table = res.body.Table
+  if (typeof table !== 'object' || table == null || !('TableArn' in table) || typeof table.TableArn !== 'string') return
+  return table.TableArn
 }
 
 module.exports = {
