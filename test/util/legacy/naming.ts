@@ -1,23 +1,21 @@
-// @ts-nocheck
-function createLegacyNaming (options) {
-  options = options || {}
+import type { LegacyNaming, LegacyNamingOptions } from '../../../types/types';
+
+function createLegacyNaming (options: LegacyNamingOptions = {}): LegacyNaming {
   var prefix = options.prefix || ''
 
-  function randomString () {
+  function randomString (): string {
     return ('AAAAAAAAA' + randomNumber()).slice(-10)
   }
 
-  function randomNumber () {
+  function randomNumber (): string {
     return String(Math.random() * 0x100000000)
   }
 
-  function randomName () {
+  function randomName (): string {
     return prefix + randomString()
   }
 
-  function strDecrement (str, regex, length) {
-    regex = regex || /.?/
-    length = length || 255
+  function strDecrement (str: string, regex: RegExp = /.?/, length: number = 255): string {
     var lastIx = str.length - 1, lastChar = str.charCodeAt(lastIx) - 1, strPrefix = str.slice(0, lastIx), finalChar = 255
     while (lastChar >= 0 && !regex.test(String.fromCharCode(lastChar))) lastChar--
     if (lastChar < 0) return strPrefix

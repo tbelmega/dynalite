@@ -251,3 +251,12 @@ export type GetItemResponseBody = {
   Item?: DynamoItem;
 };
 export type GetItemResponse = DynamoCommandResponse<GetItemResponseBody>;
+export type LegacyNamingOptions = {
+  prefix?: string;
+};
+export type LegacyNaming = {
+  randomString: () => string;
+  randomNumber: () => string;
+  randomName: () => string;
+  strDecrement: (str: string, regex?: RegExp, length?: number) => string;
+};
