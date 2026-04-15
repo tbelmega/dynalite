@@ -1,75 +1,96 @@
-// @ts-nocheck
-function attachInstanceTableLifecycle (helper) {
-  helper.createAndWait = function (table, done) {
-    helper.request(helper.opts('CreateTable', table), function (err, res) {
+import type {
+  DescribeTableResponseBody,
+  HelperCallback,
+  HelperHttpResponse,
+  HelperResponseCallback,
+  HelperResponseBody,
+  HelperTableDefinition,
+  InstanceTestHelper,
+} from '../../../types/types';
+
+function attachInstanceTableLifecycle (helper: InstanceTestHelper): void {
+  helper.createAndWait = function (table: HelperTableDefinition, done: HelperResponseCallback): void {
+    helper.request(helper.opts('CreateTable', table), function (err: unknown, res?: HelperHttpResponse): void {
       if (err) return done(err)
+      if (res == null || res.statusCode == null) return done(new Error('Missing response statusCode'))
       if (res.statusCode != 200) return done(new Error(res.statusCode + ': ' + JSON.stringify(res.body)))
       setTimeout(helper.waitUntilActive, 1000, table.TableName, done)
     })
   }
 
-  helper.createAndWaitWithRetry = function (table, done) {
+  helper.createAndWaitWithRetry = function (table: HelperTableDefinition, done: HelperResponseCallback): void {
     var maxRetries = 5
     var retryDelay = 1000
     var retryCount = 0
 
-    function attemptCreate () {
-      helper.request(helper.opts('DescribeTable', { TableName: table.TableName }), function (err, res) {
-        if (!err && res.statusCode === 200 && res.body && res.body.Table) {
+    function attemptCreate (): void {
+      helper.request(helper.opts('DescribeTable', { TableName: table.TableName }), function (err: unknown, res?: HelperHttpResponse): void {
+        var describeBody = getDescribeTableBody(res)
+        if (!err && res != null && res.statusCode === 200 && describeBody?.Table) {
           return helper.waitUntilActive(table.TableName, done)
         }
 
-        if (err || (res.statusCode !== 400 && res.statusCode !== 200)) {
+        if (err || res == null || res.statusCode == null || (res.statusCode !== 400 && res.statusCode !== 200)) {
           if (retryCount < maxRetries) {
             retryCount++
-            return setTimeout(attemptCreate, retryDelay * retryCount)
+            setTimeout(attemptCreate, retryDelay * retryCount)
+            return
           }
-          return done(err || new Error('Server error: ' + res.statusCode))
+          return done(err || new Error('Server error: ' + (res == null ? 'unknown' : res.statusCode)))
         }
 
-        if (res.statusCode === 200 && (!res.body || !res.body.Table)) {
+        if (res.statusCode === 200 && !describeBody?.Table) {
           helper.deleteAndWait(table.TableName, function () {
             createTable()
           })
           return
         }
 
-        if (res.statusCode === 400 && res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException') {
+        if (res.statusCode === 400 && describeBody?.__type === 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException') {
           return createTable()
         }
 
         if (retryCount < maxRetries) {
           retryCount++
-          return setTimeout(attemptCreate, retryDelay * retryCount)
+          setTimeout(attemptCreate, retryDelay * retryCount)
+          return
         }
         return done(new Error(res.statusCode + ': ' + JSON.stringify(res.body)))
       })
 
-      function createTable () {
-        helper.request(helper.opts('CreateTable', table), function (err, res) {
+      function createTable (): void {
+        helper.request(helper.opts('CreateTable', table), function (err: unknown, res?: HelperHttpResponse): void {
           if (err) {
             if (retryCount < maxRetries) {
               retryCount++
-              return setTimeout(attemptCreate, retryDelay * retryCount)
+              setTimeout(attemptCreate, retryDelay * retryCount)
+              return
             }
             return done(err)
           }
 
-          if (res.statusCode === 200) {
-            return setTimeout(helper.waitUntilActive, 2000, table.TableName, done)
+          if (res == null || res.statusCode == null) {
+            return done(new Error('Missing response statusCode'))
           }
 
-          if (res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceInUseException') {
+          if (res.statusCode === 200) {
+            setTimeout(helper.waitUntilActive, 2000, table.TableName, done)
+            return
+          }
+
+          if (hasDynamoErrorType(res.body, 'com.amazonaws.dynamodb.v20120810#ResourceInUseException')) {
             if (retryCount < maxRetries) {
               retryCount++
-              return setTimeout(attemptCreate, retryDelay * retryCount)
+              setTimeout(attemptCreate, retryDelay * retryCount)
+              return
             }
             return done(new Error('Table creation failed after ' + maxRetries + ' retries: ResourceInUseException'))
           }
 
           if (retryCount < maxRetries) {
             retryCount++
-            return setTimeout(attemptCreate, retryDelay * retryCount)
+            setTimeout(attemptCreate, retryDelay * retryCount)
+            return
           }
           return done(new Error(res.statusCode + ': ' + JSON.stringify(res.body)))
         })
@@ -79,40 +100,48 @@ function attachInstanceTableLifecycle (helper) {
     attemptCreate()
   }
 
-  helper.deleteAndWait = function (name, done) {
+  helper.deleteAndWait = function (name: string, done: HelperCallback): void {
     var maxRetries = 10
     var retryDelay = 1000
     var retryCount = 0
 
-    function attemptDelete () {
-      helper.request(helper.opts('DeleteTable', { TableName: name }), function (err, res) {
+    function attemptDelete (): void {
+      helper.request(helper.opts('DeleteTable', { TableName: name }), function (err: unknown, res?: HelperHttpResponse): void {
         if (err) {
           if (retryCount < maxRetries) {
             retryCount++
-            return setTimeout(attemptDelete, retryDelay)
+            setTimeout(attemptDelete, retryDelay)
+            return
           }
           return done(err)
         }
 
-        if (res.statusCode === 200) {
-          return setTimeout(helper.waitUntilDeleted, 1000, name, done)
+        if (res == null || res.statusCode == null) {
+          return done(new Error('Missing response statusCode'))
         }
 
-        if (res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException') {
+        if (res.statusCode === 200) {
+          setTimeout(helper.waitUntilDeleted, 1000, name, done)
+          return
+        }
+
+        if (hasDynamoErrorType(res.body, 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException')) {
           return done()
         }
 
-        if (res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceInUseException') {
+        if (hasDynamoErrorType(res.body, 'com.amazonaws.dynamodb.v20120810#ResourceInUseException')) {
           if (retryCount < maxRetries) {
             retryCount++
-            return setTimeout(attemptDelete, retryDelay * Math.min(retryCount, 3))
+            setTimeout(attemptDelete, retryDelay * Math.min(retryCount, 3))
+            return
           }
           return done(new Error('Table deletion failed after ' + maxRetries + ' retries: ResourceInUseException'))
         }
 
         if (retryCount < maxRetries) {
           retryCount++
-          return setTimeout(attemptDelete, retryDelay)
+          setTimeout(attemptDelete, retryDelay)
+          return
         }
         return done(new Error(res.statusCode + ': ' + JSON.stringify(res.body)))
       })
@@ -121,32 +150,34 @@ function attachInstanceTableLifecycle (helper) {
     attemptDelete()
   }
 
-  helper.waitUntilActive = function (name, done) {
+  helper.waitUntilActive = function (name: string, done: HelperResponseCallback): void {
     var maxWaitTime = 60000
     var startTime = Date.now()
     var checkInterval = 1000
 
-    function checkActive () {
+    function checkActive (): void {
       if (Date.now() - startTime > maxWaitTime) {
         return done(new Error('Timeout waiting for table ' + name + ' to become active'))
       }
 
-      helper.request(helper.opts('DescribeTable', { TableName: name }), function (err, res) {
+      helper.request(helper.opts('DescribeTable', { TableName: name }), function (err: unknown, res?: HelperHttpResponse): void {
         if (err) return done(err)
+        if (res == null || res.statusCode == null) return done(new Error('Missing response statusCode'))
 
         if (res.statusCode !== 200) {
           return done(new Error(res.statusCode + ': ' + JSON.stringify(res.body)))
         }
 
-        if (!res.body || !res.body.Table) {
+        var describeBody = getDescribeTableBody(res)
+        if (!describeBody?.Table) {
           setTimeout(checkActive, checkInterval)
           return
         }
 
-        var table = res.body.Table
+        var table = describeBody.Table
         var isActive = table.TableStatus === 'ACTIVE'
         var indexesActive = !table.GlobalSecondaryIndexes ||
-          table.GlobalSecondaryIndexes.every(function (index) {
+          table.GlobalSecondaryIndexes.every(function (index): boolean {
             return index.IndexStatus === 'ACTIVE'
           })
 
@@ -161,20 +192,21 @@ function attachInstanceTableLifecycle (helper) {
     checkActive()
   }
 
-  helper.waitUntilDeleted = function (name, done) {
+  helper.waitUntilDeleted = function (name: string, done: HelperResponseCallback): void {
     var maxWaitTime = 30000
     var startTime = Date.now()
     var checkInterval = 1000
 
-    function checkDeleted () {
+    function checkDeleted (): void {
       if (Date.now() - startTime > maxWaitTime) {
         return done(new Error('Timeout waiting for table ' + name + ' to be deleted'))
       }
 
-      helper.request(helper.opts('DescribeTable', { TableName: name }), function (err, res) {
+      helper.request(helper.opts('DescribeTable', { TableName: name }), function (err: unknown, res?: HelperHttpResponse): void {
         if (err) return done(err)
+        if (res == null || res.statusCode == null) return done(new Error('Missing response statusCode'))
 
-        if (res.body && res.body.__type === 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException') {
+        if (hasDynamoErrorType(res.body, 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException')) {
           return done(null, res)
         }
 
@@ -189,24 +221,36 @@ function attachInstanceTableLifecycle (helper) {
     checkDeleted()
   }
 
-  helper.waitUntilIndexesActive = function (name, done) {
-    helper.request(helper.opts('DescribeTable', { TableName: name }), function (err, res) {
+  helper.waitUntilIndexesActive = function (name: string, done: HelperResponseCallback): void {
+    helper.request(helper.opts('DescribeTable', { TableName: name }), function (err: unknown, res?: HelperHttpResponse): void {
       if (err) return done(err)
-      if (res.statusCode != 200)
+      if (res == null || res.statusCode == null) return done(new Error('Missing response statusCode'))
+      if (res.statusCode != 200) {
         return done(new Error(res.statusCode + ': ' + JSON.stringify(res.body)))
-      else if (res.body.Table.GlobalSecondaryIndexes.every(function (index) { return index.IndexStatus == 'ACTIVE' }))
+      }
+      var describeBody = getDescribeTableBody(res)
+      if (describeBody?.Table?.GlobalSecondaryIndexes?.every(function (index): boolean { return index.IndexStatus == 'ACTIVE' })) {
         return done(null, res)
+      }
       setTimeout(helper.waitUntilIndexesActive, 1000, name, done)
     })
   }
 
-  helper.deleteWhenActive = function (name, done) {
-    if (!done) done = function () { }
-    helper.waitUntilActive(name, function (err) {
+  helper.deleteWhenActive = function (name: string, done: HelperCallback = function (): void {}): void {
+    helper.waitUntilActive(name, function (err: unknown): void {
       if (err) return done(err)
       helper.request(helper.opts('DeleteTable', { TableName: name }), done)
     })
   }
+}
+
+function getDescribeTableBody (res?: HelperHttpResponse): DescribeTableResponseBody | undefined {
+  if (res == null || typeof res.body === 'string') return
+  return res.body
+}
+
+function hasDynamoErrorType (body: HelperResponseBody, errorType: string): boolean {
+  return typeof body !== 'string' && body.__type === errorType
 }
 
 module.exports = {

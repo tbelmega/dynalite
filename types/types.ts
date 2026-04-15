@@ -265,8 +265,23 @@ export type HelperRequestDefaults = {
   method: 'POST';
   port?: number;
 };
+export type HelperResponseBody = string | ({ __type?: string; Message?: string; message?: string } & Record<string, unknown>);
+export type HelperHttpResponse = import('http').IncomingMessage & {
+  body: HelperResponseBody;
+  rawBody: string;
+};
 export type HelperCallback = (err?: unknown) => void;
-export type HelperResponseCallback<TResponse = TestDynamoResponse> = (err?: unknown, res?: TResponse) => void;
+export type HelperResponseCallback<TResponse = HelperHttpResponse> = (err?: unknown, res?: TResponse) => void;
+export type InstanceRequestOptions = Record<string, unknown> & {
+  body?: string;
+  headers?: TestRequestHeaders;
+  host?: string;
+  method?: string;
+  noSign?: boolean;
+  port?: number;
+  retries?: number;
+  signQuery?: boolean;
+};
 export type InstanceHelperOptions = {
   awsAccountId?: string;
   awsRegion?: string;
@@ -323,6 +338,13 @@ export type BatchWriteActions = {
   deletes?: DynamoItem[];
   puts?: DynamoItem[];
 };
+export type DescribeTableResponseBody = {
+  __type?: string;
+  Message?: string;
+  message?: string;
+  Table?: TableDescriptionSummary & { TableArn?: string };
+};
+export type DescribeTableResponse = DynamoCommandResponse<DescribeTableResponseBody>;
 export type ConfiguredInstanceTestHelper = {
   awsAccountId?: string;
   awsRegion: string;
@@ -355,10 +377,11 @@ export type InstanceTestHelper = ConfiguredInstanceTestHelper & {
   deleteAndWait: (name: string, done: HelperCallback) => void;
   deleteAndWaitSafe: (name: string, done: HelperCallback) => void;
   deleteTestTables: (done: HelperCallback) => void;
+  deleteWhenActive: (name: string, done?: HelperCallback) => void;
   getAccountId: (done: HelperCallback) => void;
-  opts: (target: string, data: unknown) => TestRequestOptions;
+  opts: (target: string, data: unknown) => InstanceRequestOptions;
   replaceTable: (name: string, keyNames: string | string[], items: DynamoItem[], segmentsOrDone: number | HelperCallback, done?: HelperCallback) => void;
-  request: (opts: TestRequestOptions | HelperResponseCallback, cb?: HelperResponseCallback) => void;
+  request: (opts: InstanceRequestOptions | HelperResponseCallback, cb?: HelperResponseCallback) => void;
   scanSegmentAndDelete: (tableName: string, keyNames: string[], totalSegments: number, segment: number, cb: (err?: unknown, hadKeys?: boolean) => void) => void;
   startServer: () => Promise<void>;
   stopServer: () => Promise<void>;
@@ -366,4 +389,5 @@ export type InstanceTestHelper = ConfiguredInstanceTestHelper & {
   waitUntilActive: (name: string, done: HelperResponseCallback) => void;
   waitUntilDeleted: (name: string, done: HelperResponseCallback) => void;
   waitUntilDeletedSafe: (name: string, done: HelperCallback) => void;
+  waitUntilIndexesActive: (name: string, done: HelperResponseCallback) => void;
 };

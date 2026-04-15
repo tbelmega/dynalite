@@ -93,17 +93,17 @@ The repository should end with all helper modules participating in normal TypeSc
 - [x] Update this plan file to mark the completed subtasks as done.
 - [x] Commit with message: `Type instance helper configuration`
 
-## [ ] Task 3: Type the instance request and lifecycle modules
+## [x] Task 3: Type the instance request and lifecycle modules
 
-- [ ] Spawn a fresh worker with `fork_context: false` and a self-contained prompt that owns `test/util/instance/request.ts`, `test/util/instance/table-lifecycle.ts`, optional `types/types.ts` edits, and nothing else.
-- [ ] Remove `// @ts-nocheck` from `test/util/instance/request.ts` and `test/util/instance/table-lifecycle.ts`, then run `bun run typecheck` to surface the current request/response and callback errors.
-- [ ] Introduce precise request/response contracts for `startServer`, `stopServer`, `request`, `opts`, `createAndWait`, `createAndWaitWithRetry`, `deleteAndWait`, `waitUntilActive`, and `waitUntilDeleted`.
-- [ ] Model the DynamoDB response bodies these files inspect with narrow optional fields, especially `Table`, `TableStatus`, `GlobalSecondaryIndexes`, and `__type`.
-- [ ] Type nested retry helpers and callback signatures explicitly so control flow remains readable and no branch relies on non-null assertions.
-- [ ] Run `bun run typecheck`, `bun run build:test-ts`, and `bun run test:migration`.
-- [ ] Review the post-verification diff and confirm it is limited to the owned files plus intentional shared-type additions.
-- [ ] Update this plan file to mark the completed subtasks as done.
-- [ ] Commit with message: `Type instance request and lifecycle helpers`
+- [x] Spawn a fresh worker with `fork_context: false` and a self-contained prompt that owns `test/util/instance/request.ts`, `test/util/instance/table-lifecycle.ts`, optional `types/types.ts` edits, and nothing else.
+- [x] Remove `// @ts-nocheck` from `test/util/instance/request.ts` and `test/util/instance/table-lifecycle.ts`, then run `bun run typecheck` to surface the current request/response and callback errors.
+- [x] Introduce precise request/response contracts for `startServer`, `stopServer`, `request`, `opts`, `createAndWait`, `createAndWaitWithRetry`, `deleteAndWait`, `waitUntilActive`, and `waitUntilDeleted`.
+- [x] Model the DynamoDB response bodies these files inspect with narrow optional fields, especially `Table`, `TableStatus`, `GlobalSecondaryIndexes`, and `__type`.
+- [x] Type nested retry helpers and callback signatures explicitly so control flow remains readable and no branch relies on non-null assertions.
+- [x] Run `bun run typecheck`, `bun run build:test-ts`, and `bun run test:migration`.
+- [x] Review the post-verification diff and confirm it is limited to the owned files plus intentional shared-type additions.
+- [x] Update this plan file to mark the completed subtasks as done.
+- [x] Commit with message: `Type instance request and lifecycle helpers`
 
 ## [ ] Task 4: Type the instance cleanup, table-data, and test-table modules
 

@@ -1,37 +1,52 @@
-// @ts-nocheck
 var http = require('http')
 var aws4 = require('aws4')
 var once = require('once')
 var dynalite = require('../../../..')
+import type {
+  HelperHttpResponse,
+  HelperResponseBody,
+  HelperResponseCallback,
+  InstanceRequestOptions,
+  InstanceTestHelper,
+} from '../../../types/types';
 
-function attachInstanceRequest (helper) {
-  helper.startServer = function () {
-    return new Promise(function (resolve, reject) {
+function attachInstanceRequest (helper: InstanceTestHelper): void {
+  helper.startServer = function (): Promise<void> {
+    return new Promise<void>(function (resolve, reject) {
       if (helper.useRemoteDynamo) {
-        helper.createTestTables(function (err) {
+        helper.createTestTables(function (err: unknown): void {
           if (err) return reject(err)
-          helper.getAccountId(resolve)
+          helper.getAccountId(function (accountErr: unknown): void {
+            if (accountErr) return reject(accountErr)
+            resolve()
+          })
         })
         return
       }
 
-      helper.server = dynalite({ path: process.env.DYNALITE_PATH })
-      helper.server.listen(helper.port, function (err) {
+      var server = dynalite({ path: process.env.DYNALITE_PATH })
+      helper.server = server
+      server.listen(helper.port, function (err: unknown): void {
         if (err) return reject(err)
-        helper.createTestTables(function (err) {
+        helper.createTestTables(function (err: unknown): void {
           if (err) return reject(err)
-          helper.getAccountId(resolve)
+          helper.getAccountId(function (accountErr: unknown): void {
+            if (accountErr) return reject(accountErr)
+            resolve()
+          })
         })
       })
     })
   }
 
-  helper.stopServer = function () {
-    return new Promise(function (resolve, reject) {
-      helper.deleteTestTables(function (err) {
+  helper.stopServer = function (): Promise<void> {
+    return new Promise<void>(function (resolve, reject) {
+      helper.deleteTestTables(function (err: unknown): void {
         if (err) return reject(err)
         if (helper.server) {
-          helper.server.close(resolve)
+          helper.server.close(function (): void {
+            resolve()
+          })
         }
         else {
           resolve()
@@ -40,50 +55,66 @@ function attachInstanceRequest (helper) {
     })
   }
 
-  helper.request = function (opts, cb) {
-    if (typeof opts === 'function') { cb = opts; opts = {} }
-    opts.retries = opts.retries || 0
-    cb = once(cb)
-    for (var key in helper.requestOpts) {
-      if (opts[key] === undefined)
-        opts[key] = helper.requestOpts[key]
+  helper.request = function (opts: InstanceRequestOptions | HelperResponseCallback, cb?: HelperResponseCallback): void {
+    var requestOptions: InstanceRequestOptions
+    var callback: HelperResponseCallback | undefined
+
+    if (typeof opts === 'function') {
+      callback = opts
+      requestOptions = {}
     }
-    if (!opts.noSign) {
-      aws4.sign(opts)
-      opts.noSign = true
+    else {
+      requestOptions = opts
+      callback = cb
+    }
+
+    if (callback == null) throw new Error('Missing request callback')
+    var requestCallback: HelperResponseCallback = callback
+
+    requestOptions.retries = requestOptions.retries ?? 0
+    var safeCallback: HelperResponseCallback = once(function (err?: unknown, res?: HelperHttpResponse): void {
+      requestCallback(err, res)
+    })
+    if (requestOptions.host == null) requestOptions.host = helper.requestOpts.host
+    if (requestOptions.method == null) requestOptions.method = helper.requestOpts.method
+    if (requestOptions.port == null && helper.requestOpts.port != null) requestOptions.port = helper.requestOpts.port
+    if (!requestOptions.noSign) {
+      aws4.sign(requestOptions)
+      requestOptions.noSign = true
     }
 
     var MAX_RETRIES = 20
-    http.request(opts, function (res) {
+    http.request(requestOptions, function (res: HelperHttpResponse) {
       res.setEncoding('utf8')
-      res.on('error', cb)
+      res.on('error', safeCallback)
       res.rawBody = ''
-      res.on('data', function (chunk) { res.rawBody += chunk })
-      res.on('end', function () {
+      res.on('data', function (chunk: string): void { res.rawBody += chunk })
+      res.on('end', function (): void {
         try {
-          res.body = JSON.parse(res.rawBody)
+          res.body = JSON.parse(res.rawBody) as HelperResponseBody
         }
         catch {
           res.body = res.rawBody
         }
-        if (helper.useRemoteDynamo && opts.retries <= MAX_RETRIES &&
-            (res.body.__type == 'com.amazon.coral.availability#ThrottlingException' ||
-            res.body.__type == 'com.amazonaws.dynamodb.v20120810#LimitExceededException')) {
-          opts.retries++
-          return setTimeout(helper.request, Math.floor(Math.random() * 1000), opts, cb)
+        if (helper.useRemoteDynamo && (requestOptions.retries ?? 0) <= MAX_RETRIES &&
+            isRetryableDynamoBody(res.body)) {
+          requestOptions.retries = (requestOptions.retries ?? 0) + 1
+          setTimeout(helper.request, Math.floor(Math.random() * 1000), requestOptions, safeCallback)
+          return
         }
-        cb(null, res)
+        safeCallback(null, res)
       })
-    }).on('error', function (err) {
-      if (err && ~[ 'ECONNRESET', 'EMFILE', 'ENOTFOUND' ].indexOf(err.code) && opts.retries <= MAX_RETRIES) {
-        opts.retries++
-        return setTimeout(helper.request, Math.floor(Math.random() * 100), opts, cb)
+    }).on('error', function (err: unknown): void {
+      if (isRetryableNetworkError(err) && (requestOptions.retries ?? 0) <= MAX_RETRIES) {
+        requestOptions.retries = (requestOptions.retries ?? 0) + 1
+        setTimeout(helper.request, Math.floor(Math.random() * 100), requestOptions, safeCallback)
+        return
       }
-      cb(err)
-    }).end(opts.body)
+      safeCallback(err)
+    }).end(requestOptions.body)
   }
 
-  helper.opts = function (target, data) {
+  helper.opts = function (target: string, data: unknown): InstanceRequestOptions {
     return {
       headers: {
         'Content-Type': 'application/x-amz-json-1.0',
@@ -92,6 +123,18 @@ function attachInstanceRequest (helper) {
       body: JSON.stringify(data),
     }
   }
+}
+
+function isRetryableDynamoBody (body: HelperResponseBody): boolean {
+  if (typeof body === 'string') return false
+  return body.__type == 'com.amazon.coral.availability#ThrottlingException' ||
+    body.__type == 'com.amazonaws.dynamodb.v20120810#LimitExceededException'
+}
+
+function isRetryableNetworkError (err: unknown): err is NodeJS.ErrnoException {
+  return typeof err === 'object' && err != null && 'code' in err &&
+    typeof err.code === 'string' &&
+    [ 'ECONNRESET', 'EMFILE', 'ENOTFOUND' ].indexOf(err.code) !== -1
 }
 
 module.exports = {
