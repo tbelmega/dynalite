@@ -1,13 +1,30 @@
-// @ts-nocheck
 var async = require('async')
+var should = require('should')
+import type {
+  HelperCallback,
+  HelperHttpResponse,
+  HelperResponseBody,
+  LegacyAssertionsApi,
+  LegacyAssertionsDependencies,
+  LegacySerializationTestValue,
+  LegacyValidationMessage,
+} from '../../../types/types';
 
-function createLegacyAssertions (dependencies) {
+type LegacySerializationContainer = LegacySerializationTestValue[] | { [key: string]: LegacySerializationTestValue };
+type LegacyTypeMessageCase = [LegacySerializationTestValue, string];
+type LegacyAssertTypeCase = [string, string];
+type HelperJsonBody = Exclude<HelperResponseBody, string>;
+
+function createLegacyAssertions (dependencies: LegacyAssertionsDependencies): LegacyAssertionsApi {
   var request = dependencies.request
   var opts = dependencies.opts
   var assertSerialization = dependencies.assertSerialization
 
-  function assertType (target, property, type, done) {
-    var msgs = [], pieces = property.split('.'), subtypeMatch = type.match(/(.+?)<(.+)>$/), subtype
+  function assertType (target: string, property: string, type: string, done: HelperCallback): void {
+    var msgs: LegacyTypeMessageCase[] = []
+    var pieces = property.split('.')
+    var subtypeMatch = type.match(/(.+?)<(.+)>$/)
+    var subtype: string | undefined
     if (subtypeMatch != null) {
       type = subtypeMatch[1]
       subtype = subtypeMatch[2]
@@ -99,7 +116,7 @@ function createLegacyAssertions (dependencies) {
         [ -2147483648, 'Unexpected field type' ],
         [ 2147483648, 'Unexpected field type' ],
         [ 34.56, 'Unexpected field type' ],
-        [ [], 'Unrecognized collection type java.util.Map<java.lang.String, ' + (~subtype.indexOf('.') ? subtype : 'com.amazonaws.dynamodb.v20120810.' + subtype) + '>' ],
+        [ [], 'Unrecognized collection type java.util.Map<java.lang.String, ' + getMapSubtypeName(subtype) + '>' ],
       ]
       break
     case 'ParameterizedMap':
@@ -121,7 +138,7 @@ function createLegacyAssertions (dependencies) {
         [ -2147483648, 'Unexpected value type in payload' ],
         [ 2147483648, 'Unexpected value type in payload' ],
         [ 34.56, 'Unexpected value type in payload' ],
-        [ [], 'Unrecognized collection type class com.amazonaws.dynamodb.v20120810.' + subtype ],
+        [ [], 'Unrecognized collection type class com.amazonaws.dynamodb.v20120810.' + getSubtypeName(subtype) ],
       ]
       break
     case 'FieldStruct':
@@ -132,12 +149,12 @@ function createLegacyAssertions (dependencies) {
         [ -2147483648, 'Unexpected field type' ],
         [ 2147483648, 'Unexpected field type' ],
         [ 34.56, 'Unexpected field type' ],
-        [ [], 'Unrecognized collection type class com.amazonaws.dynamodb.v20120810.' + subtype ],
+        [ [], 'Unrecognized collection type class com.amazonaws.dynamodb.v20120810.' + getSubtypeName(subtype) ],
       ]
       break
     case 'AttrStruct':
       async.forEach([
-        [ property, subtype + '<AttributeValue>' ],
+        [ property, getSubtypeName(subtype) + '<AttributeValue>' ],
         [ property + '.S', 'String' ],
         [ property + '.N', 'String' ],
         [ property + '.B', 'Blob' ],
@@ -157,70 +174,67 @@ function createLegacyAssertions (dependencies) {
         [ property + '.M.a', 'ValueStruct<AttributeValue>' ],
         [ property + '.M.a.BS', 'List' ],
         [ property + '.M.a.BS.0', 'Blob' ],
-      ], function (test, cb) { assertType(target, test[0], test[1], cb) }, done)
+      ], function (test: LegacyAssertTypeCase, cb: HelperCallback): void {
+        assertType(target, test[0], test[1], cb)
+      }, done)
       return
     default:
       throw new Error('Unknown type: ' + type)
     }
-    async.forEach(msgs, function (msg, cb) {
-      var data = {}, child = data, i, ix
-      for (i = 0; i < pieces.length - 1; i++) {
-        ix = Array.isArray(child) ? 0 : pieces[i]
-        child = child[ix] = pieces[i + 1] === '0' ? [] : {}
-      }
-      ix = Array.isArray(child) ? 0 : pieces[pieces.length - 1]
-      child[ix] = msg[0]
-      assertSerialization(target, data, msg[1], cb)
+    async.forEach(msgs, function (msg: LegacyTypeMessageCase, cb: HelperCallback): void {
+      assertSerialization(target, createNestedSerializationPayload(pieces, msg[0]), msg[1], cb)
     }, done)
   }
 
-  function assertAccessDenied (target, data, msg, done) {
-    request(opts(target, data), function (err, res) {
+  function assertAccessDenied (target: string, data: unknown, msg: string | RegExp, done: HelperCallback): void {
+    request(opts(target, data), function (err: unknown, res?: HelperHttpResponse): void {
       if (err) return done(err)
+      if (res == null || res.statusCode == null) return done(new Error('Missing response statusCode'))
       should(res.statusCode).equal(400)
-      if (typeof res.body !== 'object') {
-        return done(new Error('Not JSON: ' + res.body))
-      }
-      should(res.body.__type).equal('com.amazon.coral.service#AccessDeniedException')
+      var body = getJsonBody(res)
+      if (body == null) return done(new Error('Not JSON: ' + res.body))
+      should(body.__type).equal('com.amazon.coral.service#AccessDeniedException')
       if (msg instanceof RegExp) {
-        should(res.body.Message).match(msg)
+        should(body.Message).match(msg)
       }
       else {
-        should(res.body.Message).equal(msg)
+        should(body.Message).equal(msg)
       }
       done()
     })
   }
 
-  function assertValidation (target, data, msg, done) {
-    request(opts(target, data), function (err, res) {
+  function assertValidation (target: string, data: unknown, msg: LegacyValidationMessage, done: HelperCallback): void {
+    request(opts(target, data), function (err: unknown, res?: HelperHttpResponse): void {
       if (err) return done(err)
-      if (typeof res.body !== 'object') {
-        return done(new Error('Not JSON: ' + res.body))
-      }
-      should(res.body.__type).equal('com.amazon.coral.validate#ValidationException')
+      if (res == null || res.statusCode == null) return done(new Error('Missing response statusCode'))
+      var body = getJsonBody(res)
+      if (body == null) return done(new Error('Not JSON: ' + res.body))
+      should(body.__type).equal('com.amazon.coral.validate#ValidationException')
       if (msg instanceof RegExp) {
-        should(res.body.message).match(msg)
+        should(body.message).match(msg)
       }
       else if (Array.isArray(msg)) {
         var prefix = msg.length + ' validation error' + (msg.length === 1 ? '' : 's') + ' detected: '
-        should(res.body.message).startWith(prefix)
-        var errors = res.body.message.slice(prefix.length).split('; ')
+        if (typeof body.message !== 'string') return done(new Error('Validation body missing message'))
+        should(body.message).startWith(prefix)
+        var errors = body.message.slice(prefix.length).split('; ')
         for (var i = 0; i < msg.length; i++) {
           should(errors).matchAny(msg[i])
         }
       }
       else {
-        should(res.body.message).equal(msg)
+        should(body.message).equal(msg)
       }
       should(res.statusCode).equal(400)
       done()
     })
   }
 
-  function assertNotFound (target, data, msg, done) {
-    request(opts(target, data), function (err, res) {
+  function assertNotFound (target: string, data: unknown, msg: string, done: HelperCallback): void {
+    request(opts(target, data), function (err: unknown, res?: HelperHttpResponse): void {
       if (err) return done(err)
+      if (res == null || res.statusCode == null) return done(new Error('Missing response statusCode'))
       should(res.statusCode).equal(400)
       should(res.body).eql({
         __type: 'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException',
@@ -230,9 +244,10 @@ function createLegacyAssertions (dependencies) {
     })
   }
 
-  function assertInUse (target, data, msg, done) {
-    request(opts(target, data), function (err, res) {
+  function assertInUse (target: string, data: unknown, msg: string, done: HelperCallback): void {
+    request(opts(target, data), function (err: unknown, res?: HelperHttpResponse): void {
       if (err) return done(err)
+      if (res == null || res.statusCode == null) return done(new Error('Missing response statusCode'))
       should(res.statusCode).equal(400)
       should(res.body).eql({
         __type: 'com.amazonaws.dynamodb.v20120810#ResourceInUseException',
@@ -242,9 +257,10 @@ function createLegacyAssertions (dependencies) {
     })
   }
 
-  function assertConditional (target, data, done) {
-    request(opts(target, data), function (err, res) {
+  function assertConditional (target: string, data: unknown, done: HelperCallback): void {
+    request(opts(target, data), function (err: unknown, res?: HelperHttpResponse): void {
       if (err) return done(err)
+      if (res == null || res.statusCode == null) return done(new Error('Missing response statusCode'))
       should(res.statusCode).equal(400)
       should(res.body).eql({
         __type: 'com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException',
@@ -262,6 +278,53 @@ function createLegacyAssertions (dependencies) {
     assertInUse: assertInUse,
     assertConditional: assertConditional,
   }
+}
+
+function getSubtypeName (subtype?: string): string {
+  if (subtype == null) throw new Error('Missing subtype in type assertion')
+  return subtype
+}
+
+function getMapSubtypeName (subtype?: string): string {
+  var subtypeName = getSubtypeName(subtype)
+  return ~subtypeName.indexOf('.') ? subtypeName : 'com.amazonaws.dynamodb.v20120810.' + subtypeName
+}
+
+function createNestedSerializationPayload (pieces: string[], value: LegacySerializationTestValue): { [key: string]: LegacySerializationTestValue } {
+  var data: { [key: string]: LegacySerializationTestValue } = {}
+  var child: LegacySerializationContainer = data
+  var i: number
+  for (i = 0; i < pieces.length - 1; i++) {
+    child = assignNestedContainer(child, pieces[i], createNextContainer(pieces[i + 1]))
+  }
+  assignNestedValue(child, pieces[pieces.length - 1], value)
+  return data
+}
+
+function createNextContainer (nextPiece: string): LegacySerializationContainer {
+  return nextPiece === '0' ? [] : {}
+}
+
+function assignNestedContainer (container: LegacySerializationContainer, piece: string, nextContainer: LegacySerializationContainer): LegacySerializationContainer {
+  if (Array.isArray(container)) {
+    container[0] = nextContainer
+    return nextContainer
+  }
+  container[piece] = nextContainer
+  return nextContainer
+}
+
+function assignNestedValue (container: LegacySerializationContainer, piece: string, value: LegacySerializationTestValue): void {
+  if (Array.isArray(container)) {
+    container[0] = value
+    return
+  }
+  container[piece] = value
+}
+
+function getJsonBody (res?: HelperHttpResponse): HelperJsonBody | undefined {
+  if (res == null || typeof res.body === 'string') return
+  return res.body
 }
 
 module.exports = {

@@ -1,6 +1,14 @@
-// @ts-nocheck
-var legacyHelpers = require('./util/legacy/helpers')
-var instanceHelpers = require('./util/instance/helpers')
+import type {
+  InstanceHelperOptions,
+  InstanceTestHelper,
+  LegacyHelperExports,
+} from '../types/types';
 
-module.exports = legacyHelpers
-module.exports.createTestHelper = instanceHelpers.createTestHelper
+type TestHelpersModule = LegacyHelperExports & {
+  createTestHelper: (options?: InstanceHelperOptions) => InstanceTestHelper;
+};
+
+var legacyHelpers: LegacyHelperExports = require('./util/legacy/helpers')
+var instanceHelpers: TestHelpersModule = Object.assign(legacyHelpers, require('./util/instance/helpers'))
+
+module.exports = instanceHelpers

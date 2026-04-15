@@ -129,17 +129,17 @@ The repository should end with all helper modules participating in normal TypeSc
 - [x] Update this plan file to mark the completed subtasks as done.
 - [x] Commit with message: `Type legacy request and table helpers`
 
-## [ ] Task 6: Type the legacy assertion and aggregate helper surface
+## [x] Task 6: Type the legacy assertion and aggregate helper surface
 
-- [ ] Spawn a fresh worker with `fork_context: false` and a self-contained prompt that owns `test/util/legacy/assertions.ts`, `test/util/legacy/helpers.ts`, `test/helpers.ts`, optional `types/types.ts` edits, and nothing else.
-- [ ] Remove `// @ts-nocheck` from `test/util/legacy/assertions.ts`, `test/util/legacy/helpers.ts`, and `test/helpers.ts`, then run `bun run typecheck` to expose the final unchecked bridge and export issues.
-- [ ] Type the assertion-case inputs in `legacy/assertions.ts` precisely, including message unions, dotted-property traversal state, and supported serialization test value shapes.
-- [ ] Type the mutable legacy module state in `legacy/helpers.ts` so global server lifecycle, exported table names, environment-derived configuration, and forwarded helper APIs all have explicit contracts with correct nullability.
-- [ ] Finish by typing the top-level `test/helpers.ts` bridge so the CommonJS export surface remains unchanged while the legacy exports and `createTestHelper` attachment are statically checked.
-- [ ] Run `bun run typecheck`, `bun run build:test-ts`, `bun run test:migration`, and `bun run test`.
-- [ ] Review the post-verification diff and confirm it is limited to the owned files plus intentional shared-type additions.
-- [ ] Update this plan file to mark the completed subtasks as done.
-- [ ] Commit with message: `Remove ts-nocheck from test helper modules`
+- [x] Spawn a fresh worker with `fork_context: false` and a self-contained prompt that owns `test/util/legacy/assertions.ts`, `test/util/legacy/helpers.ts`, `test/helpers.ts`, optional `types/types.ts` edits, and nothing else.
+- [x] Remove `// @ts-nocheck` from `test/util/legacy/assertions.ts`, `test/util/legacy/helpers.ts`, and `test/helpers.ts`, then run `bun run typecheck` to expose the final unchecked bridge and export issues.
+- [x] Type the assertion-case inputs in `legacy/assertions.ts` precisely, including message unions, dotted-property traversal state, and supported serialization test value shapes.
+- [x] Type the mutable legacy module state in `legacy/helpers.ts` so global server lifecycle, exported table names, environment-derived configuration, and forwarded helper APIs all have explicit contracts with correct nullability.
+- [x] Finish by typing the top-level `test/helpers.ts` bridge so the CommonJS export surface remains unchanged while the legacy exports and `createTestHelper` attachment are statically checked.
+- [x] Run `bun run typecheck`, `bun run build:test-ts`, `bun run test:migration`, and `bun run test`.
+- [x] Review the post-verification diff and confirm it is limited to the owned files plus intentional shared-type additions.
+- [x] Update this plan file to mark the completed subtasks as done.
+- [x] Commit with message: `Remove ts-nocheck from test helper modules`
 
 ## Tickets
 

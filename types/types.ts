@@ -403,6 +403,26 @@ export type LegacyRequestApi = {
   opts: (target: string, data: unknown) => InstanceRequestOptions;
   request: (opts: InstanceRequestOptions | HelperResponseCallback, cb?: HelperResponseCallback) => void;
 };
+export type LegacySerializationTestValue =
+  | boolean
+  | number
+  | string
+  | LegacySerializationTestValue[]
+  | { [key: string]: LegacySerializationTestValue };
+export type LegacyValidationMessage = string | RegExp | Array<string | RegExp>;
+export type LegacyAssertionsDependencies = {
+  assertSerialization: LegacyRequestApi['assertSerialization'];
+  opts: LegacyRequestApi['opts'];
+  request: LegacyRequestApi['request'];
+};
+export type LegacyAssertionsApi = {
+  assertAccessDenied: (target: string, data: unknown, msg: string | RegExp, done: HelperCallback) => void;
+  assertConditional: (target: string, data: unknown, done: HelperCallback) => void;
+  assertInUse: (target: string, data: unknown, msg: string, done: HelperCallback) => void;
+  assertNotFound: (target: string, data: unknown, msg: string, done: HelperCallback) => void;
+  assertType: (target: string, property: string, type: string, done: HelperCallback) => void;
+  assertValidation: (target: string, data: unknown, msg: LegacyValidationMessage, done: HelperCallback) => void;
+};
 export type LegacyTableLifecycleDependencies = {
   opts: (target: string, data: unknown) => InstanceRequestOptions;
   request: LegacyRequestApi['request'];
@@ -424,3 +444,25 @@ export type LegacyTableDataApi = {
   clearTable: (name: string, keyNames: string | string[], segmentsOrDone: number | HelperCallback, done?: HelperCallback) => void;
   replaceTable: (name: string, keyNames: string | string[], items: DynamoItem[], segmentsOrDone: number | HelperCallback, done?: HelperCallback) => void;
 };
+export type LegacyHelperExports = LegacyAssertionsApi &
+  LegacyRequestApi &
+  LegacyTableDataApi &
+  LegacyTableLifecycleApi & {
+    MAX_SIZE: number;
+    awsAccountId?: string;
+    awsRegion: string;
+    prefix: string;
+    randomName: () => string;
+    randomNumber: () => string;
+    randomString: () => string;
+    readCapacity: number;
+    runSlowTests: boolean;
+    strDecrement: LegacyNaming['strDecrement'];
+    testHashNTable: string;
+    testHashTable: string;
+    testRangeBTable: string;
+    testRangeNTable: string;
+    testRangeTable: string;
+    version: string;
+    writeCapacity: number;
+  };
