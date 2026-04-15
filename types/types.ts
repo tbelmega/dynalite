@@ -260,3 +260,110 @@ export type LegacyNaming = {
   randomName: () => string;
   strDecrement: (str: string, regex?: RegExp, length?: number) => string;
 };
+export type HelperRequestDefaults = {
+  host: string;
+  method: 'POST';
+  port?: number;
+};
+export type HelperCallback = (err?: unknown) => void;
+export type HelperResponseCallback<TResponse = TestDynamoResponse> = (err?: unknown, res?: TResponse) => void;
+export type InstanceHelperOptions = {
+  awsAccountId?: string;
+  awsRegion?: string;
+  port?: number;
+  prefix?: string;
+  readCapacity?: number;
+  runSlowTests?: boolean;
+  useRemoteDynamo?: boolean | string;
+  version?: string;
+  writeCapacity?: number;
+};
+export type InstanceHelperSharedOptions = {
+  runSlowTests?: boolean;
+  useRemoteDynamo?: boolean | string;
+};
+export type InstanceSafeCleanupOptions = {
+  deleteRemoteTables?: boolean;
+};
+export type InstanceTestTablesOptions = {
+  createRemoteTables?: boolean;
+};
+export type HelperAttributeDefinition = {
+  AttributeName: string;
+  AttributeType: string;
+};
+export type HelperKeySchemaElement = {
+  AttributeName: string;
+  KeyType: string;
+};
+export type HelperProjection = {
+  NonKeyAttributes?: string[];
+  ProjectionType: string;
+};
+export type HelperProvisionedThroughput = {
+  ReadCapacityUnits: number;
+  WriteCapacityUnits: number;
+};
+export type HelperSecondaryIndexDefinition = {
+  IndexName: string;
+  KeySchema: HelperKeySchemaElement[];
+  Projection: HelperProjection;
+  ProvisionedThroughput?: HelperProvisionedThroughput;
+};
+export type HelperTableDefinition = {
+  AttributeDefinitions: HelperAttributeDefinition[];
+  BillingMode?: string;
+  GlobalSecondaryIndexes?: HelperSecondaryIndexDefinition[];
+  KeySchema: HelperKeySchemaElement[];
+  LocalSecondaryIndexes?: HelperSecondaryIndexDefinition[];
+  ProvisionedThroughput?: HelperProvisionedThroughput;
+  TableName: string;
+};
+export type BatchWriteActions = {
+  deletes?: DynamoItem[];
+  puts?: DynamoItem[];
+};
+export type ConfiguredInstanceTestHelper = {
+  awsAccountId?: string;
+  awsRegion: string;
+  options: InstanceHelperOptions;
+  port: number;
+  prefix: string;
+  readCapacity: number;
+  requestOpts: HelperRequestDefaults;
+  runSlowTests?: boolean;
+  server: import('http').Server | null;
+  testHashNTable: string;
+  testHashTable: string;
+  testRangeBTable: string;
+  testRangeNTable: string;
+  testRangeTable: string;
+  useRemoteDynamo?: boolean | string;
+  version: string;
+  writeCapacity: number;
+  randomName: () => string;
+  randomNumber: () => string;
+  randomString: () => string;
+};
+export type InstanceTestHelper = ConfiguredInstanceTestHelper & {
+  batchBulkPut: (name: string, items: DynamoItem[], segmentsOrDone: number | HelperCallback, done?: HelperCallback) => void;
+  batchWriteUntilDone: (name: string, actions: BatchWriteActions, cb: HelperCallback) => void;
+  clearTable: (name: string, keyNames: string | string[], segmentsOrDone: number | HelperCallback, done?: HelperCallback) => void;
+  createAndWait: (table: HelperTableDefinition, done: HelperResponseCallback) => void;
+  createAndWaitWithRetry: (table: HelperTableDefinition, done: HelperResponseCallback) => void;
+  createTestTables: (done: HelperCallback) => void;
+  deleteAndWait: (name: string, done: HelperCallback) => void;
+  deleteAndWaitSafe: (name: string, done: HelperCallback) => void;
+  deleteTestTables: (done: HelperCallback) => void;
+  getAccountId: (done: HelperCallback) => void;
+  opts: (target: string, data: unknown) => TestRequestOptions;
+  replaceTable: (name: string, keyNames: string | string[], items: DynamoItem[], segmentsOrDone: number | HelperCallback, done?: HelperCallback) => void;
+  request: (opts: TestRequestOptions | HelperResponseCallback, cb?: HelperResponseCallback) => void;
+  scanSegmentAndDelete: (tableName: string, keyNames: string[], totalSegments: number, segment: number, cb: (err?: unknown, hadKeys?: boolean) => void) => void;
+  startServer: () => Promise<void>;
+  stopServer: () => Promise<void>;
+  verifyTablesDeleted: (tableNames: string[], done: HelperCallback) => void;
+  waitUntilActive: (name: string, done: HelperResponseCallback) => void;
+  waitUntilDeleted: (name: string, done: HelperResponseCallback) => void;
+  waitUntilDeletedSafe: (name: string, done: HelperCallback) => void;
+};

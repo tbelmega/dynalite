@@ -1,11 +1,33 @@
-// @ts-nocheck
 var http = require('http')
-var requestHelpers = require('./request')
-var safeCleanup = require('./safe-cleanup')
-var tableLifecycle = require('./table-lifecycle')
-var tableData = require('./table-data')
-var testTables = require('./test-tables')
-var configure = require('./configure')
+import type {
+  ConfiguredInstanceTestHelper,
+  InstanceHelperOptions,
+  InstanceSafeCleanupOptions,
+  InstanceTestHelper,
+  InstanceTestTablesOptions,
+} from '../../../types/types';
+
+var requestHelpers: {
+  attachInstanceRequest: (helper: ConfiguredInstanceTestHelper) => void;
+} = require('./request')
+var safeCleanup: {
+  attachInstanceSafeCleanup: (helper: ConfiguredInstanceTestHelper, options: InstanceSafeCleanupOptions) => void;
+} = require('./safe-cleanup')
+var tableLifecycle: {
+  attachInstanceTableLifecycle: (helper: ConfiguredInstanceTestHelper) => void;
+} = require('./table-lifecycle')
+var tableData: {
+  attachInstanceTableData: (helper: ConfiguredInstanceTestHelper) => void;
+} = require('./table-data')
+var testTables: {
+  attachInstanceTestTables: (helper: ConfiguredInstanceTestHelper, options: InstanceTestTablesOptions) => void;
+} = require('./test-tables')
+var configure: {
+  createConfiguredTestHelper: (
+    options?: InstanceHelperOptions,
+    shared?: { useRemoteDynamo?: boolean | string; runSlowTests?: boolean },
+  ) => ConfiguredInstanceTestHelper;
+} = require('./configure')
 
 var useRemoteDynamo = process.env.REMOTE
 var runSlowTests = true
@@ -14,11 +36,11 @@ if (useRemoteDynamo && !process.env.SLOW_TESTS) runSlowTests = false
 http.globalAgent.maxSockets = Infinity
 
 // TestHelpers factory function to encapsulate server and database management
-function createTestHelper (options) {
+function createTestHelper (options: InstanceHelperOptions = {}): InstanceTestHelper {
   var helper = configure.createConfiguredTestHelper(options, {
     useRemoteDynamo: useRemoteDynamo,
     runSlowTests: runSlowTests,
-  })
+  }) as InstanceTestHelper
 
   requestHelpers.attachInstanceRequest(helper)
   safeCleanup.attachInstanceSafeCleanup(helper, {

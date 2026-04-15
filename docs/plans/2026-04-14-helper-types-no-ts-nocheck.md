@@ -81,17 +81,17 @@ The repository should end with all helper modules participating in normal TypeSc
 - [x] Update this plan file to mark the completed subtasks as done.
 - [x] Commit with message: `Add typed helper contracts for test utilities`
 
-## [ ] Task 2: Type the instance helper configuration and composition layer
+## [x] Task 2: Type the instance helper configuration and composition layer
 
-- [ ] Spawn a fresh worker with `fork_context: false` and a self-contained prompt that owns `test/util/instance/configure.ts`, `test/util/instance/helpers.ts`, optional `types/types.ts` edits, and nothing else.
-- [ ] Remove `// @ts-nocheck` from `test/util/instance/configure.ts` and `test/util/instance/helpers.ts`, then run `bun run typecheck` to expose the current helper-shape mismatches.
-- [ ] Make `createConfiguredTestHelper` return an explicitly-declared configured helper type that accurately models nullable server state, request options, generated table names, and environment-derived configuration values.
-- [ ] Type `createTestHelper` and each attached method registration so the composed helper surface is explicit and incremental, without relying on unchecked property writes.
-- [ ] Declare explicit parameter and return types for `createConfiguredTestHelper`, `getRandomPort`, `createTestHelper`, and every local helper function in these files.
-- [ ] Run `bun run typecheck`, `bun run build:test-ts`, and `bun run test:migration`.
-- [ ] Review the post-verification diff and confirm it is limited to the owned files plus intentional shared-type additions.
-- [ ] Update this plan file to mark the completed subtasks as done.
-- [ ] Commit with message: `Type instance helper configuration`
+- [x] Spawn a fresh worker with `fork_context: false` and a self-contained prompt that owns `test/util/instance/configure.ts`, `test/util/instance/helpers.ts`, optional `types/types.ts` edits, and nothing else.
+- [x] Remove `// @ts-nocheck` from `test/util/instance/configure.ts` and `test/util/instance/helpers.ts`, then run `bun run typecheck` to expose the current helper-shape mismatches.
+- [x] Make `createConfiguredTestHelper` return an explicitly-declared configured helper type that accurately models nullable server state, request options, generated table names, and environment-derived configuration values.
+- [x] Type `createTestHelper` and each attached method registration so the composed helper surface is explicit and incremental, without relying on unchecked property writes.
+- [x] Declare explicit parameter and return types for `createConfiguredTestHelper`, `getRandomPort`, `createTestHelper`, and every local helper function in these files.
+- [x] Run `bun run typecheck`, `bun run build:test-ts`, and `bun run test:migration`.
+- [x] Review the post-verification diff and confirm it is limited to the owned files plus intentional shared-type additions.
+- [x] Update this plan file to mark the completed subtasks as done.
+- [x] Commit with message: `Type instance helper configuration`
 
 ## [ ] Task 3: Type the instance request and lifecycle modules
 
